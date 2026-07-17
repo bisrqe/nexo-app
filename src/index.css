@@ -396,6 +396,7 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   padding:28px 18px; box-sizing:border-box;
   position:fixed; top:0; left:0; height:100vh;
   overflow-y:auto; overflow-x:hidden;
+  align-items: center;
 }
 .app-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em; flex-shrink:0;}
 
@@ -413,15 +414,54 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   color:#AEBBD0; width:100%; box-sizing:border-box;
 }
 .app-nav-inner a svg,
-.app-nav-bottom a svg{flex-shrink:0;}
+.app-nav-bottom a svg{flex-shrink:0; color:inherit;}
+
+/* min-width:0 lets the label shrink inside the flex row instead of
+   forcing the row to overflow; color:inherit is set explicitly (rather
+   than left to default inheritance) so nothing — hover, active, a stray
+   rule added later — can recolor the icon without also recoloring the
+   label, or vice versa. That mismatch was what made the active tab look
+   like only the icon got highlighted while the text vanished. */
 .app-nav-inner a span,
-.app-nav-bottom a span{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;}
+.app-nav-bottom a span{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; color:inherit;}
+
 .app-nav-inner a:hover,
 .app-nav-bottom a:hover{color:#fff; background:rgba(255,255,255,.06);}
+
 .app-nav-inner a.active{color:var(--ink); background:var(--gold);}
+.app-nav-inner a.active svg,
+.app-nav-inner a.active span{color:var(--ink);}
+
 .app-nav-bottom{display:flex; flex-direction:column; gap:2px; padding-top:16px; border-top:1px solid rgba(255,255,255,.12); width:100%; min-width:0;}
 .app-nav-bottom a{font-size:11.5px; padding:9px 12px; color:#8595AE;}
 .app-nav-bottom a.active{color:var(--gold);}
+.app-nav-bottom a.active svg,
+.app-nav-bottom a.active span{color:var(--gold);}
+
+/* ── Profile card pinned to the very bottom of the sidebar ── */
+.app-profile-card{
+  display:flex; align-items:center; gap:10px;
+  width:100%; box-sizing:border-box;
+  padding:10px; border-radius:8px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  color:#fff;
+}
+.app-profile-card:hover{background:rgba(255,255,255,.09);}
+.app-profile-card.active{background:var(--gold); border-color:var(--gold);}
+.app-profile-card.active .app-profile-name,
+.app-profile-card.active .app-profile-role{color:var(--ink);}
+.app-profile-card.active .app-profile-avatar{background:var(--ink); color:var(--gold);}
+.app-profile-card.active svg{color:var(--ink);}
+.app-profile-avatar{
+  width:34px; height:34px; border-radius:50%; background:var(--navy); color:#fff;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  font-family:var(--mono); font-weight:700; font-size:12px;
+}
+.app-profile-info{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+.app-profile-name{font-size:12.5px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.app-profile-role{font-family:var(--mono); font-size:10.5px; color:#8595AE; text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.app-profile-card svg{flex-shrink:0; color:#8595AE;}
 
 .app-topbar-toggle{display:none;}
 .app-sidebar-backdrop{display:none;}
@@ -431,6 +471,7 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-topbar h1{font-family:var(--serif); font-weight:500; font-size:clamp(1.7rem,2.6vw,2.2rem); color:var(--ink); letter-spacing:-.01em; margin:6px 0 4px;}
 .app-topbar p{color:var(--text-soft); font-size:14.5px; max-width:560px;}
 .app-content{padding:32px var(--gutter) 80px;}
+
 /* content already inset by app-content's own padding — the marketing-page
    gutter classes would otherwise double up, so neutralize them in here */
 .app-content .filters,
@@ -561,3 +602,98 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   .app-topbar{padding-top:76px;}
   .dash-grid{grid-template-columns:1fr;}
 }
+
+/* ── Ajustes (perfil + preferencias) ── */
+.settings-grid{display:flex; flex-direction:column; gap:24px; max-width:640px;}
+.settings-card{background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:28px 30px;}
+.settings-card h2{font-family:var(--serif); font-weight:500; font-size:1.25rem; color:var(--ink); margin-bottom:4px;}
+.settings-card-desc{color:var(--text-soft); font-size:13.5px; margin-bottom:22px; line-height:1.5;}
+.settings-row{
+  display:flex; align-items:center; justify-content:space-between; gap:20px;
+  padding:16px 0; border-top:1px solid var(--line);
+}
+.settings-row:first-of-type{border-top:none; padding-top:0;}
+.settings-row-label{font-weight:600; font-size:14px; color:var(--ink);}
+.settings-row-desc{font-size:12.5px; color:var(--text-soft); margin-top:2px;}
+
+.theme-toggle{
+  position:relative; display:inline-flex; align-items:center;
+  width:46px; height:26px; border-radius:999px; flex-shrink:0;
+  background:var(--line-strong); border:none; cursor:pointer; padding:3px;
+  transition:background .15s;
+}
+.theme-toggle.on{background:var(--navy);}
+.theme-toggle-knob{
+  width:20px; height:20px; border-radius:50%; background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+  transform:translateX(0); transition:transform .15s;
+}
+.theme-toggle.on .theme-toggle-knob{transform:translateX(20px);}
+
+.settings-profile-head{display:flex; align-items:center; gap:16px; margin-bottom:22px;}
+.settings-profile-head .person-avatar{width:56px; height:56px; font-size:18px; margin-bottom:0;}
+
+/* ══════════════════════════════════════════════
+   Dark mode — scoped to the post-login app shell only
+   (.app-main, not .app-sidebar: the sidebar is already a
+   fixed dark panel in both themes, so it's left untouched).
+   Most components already read colors from CSS variables,
+   so redefining the tokens here is enough for them to flip
+   automatically. The handful of places that use --ink as a
+   fixed dark *background* (buttons, active chips) or that
+   always need dark text on a light gold accent are pinned
+   back explicitly below so they don't invert into unreadable
+   light-on-light / dark-on-dark combinations.
+   ══════════════════════════════════════════════ */
+.app-shell[data-theme="dark"] .app-main{
+  --paper:#12181F;
+  --paper-alt:#1B222C;
+  --ink:#F1EEE4;
+  --text:#E6E9EF;
+  --text-soft:#A9B1C0;
+  --text-faint:#7C8494;
+  --line:rgba(255,255,255,.12);
+  --line-strong:rgba(255,255,255,.24);
+  background:var(--paper);
+  min-height:100vh;
+}
+
+.app-shell[data-theme="dark"] .app-topbar-toggle{
+  background:#1B222C; color:#F1EEE4; border-color:rgba(255,255,255,.24);
+}
+
+.app-shell[data-theme="dark"] .app-main .person-card,
+.app-shell[data-theme="dark"] .app-main .resource-card,
+.app-shell[data-theme="dark"] .app-main .group-card,
+.app-shell[data-theme="dark"] .app-main .event-card,
+.app-shell[data-theme="dark"] .app-main .dash-widget,
+.app-shell[data-theme="dark"] .app-main .settings-card,
+.app-shell[data-theme="dark"] .app-main .messages-shell,
+.app-shell[data-theme="dark"] .app-main .search-input,
+.app-shell[data-theme="dark"] .app-main .form-field input,
+.app-shell[data-theme="dark"] .app-main .form-field select,
+.app-shell[data-theme="dark"] .app-main .form-field textarea{
+  background:var(--paper-alt);
+}
+
+/* Buttons/chips that use --ink as a solid dark background: pinned to navy
+   in dark mode instead of following the (now light) --ink token. */
+.app-shell[data-theme="dark"] .app-main .btn-primary{background:var(--navy);}
+.app-shell[data-theme="dark"] .app-main .btn-primary:hover{background:var(--navy-dark);}
+.app-shell[data-theme="dark"] .app-main .chip.active{background:var(--navy); border-color:var(--navy);}
+
+/* Text sitting on a fixed gold accent: always dark, regardless of theme. */
+.app-shell[data-theme="dark"] .app-main .btn-gold,
+.app-shell[data-theme="dark"] .app-main .need-badge,
+.app-shell[data-theme="dark"] .app-main .save-btn.saved{color:#101B26;}
+
+/* var(--navy) text (kickers, tags, hover states) reads fine on the light
+   --paper, but is too close in luminance to the dark --paper to stay
+   legible — lighten it in dark mode only. */
+.app-shell[data-theme="dark"] .app-main .kicker,
+.app-shell[data-theme="dark"] .app-main .cat-tags,
+.app-shell[data-theme="dark"] .app-main .event-cat{color:#8FB8E8;}
+.app-shell[data-theme="dark"] .app-main .kicker::before{color:var(--gold);}
+.app-shell[data-theme="dark"] .app-main .link-arrow:hover,
+.app-shell[data-theme="dark"] .app-main .btn-ghost:hover,
+.app-shell[data-theme="dark"] .app-main .save-btn:hover{color:#8FB8E8; border-color:#8FB8E8;}

@@ -1,9 +1,12 @@
 import React from 'react'
 import Sidebar from './Sidebar.jsx'
+import { useTheme } from '../context/ThemeContext.jsx'
 
 export default function DashboardLayout({ eyebrow, title, subtitle, children }) {
+  const { theme } = useTheme()
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme}>
       <Sidebar />
       <div className="app-main">
         <header className="app-topbar">

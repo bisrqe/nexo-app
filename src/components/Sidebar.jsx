@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import NodeMark from './NodeMark.jsx'
 import NavIcon from './NavIcon.jsx'
+import { CURRENT_USER, initials } from '../data/currentUser.js'
 
 const NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
@@ -47,15 +48,24 @@ export default function Sidebar() {
             <NavIcon name="bookmark" />
             <span>Guardado</span>
           </Link>
-          <Link to="/" onClick={() => setOpen(false)}>
-            <NavIcon name="globe" />
-            <span>Ver sitio público</span>
-          </Link>
           <Link to="/login" onClick={() => setOpen(false)}>
             <NavIcon name="logout" />
             <span>Cerrar sesión</span>
           </Link>
         </div>
+
+        <Link
+          to="/app/ajustes"
+          className={`app-profile-card ${isActive('/app/ajustes') ? 'active' : ''}`}
+          onClick={() => setOpen(false)}
+        >
+          <span className="app-profile-avatar">{initials(CURRENT_USER.name)}</span>
+          <span className="app-profile-info">
+            <span className="app-profile-name">{CURRENT_USER.name}</span>
+            <span className="app-profile-role">Perfil y ajustes</span>
+          </span>
+          <NavIcon name="settings" size={16} />
+        </Link>
       </aside>
 
       {open && <div className="app-sidebar-backdrop" onClick={() => setOpen(false)} />}

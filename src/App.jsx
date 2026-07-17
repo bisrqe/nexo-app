@@ -19,6 +19,7 @@ import Comunidad from './pages/Comunidad.jsx'
 import Eventos from './pages/Eventos.jsx'
 import Mensajes from './pages/Mensajes.jsx'
 import Saved from './pages/Saved.jsx'
+import Ajustes from './pages/Ajustes.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
 // behaviour: scroll to the hash target on route change, otherwise go top.
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/app/eventos" element={<Eventos />} />
         <Route path="/app/mensajes" element={<Mensajes />} />
         <Route path="/app/guardado" element={<Saved />} />
+        <Route path="/app/ajustes" element={<Ajustes />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

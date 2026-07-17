@@ -4,16 +4,19 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { SavedProvider } from './context/SavedContext.jsx'
 import { MessagesProvider } from './context/MessagesContext.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <SavedProvider>
-        <MessagesProvider>
-          <App />
-        </MessagesProvider>
-      </SavedProvider>
+      <ThemeProvider>
+        <SavedProvider>
+          <MessagesProvider>
+            <App />
+          </MessagesProvider>
+        </SavedProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 )
