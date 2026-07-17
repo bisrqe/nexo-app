@@ -9,7 +9,7 @@ export default function Iniciativas() {
       title="Todas las iniciativas"
       subtitle="El catálogo completo — filtra por ODS o por lo que cada una necesita ahora mismo."
     >
-      <InitiativeCatalog />
+      <InitiativeCatalog basePath="/app/iniciativas" />
     </DashboardLayout>
   )
 }

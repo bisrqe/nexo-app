@@ -357,6 +357,8 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 }
 .need-block{display:flex; flex-direction:column;}
 .need-big{font-family:var(--serif); font-weight:600; font-size:1.7rem; color:var(--ink);}
+.contact-block{display:flex; flex-direction:column; align-items:flex-start; gap:8px;}
+.contact-block .btn{font-family:var(--mono); font-size:13px;}
 
 @media (max-width:900px){
   .hero-flex{flex-direction:column; min-height:0;}
@@ -385,13 +387,17 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
    ══════════════════════════════════════════════ */
 .app-shell{display:flex; min-height:100vh; background:var(--paper); align-items:stretch;}
 
+/* Fixed — never scrolls or shifts with the page, regardless of how tall
+   the content next to it gets. .app-main carries a matching margin-left. */
 .app-sidebar{
   width:244px; flex-shrink:0; background:var(--ink); color:#fff;
-  display:flex; flex-direction:column; gap:28px;
-  padding:28px 18px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  display:flex; flex-direction:column; gap:24px;
+  padding:28px 18px;
+  position:fixed; top:0; left:0; height:100vh; overflow-y:auto;
 }
-.app-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em;}
-.app-nav{display:flex; flex-direction:column; gap:2px; flex:1;}
+.app-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em; flex-shrink:0;}
+/* centered vertically in the remaining height between the brand and the bottom links */
+.app-nav{display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-height:0;}
 .app-nav a{
   display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:6px;
   font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
@@ -411,14 +417,15 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-topbar-toggle{display:none;}
 .app-sidebar-backdrop{display:none;}
 
-.app-main{flex:1; min-width:0;}
+.app-main{flex:1; min-width:0; margin-left:244px;}
 .app-topbar{padding:36px var(--gutter) 0;}
 .app-topbar h1{font-family:var(--serif); font-weight:500; font-size:clamp(1.7rem,2.6vw,2.2rem); color:var(--ink); letter-spacing:-.01em; margin:6px 0 4px;}
 .app-topbar p{color:var(--text-soft); font-size:14.5px; max-width:560px;}
 .app-content{padding:32px var(--gutter) 80px;}
 /* content already inset by app-content's own padding — the marketing-page
    gutter classes would otherwise double up, so neutralize them in here */
-.app-content .filters{padding:0;}
+.app-content .filters,
+.app-content .in{padding:0;}
 .app-content .catalog-grid,
 .app-content .pillars,
 .app-content .vmv,
@@ -495,9 +502,43 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .dash-list-item span:last-child{color:var(--text-faint); font-family:var(--mono); font-size:11.5px; white-space:nowrap;}
 .dash-empty{font-size:13px; color:var(--text-faint);}
 
+/* ── Mensajería (demo local, un hilo por mesa de trabajo) ── */
+.messages-shell{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; min-height:520px; background:#fff;}
+.conv-list{width:260px; flex-shrink:0; border-right:1px solid var(--line); display:flex; flex-direction:column; overflow-y:auto;}
+.conv-item{
+  display:flex; flex-direction:column; gap:4px; padding:14px 18px;
+  border-bottom:1px solid var(--line); border-left:3px solid transparent;
+  text-align:left; background:transparent; width:100%;
+}
+.conv-item:hover{background:var(--paper-alt);}
+.conv-item.active{background:var(--paper-alt); border-left-color:var(--navy);}
+.conv-name{font-weight:700; font-size:13.5px; color:var(--ink);}
+.conv-meta{font-family:var(--mono); font-size:10.5px; color:var(--text-faint); text-transform:uppercase;}
+
+.chat-pane{flex:1; display:flex; flex-direction:column; min-width:0;}
+.chat-header{padding:16px 22px; border-bottom:1px solid var(--line);}
+.chat-header .group-name{font-size:16px; margin-bottom:2px;}
+.chat-messages{flex:1; overflow-y:auto; padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-height:420px;}
+.msg-bubble{max-width:72%; background:var(--paper-alt); border-radius:8px; padding:10px 14px; align-self:flex-start;}
+.msg-bubble.self{background:var(--navy); color:#fff; align-self:flex-end;}
+.msg-author{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-faint); margin-bottom:4px;}
+.msg-bubble.self .msg-author{color:#BFD3EE;}
+.msg-text{font-size:13.5px; line-height:1.5;}
+.msg-time{font-family:var(--mono); font-size:10px; color:var(--text-faint); margin-top:4px;}
+.msg-bubble.self .msg-time{color:#AEBBD0;}
+.chat-input-row{display:flex; gap:10px; padding:14px 22px; border-top:1px solid var(--line);}
+.chat-input-row .search-input{max-width:none;}
+.chat-empty{display:flex; align-items:center; justify-content:center; flex:1; color:var(--text-faint); font-size:13.5px; padding:40px;}
+
+@media (max-width:700px){
+  .messages-shell{flex-direction:column; min-height:0;}
+  .conv-list{width:100%; max-height:200px; border-right:none; border-bottom:1px solid var(--line);}
+}
+
 @media (max-width:860px){
+  .app-main{margin-left:0;}
   .app-sidebar{
-    position:fixed; z-index:60; left:0; top:0; width:260px;
+    z-index:60; width:260px;
     transform:translateX(-100%); transition:transform .2s ease;
   }
   .app-sidebar.open{transform:translateX(0); box-shadow:20px 0 44px rgba(0,0,0,.28);}

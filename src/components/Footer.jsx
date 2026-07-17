@@ -29,7 +29,7 @@ export default function Footer() {
           <h4>Cuenta</h4>
           <Link to="/login">Ingresar</Link>
           <Link to="/register">Registrarse</Link>
-          <Link to="/dashboard">Ver dashboard (demo)</Link>
+          <Link to="/app/dashboard">Ver dashboard (demo)</Link>
         </div>
       </div>
       <div className="foot-bottom">

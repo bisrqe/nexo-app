@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { PEOPLE } from '../data/people.js'
 
@@ -51,6 +52,9 @@ export default function Personas() {
                 ))}
               </div>
               <p className="person-looking"><b>Busca:</b> {p.looking}</p>
+              <Link to={`/app/personas/${p.slug}`} className="btn btn-ghost" style={{ justifyContent: 'center', marginTop: '4px' }}>
+                Ver perfil →
+              </Link>
             </div>
           ))}
         </div>

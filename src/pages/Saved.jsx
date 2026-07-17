@@ -25,7 +25,7 @@ export default function Saved() {
       {nothingSaved && (
         <div className="empty-state">
           <p>Todavía no guardaste ni te uniste a nada.</p>
-          <Link to="/iniciativas" className="link-arrow">Explorar iniciativas →</Link>
+          <Link to="/app/iniciativas" className="link-arrow">Explorar iniciativas →</Link>
         </div>
       )}
 
@@ -34,7 +34,7 @@ export default function Saved() {
           <h3>Iniciativas guardadas</h3>
           <div className="page-grid">
             {savedInitiatives.map((i) => (
-              <InitiativeCard key={i.id} initiative={i} />
+              <InitiativeCard key={i.id} initiative={i} basePath="/app/iniciativas" />
             ))}
           </div>
         </div>

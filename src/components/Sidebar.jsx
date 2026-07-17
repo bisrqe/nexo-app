@@ -4,12 +4,13 @@ import NodeMark from './NodeMark.jsx'
 import NavIcon from './NavIcon.jsx'
 
 const NAV = [
-  { to: '/dashboard', label: 'Inicio', icon: 'home' },
-  { to: '/iniciativas', label: 'Iniciativas', icon: 'compass' },
-  { to: '/personas', label: 'Personas', icon: 'users' },
-  { to: '/recursos', label: 'Recursos', icon: 'box' },
-  { to: '/comunidad', label: 'Comunidad', icon: 'chat' },
-  { to: '/eventos', label: 'Eventos', icon: 'calendar' },
+  { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
+  { to: '/app/iniciativas', label: 'Iniciativas', icon: 'compass' },
+  { to: '/app/personas', label: 'Personas', icon: 'users' },
+  { to: '/app/recursos', label: 'Recursos', icon: 'box' },
+  { to: '/app/comunidad', label: 'Comunidad', icon: 'chat' },
+  { to: '/app/mensajes', label: 'Mensajes', icon: 'mail' },
+  { to: '/app/eventos', label: 'Eventos', icon: 'calendar' },
 ]
 
 export default function Sidebar() {
@@ -25,7 +26,7 @@ export default function Sidebar() {
       </button>
 
       <aside className={`app-sidebar ${open ? 'open' : ''}`}>
-        <Link to="/dashboard" className="app-brand">
+        <Link to="/app/dashboard" className="app-brand">
           <NodeMark color="#FFD77F" />
           NEXO.
         </Link>
@@ -40,7 +41,7 @@ export default function Sidebar() {
         </nav>
 
         <div className="app-nav-bottom">
-          <Link to="/guardado" className={isActive('/guardado') ? 'active' : ''} onClick={() => setOpen(false)}>
+          <Link to="/app/guardado" className={isActive('/app/guardado') ? 'active' : ''} onClick={() => setOpen(false)}>
             <NavIcon name="bookmark" />
             Guardado
           </Link>

@@ -5,7 +5,7 @@ import { INITIATIVES, ODS_FILTERS, NEED_FILTERS } from '../data/initiatives.js'
 
 // Shared by the public landing preview and the /iniciativas page inside
 // the app — same filtering logic, so it can't drift between the two.
-export default function InitiativeCatalog({ initiatives = INITIATIVES }) {
+export default function InitiativeCatalog({ initiatives = INITIATIVES, basePath = '/iniciativas' }) {
   const [odsFilter, setOdsFilter] = useState('todos')
   const [needFilter, setNeedFilter] = useState(null)
 
@@ -44,13 +44,13 @@ export default function InitiativeCatalog({ initiatives = INITIATIVES }) {
       {filtered.length > 0 ? (
         <div className="catalog-grid">
           {filtered.map((i) => (
-            <InitiativeCard key={i.id} initiative={i} />
+            <InitiativeCard key={i.id} initiative={i} basePath={basePath} />
           ))}
         </div>
       ) : (
         <div className="empty-state">
           <p>Todavía no hay iniciativas registradas con ese filtro.</p>
-          <Link to="/iniciativas/nueva" className="link-arrow">Sé la primera en registrarla →</Link>
+          <Link to={`${basePath}/nueva`} className="link-arrow">Sé la primera en registrarla →</Link>
         </div>
       )}
     </>

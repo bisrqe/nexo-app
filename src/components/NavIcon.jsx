@@ -35,6 +35,12 @@ const PATHS = {
     </>
   ),
   bookmark: <path d="M6 3h12v18l-6-4-6 4Z" />,
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 6.5 8 6 8-6" />
+    </>
+  ),
   logout: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

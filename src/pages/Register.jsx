@@ -28,7 +28,7 @@ export default function Register() {
               <p><b>Esto es una demo.</b> El registro real llega cuando conectemos autenticación — por ahora no se guarda nada en ningún lado.</p>
               <div className="form-actions">
                 <button className="btn btn-ghost" onClick={() => setSubmitted(false)}>Volver al formulario</button>
-                <Link to="/dashboard" className="btn btn-primary">Entrar a mi dashboard →</Link>
+                <Link to="/app/dashboard" className="btn btn-primary">Entrar a mi dashboard →</Link>
               </div>
             </div>
           ) : (

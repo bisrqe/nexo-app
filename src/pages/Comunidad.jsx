@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { GROUPS } from '../data/groups.js'
 import { useSaved } from '../context/SavedContext.jsx'
@@ -32,6 +33,7 @@ export default function Comunidad() {
                 >
                   {joined ? '✓ Ya eres parte' : 'Unirme →'}
                 </button>
+                {joined && <Link to="/app/mensajes" className="link-arrow">Ir al chat →</Link>}
               </div>
             </div>
           )

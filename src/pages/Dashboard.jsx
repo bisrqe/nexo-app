@@ -60,12 +60,12 @@ export default function Dashboard() {
           {matches.length === 0 ? (
             <div className="empty-state">
               <p>{interests.length === 0 ? 'Elige al menos un ODS arriba para ver coincidencias.' : 'Nadie está trabajando todavía en esos ODS — sé quien abra el primero.'}</p>
-              <Link to="/iniciativas/nueva" className="link-arrow">Registrar iniciativa →</Link>
+              <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar iniciativa →</Link>
             </div>
           ) : (
             <div className="page-grid">
               {matches.map((i) => (
-                <InitiativeCard key={i.id} initiative={i} />
+                <InitiativeCard key={i.id} initiative={i} basePath="/app/iniciativas" />
               ))}
             </div>
           )}
@@ -75,7 +75,7 @@ export default function Dashboard() {
           <div className="dash-widget">
             <h3>Tus mesas de trabajo</h3>
             {myGroups.length === 0 ? (
-              <p className="dash-empty">Todavía no te unes a ninguna. <Link to="/comunidad" className="link-arrow">Ver comunidad →</Link></p>
+              <p className="dash-empty">Todavía no te unes a ninguna. <Link to="/app/comunidad" className="link-arrow">Ver comunidad →</Link></p>
             ) : (
               <div className="dash-list">
                 {myGroups.map((g) => (
@@ -99,7 +99,7 @@ export default function Dashboard() {
               ))}
             </div>
             <p style={{ marginTop: '14px' }}>
-              <Link to="/eventos" className="link-arrow">Ver todos →</Link>
+              <Link to="/app/eventos" className="link-arrow">Ver todos →</Link>
             </p>
           </div>
         </div>
