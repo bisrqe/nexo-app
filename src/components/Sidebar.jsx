@@ -35,7 +35,7 @@ export default function Sidebar() {
           {NAV.map(({ to, label, icon }) => (
             <Link key={to} to={to} className={isActive(to) ? 'active' : ''} onClick={() => setOpen(false)}>
               <NavIcon name={icon} />
-              {label}
+              <span>{label}</span>
             </Link>
           ))}
         </nav>
@@ -43,15 +43,15 @@ export default function Sidebar() {
         <div className="app-nav-bottom">
           <Link to="/app/guardado" className={isActive('/app/guardado') ? 'active' : ''} onClick={() => setOpen(false)}>
             <NavIcon name="bookmark" />
-            Guardado
+            <span>Guardado</span>
           </Link>
           <Link to="/" onClick={() => setOpen(false)}>
             <NavIcon name="globe" />
-            Ver sitio público
+            <span>Ver sitio público</span>
           </Link>
           <Link to="/login" onClick={() => setOpen(false)}>
             <NavIcon name="logout" />
-            Cerrar sesión
+            <span>Cerrar sesión</span>
           </Link>
         </div>
       </aside>
