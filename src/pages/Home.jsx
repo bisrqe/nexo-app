@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import Divider from '../components/Divider.jsx'
 import NetworkGraphic from '../components/NetworkGraphic.jsx'
-import InitiativeCard from '../components/InitiativeCard.jsx'
-import { INITIATIVES, ODS_FILTERS, NEED_FILTERS } from '../data/initiatives.js'
+import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
 
 const STATS = [
   { num: '047', label: 'Iniciativas activas' },
@@ -34,19 +33,6 @@ const VMV = [
 ]
 
 export default function Home() {
-  const [odsFilter, setOdsFilter] = useState('todos')
-  const [needFilter, setNeedFilter] = useState(null)
-
-  const filtered = useMemo(() => {
-    return INITIATIVES.filter((i) => {
-      const matchesOds = odsFilter === 'todos' || i.ods.includes(odsFilter)
-      const matchesNeed = !needFilter || i.needTag === needFilter
-      return matchesOds && matchesNeed
-    })
-  }, [odsFilter, needFilter])
-
-  const toggleNeed = (id) => setNeedFilter((prev) => (prev === id ? null : id))
-
   return (
     <>
       <Header />
@@ -136,45 +122,7 @@ export default function Home() {
           <p className="head-desc">Filtra por Objetivo de Desarrollo Sostenible, sector o lo que la iniciativa necesita ahora mismo.</p>
         </div>
 
-        <div className="filters">
-          <button
-            className={`chip ${odsFilter === 'todos' ? 'active' : ''}`}
-            onClick={() => setOdsFilter('todos')}
-          >
-            Todos
-          </button>
-          {ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
-            <button
-              key={f.id}
-              className={`chip ${odsFilter === f.id ? 'active' : ''}`}
-              onClick={() => setOdsFilter(odsFilter === f.id ? 'todos' : f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-          {NEED_FILTERS.map((f) => (
-            <button
-              key={f.id}
-              className={`chip ${needFilter === f.id ? 'active' : ''}`}
-              onClick={() => toggleNeed(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {filtered.length > 0 ? (
-          <div className="catalog-grid">
-            {filtered.map((i) => (
-              <InitiativeCard key={i.id} initiative={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <p>Todavía no hay iniciativas registradas con ese filtro.</p>
-            <Link to="/iniciativas/nueva" className="link-arrow">Sé la primera en registrarla →</Link>
-          </div>
-        )}
+        <InitiativeCatalog />
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────── */}

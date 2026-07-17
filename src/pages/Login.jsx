@@ -27,7 +27,10 @@ export default function Login() {
           {submitted ? (
             <div className="auth-note">
               <p><b>Esto es una demo.</b> El inicio de sesión real llega cuando conectemos autenticación — por ahora no hay ninguna base de datos detrás de este formulario.</p>
-              <button className="btn btn-ghost" onClick={() => setSubmitted(false)}>Volver al formulario</button>
+              <div className="form-actions">
+                <button className="btn btn-ghost" onClick={() => setSubmitted(false)}>Volver al formulario</button>
+                <Link to="/dashboard" className="btn btn-primary">Entrar a mi dashboard →</Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="auth-form">

@@ -5,6 +5,13 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import NewInitiative from './pages/NewInitiative.jsx'
 import InitiativeDetail from './pages/InitiativeDetail.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Iniciativas from './pages/Iniciativas.jsx'
+import Personas from './pages/Personas.jsx'
+import Recursos from './pages/Recursos.jsx'
+import Comunidad from './pages/Comunidad.jsx'
+import Eventos from './pages/Eventos.jsx'
+import Saved from './pages/Saved.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
@@ -37,6 +44,13 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/iniciativas/nueva" element={<NewInitiative />} />
         <Route path="/iniciativas/:slug" element={<InitiativeDetail />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/iniciativas" element={<Iniciativas />} />
+        <Route path="/personas" element={<Personas />} />
+        <Route path="/recursos" element={<Recursos />} />
+        <Route path="/comunidad" element={<Comunidad />} />
+        <Route path="/eventos" element={<Eventos />} />
+        <Route path="/guardado" element={<Saved />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
