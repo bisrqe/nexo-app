@@ -398,26 +398,29 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   overflow-y:auto; overflow-x:hidden;
 }
 .app-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em; flex-shrink:0;}
-/* centered vertically in the remaining height between the brand and the bottom links */
-.app-nav{display:flex; flex-direction:column; justify-content:center; gap:4px; flex:1; min-height:0; min-width:0; width:100%;}
-.app-nav a{
+
+/* .app-nav fills the space between brand and bottom links; the actual
+   list of links is a plain block (.app-nav-inner) centered inside it via
+   auto margins — kept deliberately separate from the links' own layout
+   so centering can never affect how each link lays out its icon+label. */
+.app-nav{display:flex; flex-direction:column; flex:1; min-height:0; min-width:0; width:100%; overflow:hidden;}
+.app-nav-inner{display:flex; flex-direction:column; gap:4px; width:100%; min-width:0; margin-top:auto; margin-bottom:auto;}
+
+.app-nav-inner a,
+.app-nav-bottom a{
   display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:6px;
   font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
-  color:#AEBBD0; width:100%; min-width:0; box-sizing:border-box;
+  color:#AEBBD0; width:100%; box-sizing:border-box;
 }
-.app-nav a svg{flex-shrink:0;}
-.app-nav a span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
-.app-nav a:hover{color:#fff; background:rgba(255,255,255,.06);}
-.app-nav a.active{color:var(--ink); background:var(--gold);}
-.app-nav-bottom{display:flex; flex-direction:column; gap:2px; padding-top:16px; border-top:1px solid rgba(255,255,255,.12); width:100%; min-width:0;}
-.app-nav-bottom a{
-  display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:6px;
-  font-family:var(--mono); font-size:11.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
-  color:#8595AE; width:100%; min-width:0; box-sizing:border-box;
-}
+.app-nav-inner a svg,
 .app-nav-bottom a svg{flex-shrink:0;}
-.app-nav-bottom a span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+.app-nav-inner a span,
+.app-nav-bottom a span{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;}
+.app-nav-inner a:hover,
 .app-nav-bottom a:hover{color:#fff; background:rgba(255,255,255,.06);}
+.app-nav-inner a.active{color:var(--ink); background:var(--gold);}
+.app-nav-bottom{display:flex; flex-direction:column; gap:2px; padding-top:16px; border-top:1px solid rgba(255,255,255,.12); width:100%; min-width:0;}
+.app-nav-bottom a{font-size:11.5px; padding:9px 12px; color:#8595AE;}
 .app-nav-bottom a.active{color:var(--gold);}
 
 .app-topbar-toggle{display:none;}

@@ -32,12 +32,14 @@ export default function Sidebar() {
         </Link>
 
         <nav className="app-nav">
-          {NAV.map(({ to, label, icon }) => (
-            <Link key={to} to={to} className={isActive(to) ? 'active' : ''} onClick={() => setOpen(false)}>
-              <NavIcon name={icon} />
-              <span>{label}</span>
-            </Link>
-          ))}
+          <div className="app-nav-inner">
+            {NAV.map(({ to, label, icon }) => (
+              <Link key={to} to={to} className={isActive(to) ? 'active' : ''} onClick={() => setOpen(false)}>
+                <NavIcon name={icon} />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
         </nav>
 
         <div className="app-nav-bottom">
