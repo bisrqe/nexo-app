@@ -118,7 +118,12 @@ nav{display:flex; align-items:center; justify-content:space-between; height:68px
 /* ── Hero (full-bleed) ────────────────────────── */
 .hero{padding-top:60px;}
 .hero-flex{display:flex; align-items:center; min-height:560px;}
-.hero-text{flex:0 0 46%; max-width:600px; padding:20px var(--gutter);}
+/* margin (not padding) carries the left gutter offset, so it stays
+   outside the box: at very wide viewports --gutter can exceed 300px,
+   and padding on both sides of a max-width:600px box was driving the
+   content area to 0/negative, collapsing the heading to one word per
+   line. The box's own width budget is now independent of --gutter. */
+.hero-text{flex:0 0 46%; flex-shrink:0; max-width:600px; margin-left:var(--gutter); padding:20px 32px 20px 0;}
 .hero-graphic{
   flex:1; min-width:0; align-self:stretch;
   display:flex; align-items:center; justify-content:center;
@@ -435,7 +440,14 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
    list of links is a plain block (.app-nav-inner) centered inside it via
    auto margins — kept deliberately separate from the links' own layout
    so centering can never affect how each link lays out its icon+label. */
-.app-nav{display:flex; flex-direction:column; flex:1; min-height:0; min-width:0; width:100%; overflow:hidden;}
+/* .app-nav is a real <nav> element, so it also matches the generic
+   `nav{...}` tag rule from the public header (padding:0 var(--gutter),
+   align-items:center, justify-content:space-between, height:68px) —
+   .app-nav never overrode those, so on wide screens --gutter grows past
+   300px and becomes .app-nav's left+right padding, collapsing its content
+   box to 0 and pushing every link off the edge of the sidebar (clipped
+   by overflow:hidden). Reset every property the tag rule sets. */
+.app-nav{display:flex; flex-direction:column; flex:1; min-height:0; min-width:0; width:100%; height:auto; padding:0; align-items:stretch; justify-content:flex-start; overflow:hidden;}
 .app-nav-inner{display:flex; flex-direction:column; gap:4px; width:100%; min-width:0; margin-top:auto; margin-bottom:auto;}
 
 .app-nav-inner a,
