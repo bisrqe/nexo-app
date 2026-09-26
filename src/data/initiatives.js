@@ -17,6 +17,18 @@ export const NEED_FILTERS = [
   { id: 'mentoria', label: 'Busca mentoría' },
 ]
 
+export const INDUSTRY_FILTERS = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'agroindustria', label: 'Agroindustria' },
+  { id: 'educacion', label: 'Educación' },
+  { id: 'salud', label: 'Salud' },
+  { id: 'agua', label: 'Agua y saneamiento' },
+  { id: 'energia', label: 'Energía' },
+  { id: 'manufactura', label: 'Manufactura y moda' },
+  { id: 'tecnologia', label: 'Tecnología' },
+  { id: 'gobierno', label: 'Gobierno y política pública' },
+]
+
 export const INITIATIVES = [
   {
     id: 14,
@@ -27,6 +39,8 @@ export const INITIATIVES = [
     location: 'Guadalajara, Jalisco',
     ods: ['ods2'],
     odsLabel: 'ODS 2 · Hambre cero',
+    industry: 'agroindustria',
+    industryLabel: 'Agroindustria',
     needTag: 'mentoria',
     need: 'Agrónomos',
     desc: 'Convierte espacios ociosos en primarias públicas en huertos que abastecen el comedor escolar.',
@@ -43,6 +57,8 @@ export const INITIATIVES = [
     location: 'Monterrey, Nuevo León',
     ods: ['ods4'],
     odsLabel: 'ODS 4 · Educación',
+    industry: 'educacion',
+    industryLabel: 'Educación',
     needTag: 'mentoria',
     need: 'Voluntarios',
     desc: 'Talleres para adultos mayores enfocados en trámites, salud y contacto familiar en línea.',
@@ -59,6 +75,8 @@ export const INITIATIVES = [
     location: 'Ciudad de México',
     ods: ['ods12'],
     odsLabel: 'ODS 12 · Consumo responsable',
+    industry: 'manufactura',
+    industryLabel: 'Manufactura y moda',
     needTag: 'fondeo',
     need: 'Inversión',
     desc: 'Plataforma para que marcas de moda documenten y reduzcan su huella de desperdicio.',
@@ -75,6 +93,8 @@ export const INITIATIVES = [
     location: 'Oaxaca de Juárez, Oaxaca',
     ods: ['ods6'],
     odsLabel: 'ODS 6 · Agua limpia',
+    industry: 'agua',
+    industryLabel: 'Agua y saneamiento',
     needTag: 'mentoria',
     need: 'Ingeniería civil',
     desc: 'Sistema de bajo costo para barrios sin acceso constante a agua potable.',

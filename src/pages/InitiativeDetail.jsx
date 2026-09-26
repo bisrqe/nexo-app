@@ -14,7 +14,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const { slug } = useParams()
   const initiative = getInitiativeBySlug(slug)
   const isApp = variant === 'app'
-  const backTo = isApp ? '/app/iniciativas' : '/#iniciativas'
+  const backTo = isApp ? '/app/iniciativas' : '/iniciativas'
 
   if (!initiative) {
     const notFound = (

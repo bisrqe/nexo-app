@@ -7,6 +7,10 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import NewInitiative from './pages/NewInitiative.jsx'
 import InitiativeDetail from './pages/InitiativeDetail.jsx'
+import IniciativasPublicas from './pages/IniciativasPublicas.jsx'
+import ComoFunciona from './pages/ComoFunciona.jsx'
+import Nosotros from './pages/Nosotros.jsx'
+import EventosPublicos from './pages/EventosPublicos.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 // Zona post-login — todo vive bajo /app/*, con el shell de Sidebar.
@@ -50,8 +54,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/iniciativas" element={<IniciativasPublicas />} />
         <Route path="/iniciativas/nueva" element={<NewInitiative variant="public" />} />
         <Route path="/iniciativas/:slug" element={<InitiativeDetail variant="public" />} />
+        <Route path="/como-funciona" element={<ComoFunciona />} />
+        <Route path="/nosotros" element={<Nosotros />} />
+        <Route path="/eventos" element={<EventosPublicos />} />
 
         {/* ── Zona post-login — separada de la landing ────────── */}
         <Route path="/app/dashboard" element={<Dashboard />} />

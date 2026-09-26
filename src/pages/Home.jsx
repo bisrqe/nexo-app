@@ -2,9 +2,10 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
-import Divider from '../components/Divider.jsx'
 import NetworkGraphic from '../components/NetworkGraphic.jsx'
-import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
+import InitiativeCard from '../components/InitiativeCard.jsx'
+import { INITIATIVES } from '../data/initiatives.js'
+import { EVENTS } from '../data/events.js'
 
 const STATS = [
   { num: '047', label: 'Iniciativas activas' },
@@ -13,24 +14,13 @@ const STATS = [
   { num: '03', label: 'Recursos nuevos esta semana' },
 ]
 
-const PILLARS = [
-  { num: '01', title: 'Iniciativas', text: 'Un catálogo real de proyectos en curso, filtrable por ODS, sector y etapa — no publicaciones sueltas que se pierden en un scroll.' },
-  { num: '02', title: 'Personas', text: 'Quién sabe hacer qué, y qué está dispuesto a compartir. Sin currículums de relleno.' },
-  { num: '03', title: 'Recursos', text: 'Mentoría, fondeo, herramientas y aliados institucionales que ya existen, pero nadie sabía dónde buscar.' },
-  { num: '04', title: 'Eventos', text: 'Los espacios donde el mapa se vuelve conversación real, cara a cara.' },
-]
+const FEATURED_INITIATIVES = INITIATIVES.slice(0, 3)
+const UPCOMING_EVENTS = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3)
 
-const STEPS = [
-  { num: '01', title: 'Explora el mapa', text: 'Filtra por ODS, sector o por lo que tú puedes aportar.' },
-  { num: '02', title: 'Conecta directo', text: 'Sin mensajes perdidos en un feed. Hablas con quien lidera la iniciativa.' },
-  { num: '03', title: 'Construyan juntos', text: 'Súmate a una iniciativa existente o registra la tuya para que te encuentren.' },
-]
-
-const VMV = [
-  { roman: 'I — VISIÓN', title: 'Un punto de encuentro nacional', text: 'Conectar al sector público, privado y académico para transformar ideas en iniciativas que impulsen la economía mexicana.' },
-  { roman: 'II — MISIÓN', title: 'De la idea a la acción conjunta', text: 'Permitir el intercambio de metodologías, procesos y recursos para co-crear soluciones compartidas ante retos comunes.' },
-  { roman: 'III — VALORES', title: 'Empatía, transparencia, propósito', text: 'Colaboración, sostenibilidad, diversidad e inclusión, e innovación con un fin social claro.' },
-]
+function formatEventDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 export default function Home() {
   return (
@@ -52,8 +42,8 @@ export default function Home() {
             <p className="lede">Nexo reúne lo que ya existe en tu ecosistema — iniciativas, personas y recursos — para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
 
             <div className="hero-actions">
-              <Link to="/#iniciativas" className="btn btn-gold btn-lg">Explorar iniciativas →</Link>
-              <Link to="/#como-funciona" className="btn btn-ghost btn-lg">Ver cómo funciona</Link>
+              <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar iniciativas →</Link>
+              <Link to="/como-funciona" className="btn btn-ghost btn-lg">Ver cómo funciona</Link>
             </div>
           </div>
 
@@ -80,93 +70,67 @@ export default function Home() {
         <div className="wrap">
           <span className="kicker on-dark">Por qué existe Nexo</span>
           <p className="pivot-quote">
-            Casi todos los problemas que Nexo quiere resolver, <b>alguien ya los está resolviendo</b> en algún lugar
+            Casi todos los problemas que <b>algún emprendimiento</b> quiere resolver, <b>alguien ya los está resolviendo</b> en algún lugar
             de México. El problema nunca fue la falta de ideas — fue que nadie las encontraba a tiempo para sumarse.
           </p>
           <p className="pivot-attr">Por eso dejamos de ser un feed y empezamos a ser un mapa</p>
         </div>
       </section>
 
-      <Divider />
-
-      {/* ── PILLARS ──────────────────────────────── */}
-      <section id="pilares">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Qué hay adentro</span>
-            <h2>Cuatro maneras de dejar de empezar de cero</h2>
-          </div>
-          <p className="head-desc">Nexo no es un espacio para publicar. Es el inventario de lo que tu comunidad ya construyó, ya sabe hacer, o ya está dispuesta a prestar.</p>
-        </div>
-
-        <div className="pillars">
-          {PILLARS.map((p) => (
-            <div className="pillar" key={p.num}>
-              <div className="num">{p.num}</div>
-              <div className="pillar-body">
-                <h3>{p.title}</h3>
-                <p>{p.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CATALOG ──────────────────────────────── */}
+      {/* ── FEATURED INITIATIVES ─────────────────── */}
       <section className="bg-alt" id="iniciativas">
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Explorar</span>
-            <h2>Iniciativas, no publicaciones</h2>
+            <h2>Iniciativas destacadas</h2>
           </div>
-          <p className="head-desc">Filtra por Objetivo de Desarrollo Sostenible, sector o lo que la iniciativa necesita ahora mismo.</p>
+          <p className="head-desc">Un vistazo del mapa — filtra por industria y ve el catálogo completo en la página de iniciativas.</p>
         </div>
 
-        <InitiativeCatalog />
-      </section>
-
-      {/* ── HOW IT WORKS ─────────────────────────── */}
-      <section id="como-funciona">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Cómo funciona</span>
-            <h2>Tres pasos, sin vueltas</h2>
-          </div>
-          <p className="head-desc">De explorar el mapa a construir algo juntos — sin intermediarios ni mensajes que se pierden.</p>
-        </div>
-        <div className="steps">
-          {STEPS.map((s) => (
-            <div className="step" key={s.num}>
-              <div className="step-num">{s.num}</div>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </div>
+        <div className="catalog-grid">
+          {FEATURED_INITIATIVES.map((i) => (
+            <InitiativeCard key={i.id} initiative={i} allowSave={false} tagMode="industry" />
           ))}
+        </div>
+
+        <div className="section-cta">
+          <Link to="/iniciativas" className="link-arrow">Ver todas las iniciativas →</Link>
         </div>
       </section>
 
-      {/* ── IDENTITY / VMV ───────────────────────── */}
-      <section className="bg-alt" id="identidad">
+      {/* ── UPCOMING EVENTS ──────────────────────── */}
+      <section>
         <div className="section-head">
           <div className="head-title">
-            <span className="kicker">Nuestra identidad</span>
-            <h2>Visión, misión y valores</h2>
+            <span className="kicker">Comunidad</span>
+            <h2>Próximos eventos</h2>
           </div>
-          <p className="head-desc">Lo que no cambia aunque la plataforma sí lo haga.</p>
+          <p className="head-desc">Los espacios donde el mapa se vuelve conversación real, cara a cara.</p>
         </div>
-        <div className="vmv">
-          {VMV.map((v) => (
-            <div className="vmv-card" key={v.roman}>
-              <div className="roman">{v.roman}</div>
-              <h3>{v.title}</h3>
-              <p>{v.text}</p>
+
+        <div className="page-grid in">
+          {UPCOMING_EVENTS.map((event) => (
+            <div className="event-card" key={event.id}>
+              <div className="event-stripe" />
+              <div className="event-body">
+                <div className="event-top">
+                  <span className="event-cat">{event.category}</span>
+                  <span className="event-date">{formatEventDate(event.date)}</span>
+                </div>
+                <div className="event-title">{event.title}</div>
+                <p className="event-desc">{event.description}</p>
+              </div>
             </div>
           ))}
+        </div>
+
+        <div className="section-cta">
+          <Link to="/eventos" className="link-arrow">Ver todos los eventos →</Link>
         </div>
       </section>
 
       {/* ── CTA ──────────────────────────────────── */}
-      <section className="full" id="eventos">
+      <section className="full">
         <div className="cta-band">
           <div>
             <h2>¿Tu iniciativa <i>todavía</i> no está en el mapa?</h2>

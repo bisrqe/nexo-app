@@ -193,6 +193,8 @@ section.full{padding:0;}
   margin-bottom:0;
 }
 .head-desc{flex:0 1 380px; color:var(--text-soft); font-size:16px; padding-bottom:5px;}
+.head-desc-below{margin-top:16px; color:var(--text-soft); font-size:16px; max-width:640px; line-height:1.5;}
+.section-cta{padding:0 var(--gutter); margin-top:28px;}
 .in{padding:0 var(--gutter);}
 
 /* ── Pillars — quadrant grid ──────────────────── */

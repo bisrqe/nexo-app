@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import NodeMark from './NodeMark.jsx'
+import logo from '../assets/iconotipo-azul.png'
 
 export default function Footer() {
   return (
@@ -8,28 +8,25 @@ export default function Footer() {
       <div className="foot-grid">
         <div className="foot-brand">
           <Link to="/" className="brand">
-            <NodeMark />
+            <img src={logo} alt="" width="24" height="24" />
             NEXO.
           </Link>
           <p>Este mapa cambia cada semana. Si tu iniciativa no está todavía, ese es el primer problema que puedes resolver aquí.</p>
         </div>
         <div className="foot-col">
           <h4>Plataforma</h4>
-          <Link to="/#iniciativas">Iniciativas</Link>
-          <Link to="/iniciativas/nueva">Nueva iniciativa</Link>
-          <Link to="/#identidad">Recursos</Link>
+          <Link to="/app/recursos">Recursos</Link>
+          <Link to="/iniciativas">Iniciativas</Link>
         </div>
         <div className="foot-col">
           <h4>Comunidad</h4>
-          <Link to="/#eventos">Eventos</Link>
-          <Link to="/#identidad">Nosotros</Link>
-          <a href="mailto:join.nexo.mx@gmail.com">Contacto</a>
+          <Link to="/nosotros">Nosotros</Link>
+          <Link to="/eventos">Eventos</Link>
         </div>
         <div className="foot-col">
           <h4>Cuenta</h4>
           <Link to="/login">Ingresar</Link>
           <Link to="/register">Registrarse</Link>
-          <Link to="/app/dashboard">Ver dashboard (demo)</Link>
         </div>
       </div>
       <div className="foot-bottom">
