@@ -35,32 +35,26 @@ const IMPACT_STATS = [
   { num: '8', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
 ]
 
-const ALLIES = [
-  'Distrito Tec · Tec de Monterrey',
-  'BID Lab / CONACYT',
-  'ONGs y fondos sociales',
-  'Cámaras empresariales',
-  'Gobiernos municipales',
-  'Plataformas de IA y pagos',
-]
-
 export default function Nosotros() {
   return (
     <>
       <Header />
 
-      {/* ── IDENTITY / VM ────────────────────────── */}
+      {/* ── QUIÉNES SOMOS ─────────────────────────── */}
       <section>
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Nuestra identidad</span>
-            <h2>Visión y misión</h2>
-            <div className="def-block" style={{ marginBottom: 0, marginTop: 18 }}>
-              <b>N.E.X.O.</b><span className="cls">sigla</span><br />
-              Núcleo de Emprendedores eXplorando Oportunidades.
-            </div>
+            <h2>¿Quiénes somos?</h2>
           </div>
-          <p className="head-desc">
+        </div>
+
+        <div className="in">
+          <div className="def-block">
+            <b>N.E.X.O.</b><span className="cls">sigla</span><br />
+            Núcleo de Emprendedores eXplorando Oportunidades.
+          </div>
+          <p className="head-desc-below" style={{ maxWidth: 'none' }}>
             Somos una comunidad multidisciplinaria de jóvenes líderes, investigadores y emprendedores comprometidos con
             construir un México más conectado, sostenible e inclusivo. Creemos que la colaboración intersectorial es la
             clave para pasar de las ideas a la acción — por eso trabajamos para reducir la fragmentación entre
@@ -68,20 +62,32 @@ export default function Nosotros() {
             innovación.
           </p>
         </div>
+      </section>
 
-        <div className="vmv vmv-two">
-          {VMV.map((v) => (
-            <div className="vmv-card" key={v.roman}>
-              <div className="roman">{v.roman}</div>
-              <h3>{v.title}</h3>
-              <p>{v.text}</p>
-            </div>
-          ))}
+      {/* ── VISIÓN Y MISIÓN ───────────────────────── */}
+      <section className="bg-alt">
+        <div className="section-head">
+          <div className="head-title">
+            <span className="kicker">Nuestra identidad</span>
+            <h2>Visión y misión</h2>
+          </div>
+        </div>
+
+        <div className="vmv-centered-wrap">
+          <div className="vmv vmv-two vmv-centered">
+            {VMV.map((v) => (
+              <div className="vmv-card" key={v.roman}>
+                <div className="roman">{v.roman}</div>
+                <h3>{v.title}</h3>
+                <p>{v.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── VALUES ────────────────────────────────── */}
-      <section className="bg-alt">
+      <section>
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Cómo trabajamos</span>
@@ -99,7 +105,7 @@ export default function Nosotros() {
       </section>
 
       {/* ── ODS ───────────────────────────────────── */}
-      <section>
+      <section className="bg-alt">
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Impacto</span>
@@ -117,7 +123,7 @@ export default function Nosotros() {
       </section>
 
       {/* ── WHY IT MATTERS / IMPACT ──────────────── */}
-      <section className="bg-alt">
+      <section>
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Por qué existimos</span>
@@ -137,23 +143,6 @@ export default function Nosotros() {
           <p className="impact-sources">
             Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
           </p>
-        </div>
-      </section>
-
-      {/* ── ALLIES ────────────────────────────────── */}
-      <section>
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Ecosistema</span>
-            <h2>Con quién construimos</h2>
-          </div>
-        </div>
-        <div className="in">
-          <div className="allies-row">
-            {ALLIES.map((a) => (
-              <span className="chip" key={a}>{a}</span>
-            ))}
-          </div>
         </div>
       </section>
 
