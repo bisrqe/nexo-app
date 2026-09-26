@@ -17,6 +17,17 @@ const VALUES = [
   { name: 'Innovación con propósito', text: 'Crear impacto positivo real.' },
 ]
 
+const ODS_LIST = [
+  { num: 4, title: 'Educación de calidad' },
+  { num: 5, title: 'Igualdad de género' },
+  { num: 8, title: 'Trabajo decente y crecimiento económico' },
+  { num: 9, title: 'Industria, innovación e infraestructura' },
+  { num: 10, title: 'Reducción de las desigualdades' },
+  { num: 11, title: 'Ciudades y comunidades sostenibles' },
+  { num: 16, title: 'Paz, justicia e instituciones sólidas' },
+  { num: 17, title: 'Alianzas para lograr los objetivos', featured: true },
+]
+
 const IMPACT_STATS = [
   { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
   { num: '75–80%', label: 'De las startups fracasan en sus primeros 3 años por falta de redes y apoyo' },
@@ -38,21 +49,18 @@ export default function Nosotros() {
     <>
       <Header />
 
-      {/* ── IDENTITY / VMV ───────────────────────── */}
+      {/* ── IDENTITY / VM ────────────────────────── */}
       <section>
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Nuestra identidad</span>
-            <h2>Visión, misión y valores</h2>
+            <h2>Visión y misión</h2>
+            <div className="def-block" style={{ marginBottom: 0, marginTop: 18 }}>
+              <b>N.E.X.O.</b><span className="cls">sigla</span><br />
+              Núcleo de Emprendedores eXplorando Oportunidades.
+            </div>
           </div>
-        </div>
-
-        <div className="in" style={{ marginBottom: 40 }}>
-          <div className="def-block">
-            <b>N.E.X.O.</b><span className="cls">sigla</span><br />
-            Núcleo de Emprendedores eXplorando Oportunidades.
-          </div>
-          <p className="head-desc-below" style={{ marginTop: 0 }}>
+          <p className="head-desc">
             Somos una comunidad multidisciplinaria de jóvenes líderes, investigadores y emprendedores comprometidos con
             construir un México más conectado, sostenible e inclusivo. Creemos que la colaboración intersectorial es la
             clave para pasar de las ideas a la acción — por eso trabajamos para reducir la fragmentación entre
@@ -61,7 +69,7 @@ export default function Nosotros() {
           </p>
         </div>
 
-        <div className="vmv">
+        <div className="vmv vmv-two">
           {VMV.map((v) => (
             <div className="vmv-card" key={v.roman}>
               <div className="roman">{v.roman}</div>
@@ -69,15 +77,42 @@ export default function Nosotros() {
               <p>{v.text}</p>
             </div>
           ))}
-          <div className="vmv-card">
-            <div className="roman">III — VALORES</div>
-            <h3>Empatía, transparencia, propósito</h3>
-            <ul className="value-list">
-              {VALUES.map((v) => (
-                <li key={v.name}><b>{v.name}</b> — {v.text}</li>
-              ))}
-            </ul>
+        </div>
+      </section>
+
+      {/* ── VALUES ────────────────────────────────── */}
+      <section className="bg-alt">
+        <div className="section-head">
+          <div className="head-title">
+            <span className="kicker">Cómo trabajamos</span>
+            <h2>Nuestros valores</h2>
           </div>
+        </div>
+        <div className="tile-grid">
+          {VALUES.map((v) => (
+            <div className="tile" key={v.name}>
+              <span className="tile-title">{v.name}</span>
+              <p className="tile-text">{v.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── ODS ───────────────────────────────────── */}
+      <section>
+        <div className="section-head">
+          <div className="head-title">
+            <span className="kicker">Impacto</span>
+            <h2>Los ODS que atacamos</h2>
+          </div>
+        </div>
+        <div className="tile-grid">
+          {ODS_LIST.map((o) => (
+            <div className={`tile ${o.featured ? 'featured' : ''}`} key={o.num}>
+              <span className="tile-eyebrow">ODS {o.num}{o.featured ? ' ★' : ''}</span>
+              <span className="tile-title">{o.title}</span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -90,20 +125,36 @@ export default function Nosotros() {
           </div>
         </div>
 
-        <div className="stat-strip">
-          {IMPACT_STATS.map((s) => (
-            <div className="stat-item" key={s.label}>
-              <span className="stat-num">{s.num}</span>
-              <span className="stat-label">{s.label}</span>
-            </div>
-          ))}
+        <div className="impact-card">
+          <div className="impact-grid">
+            {IMPACT_STATS.map((s) => (
+              <div className="stat-item" key={s.label}>
+                <span className="stat-num">{s.num}</span>
+                <span className="stat-label">{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="impact-sources">
+            Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
+          </p>
         </div>
+      </section>
 
-        <p className="head-desc-below in" style={{ marginTop: 20 }}>
-          Fuentes: INEGI 2021, OCDE 2024, GEM México 2022–23, Registro Federal de Organizaciones de la Sociedad Civil.
-          Alineamos nuestro trabajo a los ODS 4, 5, 8, 9, 10, 11, 16 y 17 — con especial énfasis en el ODS 17,
-          alianzas para lograr los objetivos.
-        </p>
+      {/* ── ALLIES ────────────────────────────────── */}
+      <section>
+        <div className="section-head">
+          <div className="head-title">
+            <span className="kicker">Ecosistema</span>
+            <h2>Con quién construimos</h2>
+          </div>
+        </div>
+        <div className="in">
+          <div className="allies-row">
+            {ALLIES.map((a) => (
+              <span className="chip" key={a}>{a}</span>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── CONTACT ──────────────────────────────── */}
