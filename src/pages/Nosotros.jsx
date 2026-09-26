@@ -2,19 +2,19 @@ import React from 'react'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 
-const VMV = [
-  { roman: 'I — VISIÓN', title: 'Un punto de encuentro nacional', text: 'Conectar al sector público, privado y académico para transformar ideas en iniciativas que impulsen la economía mexicana.' },
-  { roman: 'II — MISIÓN', title: 'De la idea a la acción conjunta', text: 'Permitir el intercambio de metodologías, procesos y recursos para co-crear soluciones compartidas ante retos comunes.' },
+const MISSION_VISION = [
+  { key: 'mision', label: 'Misión', text: 'Permitir el intercambio de metodologías, procesos y recursos para co-crear soluciones compartidas ante retos comunes.' },
+  { key: 'vision', label: 'Visión', text: 'Conectar al sector público, privado y académico para transformar ideas en iniciativas que impulsen la economía mexicana.' },
 ]
 
 const VALUES = [
-  { name: 'Empatía', text: 'Escuchar y comprender a otros.' },
-  { name: 'Compromiso', text: 'Cumplir con propósito y acción.' },
-  { name: 'Colaboración', text: 'Construir juntos soluciones efectivas.' },
-  { name: 'Transparencia', text: 'Actuar con claridad y confianza.' },
-  { name: 'Sostenibilidad', text: 'Equilibrar progreso y entorno.' },
-  { name: 'Diversidad e inclusión', text: 'Valorar todas las perspectivas.' },
-  { name: 'Innovación con propósito', text: 'Crear impacto positivo real.' },
+  'Empatía',
+  'Compromiso',
+  'Colaboración',
+  'Transparencia',
+  'Sostenibilidad',
+  'Diversidad e inclusión',
+  'Innovación con propósito',
 ]
 
 const ODS_LIST = [
@@ -73,32 +73,29 @@ export default function Nosotros() {
           </div>
         </div>
 
-        <div className="vmv-centered-wrap">
-          <div className="vmv vmv-two vmv-centered">
-            {VMV.map((v) => (
-              <div className="vmv-card" key={v.roman}>
-                <div className="roman">{v.roman}</div>
-                <h3>{v.title}</h3>
-                <p>{v.text}</p>
-              </div>
-            ))}
-          </div>
+        <div className="mv-grid">
+          {MISSION_VISION.map((v) => (
+            <div key={v.key}>
+              <h3 className={`mv-heading mv-${v.key}`}>{v.label}</h3>
+              <p className="mv-text">{v.text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── VALUES ────────────────────────────────── */}
-      <section>
+      <section className="section-dark">
         <div className="section-head">
           <div className="head-title">
-            <span className="kicker">Cómo trabajamos</span>
+            <span className="kicker on-dark">Cómo trabajamos</span>
             <h2>Nuestros valores</h2>
           </div>
         </div>
-        <div className="tile-grid">
-          {VALUES.map((v) => (
-            <div className="tile" key={v.name}>
-              <span className="tile-title">{v.name}</span>
-              <p className="tile-text">{v.text}</p>
+        <div className="value-grid">
+          {VALUES.map((name, i) => (
+            <div className="value-tile" key={name}>
+              <span className="value-num">{String(i + 1).padStart(2, '0')}</span>
+              <span className="value-name">{name}</span>
             </div>
           ))}
         </div>

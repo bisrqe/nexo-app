@@ -212,11 +212,6 @@ section.full{padding:0;}
 .impact-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:40px 56px; padding:40px 44px 36px;}
 .impact-sources{border-top:1px solid rgba(255,255,255,.14); padding:16px 44px; font-family:var(--mono); font-size:11px; color:#7E8FAE; line-height:1.6;}
 
-.vmv-two{grid-template-columns:repeat(2,1fr);}
-.vmv-centered-wrap{display:flex; justify-content:center; padding:0 var(--gutter);}
-.vmv-centered{max-width:760px; width:100%; margin:0; gap:48px;}
-.vmv-centered .vmv-card{text-align:center;}
-
 @media (max-width:700px){
   .impact-grid{grid-template-columns:1fr; padding:28px 24px 24px;}
   .impact-sources{padding:14px 24px;}
@@ -291,14 +286,26 @@ section.full{padding:0;}
 .step h3{font-size:16.5px; font-weight:700; margin-bottom:9px; color:var(--ink);}
 .step p{font-size:14px; color:var(--text-soft);}
 
-/* ── VMV — manifesto ──────────────────────────── */
-.vmv{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin:0 var(--gutter);}
-.vmv-card{padding:32px 30px; background:var(--paper); border-top:3px solid var(--navy);}
-.vmv-card:nth-child(2){border-top-color:var(--indigo);}
-.vmv-card:nth-child(3){border-top-color:var(--gold-ink);}
-.vmv-card .roman{font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--gold-ink); letter-spacing:.08em; margin-bottom:16px;}
-.vmv-card h3{font-family:var(--serif); font-style:italic; font-weight:500; font-size:20px; margin-bottom:11px; color:var(--ink);}
-.vmv-card p{font-size:14px; color:var(--text-soft);}
+/* ── Misión / Visión — two plain columns ──────── */
+.mv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:48px 60px; margin:0 var(--gutter);}
+.mv-heading{font-family:var(--serif); font-style:italic; font-weight:500; font-size:1.9rem; margin-bottom:14px; letter-spacing:-.01em;}
+.mv-mision{color:var(--navy);}
+.mv-vision{color:var(--gold-ink);}
+.mv-text{color:var(--text-soft); font-size:15.5px; line-height:1.6; max-width:480px;}
+
+/* ── Dark section modifier (Valores, etc.) ────── */
+.section-dark{background:var(--ink);}
+.section-dark .section-head h2{color:#fff;}
+
+/* ── Values — numbered dark tiles ─────────────── */
+.value-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px; margin:0 var(--gutter);}
+.value-tile{border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:30px 26px; background:rgba(255,255,255,.02);}
+.value-num{display:block; font-family:var(--serif); font-weight:600; font-size:2.1rem; color:rgba(255,215,127,.32); line-height:1; margin-bottom:20px;}
+.value-name{font-size:16px; font-weight:700; color:#fff;}
+
+@media (max-width:700px){
+  .mv-grid{grid-template-columns:1fr; gap:32px;}
+}
 
 /* ── CTA band (full-bleed) ─────────────────────── */
 .cta-band{
@@ -431,7 +438,6 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   .catalog-grid{grid-template-columns:1fr; margin:0 var(--gutter);}
   .steps{grid-template-columns:1fr; gap:28px;}
   .steps::before{display:none;}
-  .vmv{grid-template-columns:1fr; margin:0 var(--gutter);}
   .foot-grid{grid-template-columns:1fr 1fr;}
   .stat-strip{gap:24px; padding:28px 24px;}
   .section-head{align-items:flex-start;}
@@ -569,7 +575,6 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-content .in{padding:0;}
 .app-content .catalog-grid,
 .app-content .pillars,
-.app-content .vmv,
 .app-content .empty-state{margin:0;}
 
 /* ── generic grid + cards for Personas / Recursos / Comunidad ── */
