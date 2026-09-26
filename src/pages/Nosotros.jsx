@@ -106,23 +106,6 @@ export default function Nosotros() {
         </p>
       </section>
 
-      {/* ── ALLIES ────────────────────────────────── */}
-      <section>
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Ecosistema</span>
-            <h2>Con quién construimos</h2>
-          </div>
-        </div>
-        <div className="in">
-          <div className="allies-row">
-            {ALLIES.map((a) => (
-              <span className="chip" key={a}>{a}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── CONTACT ──────────────────────────────── */}
       <section className="bg-alt">
         <div className="in contact-section">
@@ -134,7 +117,7 @@ export default function Nosotros() {
           <a href="mailto:join.nexo.mx@gmail.com" className="btn btn-gold btn-lg">join.nexo.mx@gmail.com</a>
 
           <p className="founders-credit">
-            Un proyecto fundado por Bismarck Sebastian Animas Roque · Regina Ramos Gil — lanzamiento previsto agosto 2026.
+            Un proyecto fundado por Bismarck Sebastian Animas Roque · Regina Ramos Gil.
             <br />Conectemos el ecosistema. Transformemos México.
           </p>
         </div>
