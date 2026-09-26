@@ -84,7 +84,6 @@ export default function Home() {
             <span className="kicker">Explorar</span>
             <h2>Iniciativas destacadas</h2>
           </div>
-          <p className="head-desc">Un vistazo del mapa — filtra por industria y ve el catálogo completo en la página de iniciativas.</p>
         </div>
 
         <div className="catalog-grid">
@@ -105,7 +104,6 @@ export default function Home() {
             <span className="kicker">Comunidad</span>
             <h2>Próximos eventos</h2>
           </div>
-          <p className="head-desc">Los espacios donde el mapa se vuelve conversación real, cara a cara.</p>
         </div>
 
         <div className="page-grid in">
