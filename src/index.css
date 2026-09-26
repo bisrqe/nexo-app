@@ -215,7 +215,7 @@ section.full{padding:0;}
 .search-input:focus{outline:2px solid var(--navy); outline-offset:1px;}
 
 .catalog-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin:0 var(--gutter);}
-.catalog-grid-single{grid-template-columns:minmax(280px,380px); margin:0; border:1px solid var(--line);}
+.catalog-grid-single{grid-template-columns:minmax(min(280px, 100%),380px); margin:0; border:1px solid var(--line);}
 .cat-card{background:var(--paper); padding:28px 26px; display:flex; flex-direction:column; gap:13px; position:relative;}
 .cat-card::before{content:""; position:absolute; top:0; left:26px; right:26px; height:3px; background:var(--gold);}
 .cat-top-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -331,6 +331,31 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .form-field textarea{resize:vertical; font-family:var(--sans);}
 .form-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
 
+.input-prefix{
+  display:flex; align-items:center;
+  border:1.5px solid var(--line-strong); border-radius:4px; background:#fff;
+  padding-left:13px;
+}
+.input-prefix span{font-family:var(--sans); font-size:14.5px; color:var(--text-faint); flex-shrink:0;}
+.input-prefix input{border:none !important; padding-left:2px !important; background:transparent !important; flex:1; width:auto !important;}
+.input-prefix:focus-within{outline:2px solid var(--navy); outline-offset:1px;}
+
+/* Datos que se capturan al registrarse y ya no se pueden editar. */
+.locked-fields{display:flex; flex-wrap:wrap; gap:24px; margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid var(--line);}
+.locked-field{display:flex; flex-direction:column; gap:3px;}
+.locked-field-label{font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--text-faint);}
+.locked-field-value{font-size:14px; font-weight:600; color:var(--ink);}
+
+.checkbox-group{display:flex; flex-wrap:wrap; gap:8px;}
+.checkbox-pill{
+  display:flex; align-items:center; gap:7px;
+  font-family:var(--mono); font-size:11.5px; font-weight:600;
+  padding:8px 12px; border-radius:4px; border:1.5px solid var(--line-strong);
+  color:var(--text-soft); cursor:pointer; user-select:none;
+}
+.checkbox-pill input{width:auto; margin:0; accent-color:var(--navy);}
+.checkbox-pill.checked{border-color:var(--navy); color:var(--navy); background:var(--paper-alt);}
+
 .auth-note{
   border:1px solid var(--line); border-radius:6px; background:var(--paper-alt);
   padding:18px 20px; margin-top:20px;
@@ -396,9 +421,15 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   padding:28px 18px; box-sizing:border-box;
   position:fixed; top:0; left:0; height:100vh;
   overflow-y:auto; overflow-x:hidden;
-  align-items: center;
 }
-.app-brand{display:flex; align-items:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em; flex-shrink:0;}
+/* Centering is done with justify-content on each full-width row below,
+   not with align-items on this container. align-items:center here would
+   let each row's width collapse to its content instead of the intended
+   100%, which is what was clipping/hiding the nav labels: a row that
+   shrinks to icon-only size, then gets centered as a small block, looks
+   exactly like "only the icon is painted". Rows now always span the
+   full sidebar width and center their own icon+label inside that. */
+.app-brand{display:flex; align-items:center; justify-content:center; gap:9px; font-weight:700; font-size:17px; color:#fff; letter-spacing:.02em; flex-shrink:0; width:100%; box-sizing:border-box;}
 
 /* .app-nav fills the space between brand and bottom links; the actual
    list of links is a plain block (.app-nav-inner) centered inside it via
@@ -409,21 +440,24 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 
 .app-nav-inner a,
 .app-nav-bottom a{
-  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center; gap:11px; padding:10px 12px; border-radius:6px;
   font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
   color:#AEBBD0; width:100%; box-sizing:border-box;
 }
 .app-nav-inner a svg,
 .app-nav-bottom a svg{flex-shrink:0; color:inherit;}
 
-/* min-width:0 lets the label shrink inside the flex row instead of
-   forcing the row to overflow; color:inherit is set explicitly (rather
-   than left to default inheritance) so nothing — hover, active, a stray
-   rule added later — can recolor the icon without also recoloring the
-   label, or vice versa. That mismatch was what made the active tab look
-   like only the icon got highlighted while the text vanished. */
+/* Deliberately NOT using flex-shrink + min-width:0 + overflow:hidden here.
+   That combination is the classic way a flex label silently shrinks to
+   0px and disappears the moment anything upstream (a parent's width,
+   align-items, a re-added centering rule, ...) is slightly off — which is
+   exactly what happened before. The sidebar is plenty wide for these
+   labels, so the label is simply left at its natural size: it can never
+   be invisible, worst case it would overflow (it won't). color:inherit
+   is explicit so hover/active can't recolor the icon without the label,
+   or vice versa. */
 .app-nav-inner a span,
-.app-nav-bottom a span{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; color:inherit;}
+.app-nav-bottom a span{white-space:nowrap; text-align:left; color:inherit;}
 
 .app-nav-inner a:hover,
 .app-nav-bottom a:hover{color:#fff; background:rgba(255,255,255,.06);}
@@ -467,10 +501,28 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-sidebar-backdrop{display:none;}
 
 .app-main{flex:1; min-width:0; margin-left:244px;}
-.app-topbar{padding:36px var(--gutter) 0;}
+/* .app-topbar and .app-content deliberately do NOT use var(--gutter):
+   that variable is `max(28px, calc((100vw - 1360px)/2 + 28px))`, sized
+   for the PUBLIC pages where there's no sidebar and the content really
+   does span the full viewport. Inside .app-main the available width is
+   already `100vw - 244px`, so reusing a formula based on raw 100vw made
+   the "centered" content actually off-center by roughly half the
+   sidebar's width, and — because that error changes with viewport width
+   — content visibly drifted as the window was resized/maximized instead
+   of staying put. A plain max-width + auto margins fixes both: it's
+   stable at any window size and never depends on 100vw. */
+.app-topbar,
+.app-content{max-width:1180px; margin:0 auto; box-sizing:border-box; width:100%;}
+/* .app-topbar is a <header> tag, so without this it silently inherits
+   the hardcoded background:rgba(251,249,244,.92) from the generic
+   `header{}` rule above (meant for the public marketing nav) — that
+   value ignores theme entirely, which is why the topbar stayed light in
+   dark mode. Giving it its own background (which does read the --paper
+   token, and therefore flips with the theme) overrides that. */
+.app-topbar{padding:36px 32px 0; background:var(--paper);}
 .app-topbar h1{font-family:var(--serif); font-weight:500; font-size:clamp(1.7rem,2.6vw,2.2rem); color:var(--ink); letter-spacing:-.01em; margin:6px 0 4px;}
 .app-topbar p{color:var(--text-soft); font-size:14.5px; max-width:560px;}
-.app-content{padding:32px var(--gutter) 80px;}
+.app-content{padding:32px 32px 80px;}
 
 /* content already inset by app-content's own padding — the marketing-page
    gutter classes would otherwise double up, so neutralize them in here */
@@ -482,7 +534,12 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-content .empty-state{margin:0;}
 
 /* ── generic grid + cards for Personas / Recursos / Comunidad ── */
-.page-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:18px;}
+/* minmax(min(280px,100%),1fr) instead of minmax(280px,1fr): on a phone
+   narrower than 280px + the grid's own padding, a plain 280px minimum
+   forces the track wider than the viewport and everything gets
+   squeezed/overflows sideways. Capping the minimum at 100% lets the
+   single remaining column shrink to fit instead. */
+.page-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap:18px;}
 
 .person-card{background:#fff; border:1px solid var(--line); border-radius:8px; padding:22px; display:flex; flex-direction:column; gap:10px;}
 .person-avatar{
@@ -601,6 +658,18 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   .app-sidebar-backdrop{display:block; position:fixed; inset:0; background:rgba(16,27,38,.42); z-index:55;}
   .app-topbar{padding-top:76px;}
   .dash-grid{grid-template-columns:1fr;}
+  /* Narrower side padding once the sidebar stops taking up permanent
+     width — 32px a side is comfortable on desktop but eats a real chunk
+     of a ~360px phone screen. */
+  .app-topbar,
+  .app-content{padding-left:20px; padding-right:20px;}
+  .settings-row{flex-wrap:wrap;}
+}
+
+@media (max-width:480px){
+  .app-topbar,
+  .app-content{padding-left:16px; padding-right:16px;}
+  .stat-strip{padding:22px 18px; gap:18px;}
 }
 
 /* ── Ajustes (perfil + preferencias) ── */
@@ -630,8 +699,15 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 }
 .theme-toggle.on .theme-toggle-knob{transform:translateX(20px);}
 
-.settings-profile-head{display:flex; align-items:center; gap:16px; margin-bottom:22px;}
-.settings-profile-head .person-avatar{width:56px; height:56px; font-size:18px; margin-bottom:0;}
+.settings-saved-note{font-family:var(--mono); font-size:12px; font-weight:600; color:#3f8557; align-self:center;}
+
+/* Foto de perfil: subir/quitar, con el mismo círculo con iniciales de
+   .person-avatar como respaldo cuando no hay foto. */
+.avatar-upload{display:flex; align-items:center; gap:16px; margin-bottom:22px;}
+.avatar-upload-actions{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.avatar-upload-actions .btn{cursor:pointer;}
+.person-avatar img,
+.app-profile-avatar img{width:100%; height:100%; border-radius:50%; object-fit:cover;}
 
 /* ══════════════════════════════════════════════
    Dark mode — scoped to the post-login app shell only
@@ -672,7 +748,8 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-shell[data-theme="dark"] .app-main .search-input,
 .app-shell[data-theme="dark"] .app-main .form-field input,
 .app-shell[data-theme="dark"] .app-main .form-field select,
-.app-shell[data-theme="dark"] .app-main .form-field textarea{
+.app-shell[data-theme="dark"] .app-main .form-field textarea,
+.app-shell[data-theme="dark"] .app-main .input-prefix{
   background:var(--paper-alt);
 }
 

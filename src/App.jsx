@@ -20,6 +20,7 @@ import Eventos from './pages/Eventos.jsx'
 import Mensajes from './pages/Mensajes.jsx'
 import Saved from './pages/Saved.jsx'
 import Ajustes from './pages/Ajustes.jsx'
+import MyInitiative from './pages/MyInitiative.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
 // behaviour: scroll to the hash target on route change, otherwise go top.
@@ -55,6 +56,7 @@ export default function App() {
         {/* ── Zona post-login — separada de la landing ────────── */}
         <Route path="/app/dashboard" element={<Dashboard />} />
         <Route path="/app/iniciativas" element={<Iniciativas />} />
+        <Route path="/app/mi-iniciativa" element={<MyInitiative />} />
         <Route path="/app/iniciativas/nueva" element={<NewInitiative variant="app" />} />
         <Route path="/app/iniciativas/:slug" element={<InitiativeDetail variant="app" />} />
         <Route path="/app/personas" element={<Personas />} />

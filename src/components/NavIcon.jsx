@@ -54,6 +54,12 @@ const PATHS = {
       <path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z" />
     </>
   ),
+  flag: (
+    <>
+      <path d="M5 21V4" />
+      <path d="M5 4h13l-3 4.5L18 13H5" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />

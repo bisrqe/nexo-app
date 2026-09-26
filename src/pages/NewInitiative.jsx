@@ -1,18 +1,23 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { ODS_FILTERS } from '../data/initiatives.js'
+import { useUserContent } from '../context/UserContentContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 
 const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
-const EMPTY = { title: '', org: '', location: '', ods: 'ods4', stage: 'Idea', desc: '', need: '' }
+const EMPTY = { title: '', org: '', location: '', ods: 'ods4', stage: 'Idea', desc: '', need: '', contact: '' }
 
 // Igual que InitiativeDetail: vive en /iniciativas/nueva (público) y en
 // /app/iniciativas/nueva (dashboard) — mismo formulario, distinto chrome.
 export default function NewInitiative({ variant = 'public' }) {
   const isApp = variant === 'app'
+  const { setMyInitiative } = useUserContent()
+  const { profile } = useProfile()
+  const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [preview, setPreview] = useState(null)
 
@@ -21,16 +26,24 @@ export default function NewInitiative({ variant = 'public' }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const odsLabel = ODS_FILTERS.find((f) => f.id === form.ods)?.label ?? ''
-    setPreview({
+    const built = {
       id: Math.floor(Math.random() * 900) + 100,
       slug: 'vista-previa',
       stage: form.stage,
       title: form.title || 'Tu iniciativa',
       org: form.org || 'Tu organización',
+      location: form.location || 'Por definir',
       desc: form.desc || 'Aquí aparecerá la descripción que escribas.',
+      longDesc: form.desc || 'Aquí aparecerá la descripción que escribas.',
       odsLabel,
       need: form.need || 'Por definir',
-    })
+      contact: form.contact || profile.email,
+    }
+    setPreview(built)
+
+    // Dentro del dashboard, esto sí "queda guardado" como la iniciativa
+    // propia de quien usa el sitio — se puede ver luego en /app/mi-iniciativa.
+    if (isApp) setMyInitiative(built)
   }
 
   const content = (
@@ -51,11 +64,12 @@ export default function NewInitiative({ variant = 'public' }) {
           <div className="auth-note">
             <p>
               {isApp
-                ? 'Cuando conectemos base de datos, esto quedará publicado de verdad en el catálogo.'
+                ? 'Ya quedó guardada como tu iniciativa — puedes verla y editarla desde "Mi iniciativa" en el sidebar. Cuando conectemos base de datos, esto quedará publicado de verdad en el catálogo.'
                 : 'Para publicarla de verdad vas a necesitar una cuenta — eso llega en la siguiente etapa del proyecto.'}
             </p>
             <div className="form-actions">
               <button className="btn btn-ghost" onClick={() => setPreview(null)}>Editar</button>
+              {isApp && <button className="btn btn-primary" onClick={() => navigate('/app/mi-iniciativa')}>Ver mi iniciativa →</button>}
               {!isApp && <Link to="/register" className="btn btn-primary">Crear cuenta</Link>}
             </div>
           </div>

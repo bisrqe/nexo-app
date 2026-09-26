@@ -5,17 +5,23 @@ import App from './App.jsx'
 import { SavedProvider } from './context/SavedContext.jsx'
 import { MessagesProvider } from './context/MessagesContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { UserContentProvider } from './context/UserContentContext.jsx'
+import { ProfileProvider } from './context/ProfileContext.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <SavedProvider>
-          <MessagesProvider>
-            <App />
-          </MessagesProvider>
-        </SavedProvider>
+        <ProfileProvider>
+          <SavedProvider>
+            <MessagesProvider>
+              <UserContentProvider>
+                <App />
+              </UserContentProvider>
+            </MessagesProvider>
+          </SavedProvider>
+        </ProfileProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>

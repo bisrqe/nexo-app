@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import NodeMark from './NodeMark.jsx'
 import NavIcon from './NavIcon.jsx'
-import { CURRENT_USER, initials } from '../data/currentUser.js'
+import { initials } from '../data/currentUser.js'
+import { useProfile } from '../context/ProfileContext.jsx'
 
 const NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
   { to: '/app/iniciativas', label: 'Iniciativas', icon: 'compass' },
+  { to: '/app/mi-iniciativa', label: 'Mi iniciativa', icon: 'flag' },
   { to: '/app/personas', label: 'Personas', icon: 'users' },
   { to: '/app/recursos', label: 'Recursos', icon: 'box' },
   { to: '/app/comunidad', label: 'Comunidad', icon: 'chat' },
@@ -16,6 +18,7 @@ const NAV = [
 
 export default function Sidebar() {
   const location = useLocation()
+  const { profile } = useProfile()
   const [open, setOpen] = useState(false)
 
   const isActive = (to) => location.pathname === to
@@ -59,9 +62,11 @@ export default function Sidebar() {
           className={`app-profile-card ${isActive('/app/ajustes') ? 'active' : ''}`}
           onClick={() => setOpen(false)}
         >
-          <span className="app-profile-avatar">{initials(CURRENT_USER.name)}</span>
+          <span className="app-profile-avatar">
+            {profile.photo ? <img src={profile.photo} alt="" /> : initials(profile.name)}
+          </span>
           <span className="app-profile-info">
-            <span className="app-profile-name">{CURRENT_USER.name}</span>
+            <span className="app-profile-name">{profile.name}</span>
             <span className="app-profile-role">Perfil y ajustes</span>
           </span>
           <NavIcon name="settings" size={16} />
