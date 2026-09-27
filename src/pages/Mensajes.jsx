@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { GROUPS } from '../data/groups.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useMessages } from '../context/MessagesContext.jsx'
+import { useGroups } from '../context/GroupsContext.jsx'
+import { useGroupMessages } from '../hooks/useGroupMessages.js'
 import { useDirectMessages } from '../context/DirectMessagesContext.jsx'
 import { useConversationMessages } from '../hooks/useConversationMessages.js'
 import { initials } from '../data/currentUser.js'
@@ -17,18 +17,25 @@ function formatTime(ts) {
 export default function Mensajes() {
   const { profile } = useProfile()
   const { user } = useAuth()
-  const { getMessages, sendMessage } = useMessages()
+  const { groups, sendGroupMessage } = useGroups()
   const { conversations, getOrCreateConversation, sendDirectMessage } = useDirectMessages()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const myGroups = GROUPS.filter((g) => profile.joinedGroups?.includes(g.id))
+  const myGroups = groups.filter((g) => profile.joinedGroups?.includes(g.docId))
   const [activeKey, setActiveKey] = useState(null)
   const [draft, setDraft] = useState('')
 
-  // Si llegamos desde "Enviar mensaje" en un perfil (/app/mensajes?to=uid),
-  // se crea (o reusa) la conversación con esa persona y se abre de una vez.
+  // Se puede llegar aquí desde "Enviar mensaje" en un perfil (?to=uid) o
+  // desde "Ir al chat" en una mesa de trabajo (?group=id) — en ambos casos
+  // se abre esa conversación de una vez.
   useEffect(() => {
     const to = searchParams.get('to')
+    const groupId = searchParams.get('group')
+    if (groupId) {
+      setActiveKey(`group:${groupId}`)
+      setSearchParams({}, { replace: true })
+      return
+    }
     if (!to) return
     let cancelled = false
     getOrCreateConversation(to).then((convId) => {
@@ -41,16 +48,16 @@ export default function Mensajes() {
 
   useEffect(() => {
     if (activeKey) return
-    if (myGroups.length > 0) setActiveKey(`group:${myGroups[0].id}`)
+    if (myGroups.length > 0) setActiveKey(`group:${myGroups[0].docId}`)
     else if (conversations.length > 0) setActiveKey(`dm:${conversations[0].docId}`)
   }, [activeKey, myGroups.length, conversations.length])
 
-  const activeGroup = activeKey?.startsWith('group:') ? myGroups.find((g) => `group:${g.id}` === activeKey) : null
+  const activeGroup = activeKey?.startsWith('group:') ? myGroups.find((g) => `group:${g.docId}` === activeKey) : null
   const activeConv = activeKey?.startsWith('dm:') ? conversations.find((c) => `dm:${c.docId}` === activeKey) : null
   const otherUid = activeConv ? activeConv.participants.find((p) => p !== user.uid) : null
   const otherName = activeConv ? activeConv.participantNames?.[otherUid] || 'Cuenta eliminada' : ''
 
-  const groupMessages = activeGroup ? getMessages(activeGroup.id) : []
+  const groupMessages = useGroupMessages(activeGroup?.docId)
   const directMessages = useConversationMessages(activeConv?.docId)
 
   const nothingToShow = myGroups.length === 0 && conversations.length === 0
@@ -58,7 +65,7 @@ export default function Mensajes() {
   const handleSend = (e) => {
     e.preventDefault()
     if (!draft.trim()) return
-    if (activeGroup) sendMessage(activeGroup.id, draft)
+    if (activeGroup) sendGroupMessage(activeGroup.docId, draft)
     else if (activeConv) sendDirectMessage(activeConv.docId, draft)
     else return
     setDraft('')
@@ -84,7 +91,7 @@ export default function Mensajes() {
     <DashboardLayout
       eyebrow="Comunidad"
       title="Mensajes"
-      subtitle="Las mesas de trabajo son demo local; los mensajes directos con otras personas sí quedan guardados."
+      subtitle="Directos y mesas de trabajo — todo queda guardado de verdad."
     >
       <div className="messages-shell">
         <div className="conv-list">
@@ -113,12 +120,12 @@ export default function Mensajes() {
               <div className="conv-list-heading">Mesas de trabajo</div>
               {myGroups.map((g) => (
                 <button
-                  key={g.id}
-                  className={`conv-item ${activeKey === `group:${g.id}` ? 'active' : ''}`}
-                  onClick={() => setActiveKey(`group:${g.id}`)}
+                  key={g.docId}
+                  className={`conv-item ${activeKey === `group:${g.docId}` ? 'active' : ''}`}
+                  onClick={() => setActiveKey(`group:${g.docId}`)}
                 >
                   <span className="conv-name">{g.name}</span>
-                  <span className="conv-meta">{g.odsLabel} — {g.members} miembros</span>
+                  <span className="conv-meta conv-preview">{g.lastMessage || g.industryLabel}</span>
                 </button>
               ))}
             </>
@@ -130,18 +137,18 @@ export default function Mensajes() {
             <>
               <div className="chat-header">
                 <div className="group-name person-name">{activeGroup.name}</div>
-                <span className="conv-meta">{activeGroup.odsLabel}</span>
+                <span className="conv-meta">{activeGroup.industryLabel}</span>
               </div>
 
               <div className="chat-messages">
                 {groupMessages.length === 0 ? (
-                  <p className="dash-empty">Todavía no hay mensajes en este grupo. Sé quien abra la conversación.</p>
+                  <p className="dash-empty">Todavía no hay mensajes en esta mesa. Sé quien abra la conversación.</p>
                 ) : (
                   groupMessages.map((m) => (
-                    <div className={`msg-bubble ${m.self ? 'self' : ''}`} key={m.id}>
-                      <div className="msg-author">{m.author}</div>
+                    <div className={`msg-bubble ${m.senderUid === user.uid ? 'self' : ''}`} key={m.id}>
+                      <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : m.senderName}</div>
                       <div className="msg-text">{m.text}</div>
-                      <div className="msg-time">{m.time}</div>
+                      <div className="msg-time">{formatTime(m.createdAt)}</div>
                     </div>
                   ))
                 )}

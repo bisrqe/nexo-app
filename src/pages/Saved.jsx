@@ -5,16 +5,17 @@ import { useSaved } from '../context/SavedContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { getInitiativeBySlug } from '../data/initiatives.js'
 import { EVENTS } from '../data/events.js'
-import { GROUPS } from '../data/groups.js'
+import { useGroups } from '../context/GroupsContext.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 
 export default function Saved() {
   const { saved } = useSaved()
   const { profile } = useProfile()
+  const { groups } = useGroups()
 
   const savedInitiatives = saved.initiatives.map(getInitiativeBySlug).filter(Boolean)
   const savedEvents = EVENTS.filter((e) => saved.events.includes(e.id))
-  const savedGroups = GROUPS.filter((g) => profile.joinedGroups?.includes(g.id))
+  const savedGroups = groups.filter((g) => profile.joinedGroups?.includes(g.docId))
 
   const nothingSaved = savedInitiatives.length === 0 && savedEvents.length === 0 && savedGroups.length === 0
 
@@ -27,13 +28,13 @@ export default function Saved() {
       {nothingSaved && (
         <div className="empty-state">
           <p>Todavía no guardaste ni te uniste a nada.</p>
-          <Link to="/app/iniciativas" className="link-arrow">Explorar iniciativas →</Link>
+          <Link to="/app/iniciativas" className="link-arrow">Explorar emprendimientos →</Link>
         </div>
       )}
 
       {savedInitiatives.length > 0 && (
         <div className="resource-group">
-          <h3>Iniciativas guardadas</h3>
+          <h3>Emprendimientos guardados</h3>
           <div className="page-grid">
             {savedInitiatives.map((i) => (
               <InitiativeCard key={i.id} initiative={i} basePath="/app/iniciativas" />
@@ -62,9 +63,9 @@ export default function Saved() {
           <h3>Mesas de trabajo a las que te uniste</h3>
           <div className="page-grid">
             {savedGroups.map((g) => (
-              <div className="resource-card" key={g.id}>
+              <div className="resource-card" key={g.docId}>
                 <div className="resource-title">{g.name}</div>
-                <div className="resource-org">{g.odsLabel}</div>
+                <div className="resource-org">{g.industryLabel}</div>
                 <p className="resource-desc">{g.desc}</p>
               </div>
             ))}

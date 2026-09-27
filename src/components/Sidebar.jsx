@@ -8,8 +8,8 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 const NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
-  { to: '/app/iniciativas', label: 'Iniciativas', icon: 'compass' },
-  { to: '/app/mi-iniciativa', label: 'Mi iniciativa', icon: 'flag' },
+  { to: '/app/iniciativas', label: 'Emprendimientos', icon: 'compass' },
+  { to: '/app/mi-iniciativa', label: 'Mi emprendimiento', icon: 'flag' },
   { to: '/app/personas', label: 'Personas', icon: 'users' },
   { to: '/app/recursos', label: 'Recursos', icon: 'box' },
   { to: '/app/comunidad', label: 'Comunidad', icon: 'chat' },

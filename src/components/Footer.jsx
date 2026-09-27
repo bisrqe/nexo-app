@@ -11,12 +11,12 @@ export default function Footer() {
             <img src={logo} alt="" width="24" height="24" />
             NEXO.
           </Link>
-          <p>Este mapa cambia cada semana. Si tu iniciativa no está todavía, ese es el primer problema que puedes resolver aquí.</p>
+          <p>Este mapa cambia cada semana. Si tu emprendimiento no está todavía, ese es el primer problema que puedes resolver aquí.</p>
         </div>
         <div className="foot-col">
           <h4>Plataforma</h4>
           <Link to="/app/recursos">Recursos</Link>
-          <Link to="/iniciativas">Iniciativas</Link>
+          <Link to="/iniciativas">Emprendimientos</Link>
         </div>
         <div className="foot-col">
           <h4>Comunidad</h4>

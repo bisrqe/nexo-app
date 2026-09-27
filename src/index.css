@@ -356,9 +356,17 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
   color:var(--text-soft);
 }
+.resource-add-row{display:flex; gap:10px; flex-wrap:wrap;}
+.resource-add-row input{flex:1; min-width:140px;}
+.resource-link-list{list-style:none; display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+.resource-link-list li{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  font-size:13.5px; padding:8px 12px; border:1px solid var(--line); border-radius:4px; background:#fff;
+}
 .form-field input,
 .form-field select,
-.form-field textarea{
+.form-field textarea,
+.resource-add-row input{
   font-family:var(--sans); font-size:14.5px; color:var(--text);
   border:1.5px solid var(--line-strong); border-radius:4px;
   padding:11px 13px; background:#fff;
@@ -692,7 +700,7 @@ a.resource-tag:hover{background:var(--gold);}
 .msg-bubble.self{background:var(--navy); color:#fff; align-self:flex-end;}
 .msg-author{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-faint); margin-bottom:4px;}
 .msg-bubble.self .msg-author{color:#BFD3EE;}
-.msg-text{font-size:13.5px; line-height:1.5;}
+.msg-text{font-size:13.5px; line-height:1.5; color:var(--text);}
 .msg-time{font-family:var(--mono); font-size:10px; color:var(--text-faint); margin-top:4px;}
 .msg-bubble.self .msg-time{color:#AEBBD0;}
 .chat-input-row{display:flex; gap:10px; padding:14px 22px; border-top:1px solid var(--line);}
@@ -813,7 +821,9 @@ a.resource-tag:hover{background:var(--gold);}
 .app-shell[data-theme="dark"] .app-main .form-field textarea,
 .app-shell[data-theme="dark"] .app-main .input-prefix,
 .app-shell[data-theme="dark"] .app-main .kpi-card,
-.app-shell[data-theme="dark"] .app-main .kpi-stat-card{
+.app-shell[data-theme="dark"] .app-main .kpi-stat-card,
+.app-shell[data-theme="dark"] .app-main .resource-add-row input,
+.app-shell[data-theme="dark"] .app-main .resource-link-list li{
   background:var(--paper-alt);
 }
 

@@ -10,11 +10,7 @@ export const ODS_FILTERS = [
   { id: 'ods8', label: 'ODS 8 · Trabajo digno' },
   { id: 'ods12', label: 'ODS 12 · Consumo responsable' },
   { id: 'ods13', label: 'ODS 13 · Clima' },
-]
-
-export const NEED_FILTERS = [
-  { id: 'fondeo', label: 'Busca fondeo' },
-  { id: 'mentoria', label: 'Busca mentoría' },
+  { id: 'otra', label: 'Otra' },
 ]
 
 export const INDUSTRY_FILTERS = [
@@ -27,6 +23,7 @@ export const INDUSTRY_FILTERS = [
   { id: 'manufactura', label: 'Manufactura y moda' },
   { id: 'tecnologia', label: 'Tecnología' },
   { id: 'gobierno', label: 'Gobierno y política pública' },
+  { id: 'otra', label: 'Otra' },
 ]
 
 export const INITIATIVES = [

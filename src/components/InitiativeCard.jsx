@@ -18,7 +18,7 @@ export default function InitiativeCard({ initiative, basePath = '/iniciativas', 
           <button
             className={`save-btn ${saved ? 'saved' : ''}`}
             onClick={() => toggleInitiative(slug)}
-            aria-label={saved ? 'Quitar de guardados' : 'Guardar iniciativa'}
+            aria-label={saved ? 'Quitar de guardados' : 'Guardar emprendimiento'}
             title={saved ? 'Quitar de guardados' : 'Guardar'}
           >
             <NavIcon name="bookmark" size={15} />

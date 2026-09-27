@@ -1,14 +1,7 @@
-// Puntúa qué tan afín es una iniciativa/evento/mesa de trabajo al perfil
+// Puntúa qué tan afín es un emprendimiento/evento/mesa de trabajo al perfil
 // de quien está viendo el dashboard. Un solo criterio reutilizable en vez
 // de comparar ODS a mano en cada página — así "recomendado para ti"
 // significa lo mismo en todas partes.
-//
-// needTag -> profileType que más lo resuelve, para el bono de "lo que
-// busca esta iniciativa coincide con lo que tú ofreces".
-const NEED_TO_PROFILE = {
-  fondeo: 'inversionista',
-  mentoria: 'mentor',
-}
 
 // Los ODS de eventos/grupos vienen como "ODS 4" (mock viejo) en vez de
 // "ods4" (id usado en perfiles/iniciativas) — se normaliza antes de comparar.
@@ -38,8 +31,6 @@ export function scoreForProfile(item, profile) {
     else if (item.industrySecondary === profile.industry) score += 1
   }
   if (item.industrySecondary && profile.industry === item.industrySecondary) score += 1
-
-  if (item.needTag && NEED_TO_PROFILE[item.needTag] === profile.profileType) score += 2
 
   if (item.city && profile.city && item.city === profile.city) score += 2
 

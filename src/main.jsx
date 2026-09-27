@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { SavedProvider } from './context/SavedContext.jsx'
-import { MessagesProvider } from './context/MessagesContext.jsx'
 import { DirectMessagesProvider } from './context/DirectMessagesContext.jsx'
+import { GroupsProvider } from './context/GroupsContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { UserContentProvider } from './context/UserContentContext.jsx'
 import { ProfileProvider } from './context/ProfileContext.jsx'
@@ -18,13 +18,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ProfileProvider>
             <SavedProvider>
-              <MessagesProvider>
-                <DirectMessagesProvider>
+              <DirectMessagesProvider>
+                <GroupsProvider>
                   <UserContentProvider>
                     <App />
                   </UserContentProvider>
-                </DirectMessagesProvider>
-              </MessagesProvider>
+                </GroupsProvider>
+              </DirectMessagesProvider>
             </SavedProvider>
           </ProfileProvider>
         </AuthProvider>

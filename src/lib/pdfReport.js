@@ -65,7 +65,7 @@ export async function downloadKpiPdf(kpis) {
     startY: y,
     body: [
       ['Miembros registrados', t.profiles],
-      ['Iniciativas activas', t.initiatives],
+      ['Emprendimientos activos', t.initiatives],
       ['Eventos creados', t.events],
       ['Total de "Me interesa"', t.interest],
       ['Conexiones realizadas (interesado ↔ dueño)', t.connections],
@@ -73,27 +73,29 @@ export async function downloadKpiPdf(kpis) {
       ['Ciudades con actividad', t.cities],
       ['Chats directos iniciados', t.directConversations],
       ['Mensajes directos enviados', t.directMessages],
+      ['Mesas de trabajo creadas', t.groups],
+      ['Mensajes en mesas de trabajo', t.groupMessages],
     ],
   })
 
   y = addSectionTable(doc, autoTable, {
-    title: 'Iniciativas por industria',
-    head: ['Industria', 'Iniciativas'],
+    title: 'Emprendimientos por industria',
+    head: ['Industria', 'Emprendimientos'],
     startY: y,
     body: kpis.initiativesByIndustry.map((d) => [d.label, d.value]),
   })
 
   y = addSectionTable(doc, autoTable, {
-    title: 'Iniciativas por ODS',
-    head: ['ODS', 'Iniciativas'],
+    title: 'Emprendimientos por ODS',
+    head: ['ODS', 'Emprendimientos'],
     startY: y,
     body: kpis.initiativesByOds.map((d) => [d.label, d.value]),
   })
 
   if (y > 240) { doc.addPage(); y = 20 }
   y = addSectionTable(doc, autoTable, {
-    title: 'Iniciativas por etapa',
-    head: ['Etapa', 'Iniciativas'],
+    title: 'Emprendimientos por etapa',
+    head: ['Etapa', 'Emprendimientos'],
     startY: y,
     body: kpis.initiativesByStage.map((d) => [d.label, d.value]),
   })
@@ -122,28 +124,19 @@ export async function downloadKpiPdf(kpis) {
 
   if (y > 220) { doc.addPage(); y = 20 }
   y = addSectionTable(doc, autoTable, {
-    title: 'Iniciativas con más interés',
-    head: ['Iniciativa', 'Organización', 'Industria', 'Interesados'],
+    title: 'Emprendimientos con más interés',
+    head: ['Emprendimiento', 'Organización', 'Industria', 'Interesados'],
     startY: y,
     body: kpis.topInitiatives.map((d) => [d.title, d.org, d.industryLabel, d.interest]),
   })
 
   y = addSectionTable(doc, autoTable, {
     title: 'Actividad por usuario (top 10)',
-    head: ['Nombre', 'Ciudad', 'Iniciativas creadas', 'Interés mostrado', 'Eventos creados', 'Mesas unidas'],
+    head: ['Nombre', 'Ciudad', 'Emprendimientos creados', 'Interés mostrado', 'Eventos creados', 'Mesas unidas'],
     startY: y,
     note: 'Actividad registrada en la plataforma — no incluye tiempo de sesión, que todavía no se rastrea.',
     body: kpis.activityRanking.map((d) => [d.name, d.city || '—', d.initiatives, d.interestShown, d.events, d.groupsJoined]),
   })
-
-  doc.setFont('helvetica', 'italic')
-  doc.setFontSize(8.5)
-  doc.setTextColor(138, 144, 155)
-  doc.text(
-    'Nota: los chats de mesas de trabajo todavía son una demo local por navegador — solo los mensajes directos entre personas se contabilizan aquí.',
-    14,
-    Math.min(y, 285)
-  )
 
   doc.save(`nexo-kpis-${kpis.generatedAt.toISOString().slice(0, 10)}.pdf`)
 }

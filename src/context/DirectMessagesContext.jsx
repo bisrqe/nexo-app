@@ -7,8 +7,7 @@ import { db } from '../lib/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 import { useProfile } from './ProfileContext.jsx'
 
-// Chat directo real entre dos cuentas — a diferencia de las mesas de
-// trabajo (MessagesContext, demo local), esto vive en Firestore bajo
+// Chat directo real entre dos cuentas — vive en Firestore bajo
 // conversations/{uidA_uidB}/messages, así que ambas personas ven la
 // misma conversación. El id de la conversación es siempre los dos uids
 // ordenados y unidos con "_", para que nunca existan dos conversaciones

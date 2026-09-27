@@ -56,7 +56,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
   if (loading) {
     const loadingBody = <p className="auth-sub">Cargando…</p>
     return isApp ? (
-      <DashboardLayout eyebrow="Iniciativas" title="Dossier">{loadingBody}</DashboardLayout>
+      <DashboardLayout eyebrow="Emprendimientos" title="Dossier">{loadingBody}</DashboardLayout>
     ) : (
       <>
         <Header />
@@ -70,14 +70,14 @@ export default function InitiativeDetail({ variant = 'public' }) {
     const notFound = (
       <div className="auth-card">
         <span className="kicker">No encontrada</span>
-        <h1 className="auth-title">Esa iniciativa no está en el mapa</h1>
+        <h1 className="auth-title">Ese emprendimiento no está en el mapa</h1>
         <p className="auth-sub">Puede que se haya movido de nombre, o que todavía no exista.</p>
         <Link to={backTo} className="btn btn-primary">Volver al catálogo</Link>
       </div>
     )
     if (isApp) {
       return (
-        <DashboardLayout eyebrow="Iniciativas" title="No encontrada">
+        <DashboardLayout eyebrow="Emprendimientos" title="No encontrada">
           {notFound}
         </DashboardLayout>
       )
@@ -93,7 +93,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   const {
     id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
-    industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact, contact,
+    industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact, contact, resources,
   } = initiative
 
   const body = (
@@ -118,6 +118,20 @@ export default function InitiativeDetail({ variant = 'public' }) {
         {impact && <p><b>Impacto: </b>{impact}</p>}
         {collaborators?.length > 0 && <p><b>Colaboradores: </b>{collaborators.join(', ')}</p>}
         {link && <p><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>}
+        {resources?.length > 0 && (
+          <div className="resource-group" style={{ marginTop: 20 }}>
+            <span className="kicker">Documentos y ligas</span>
+            <ul className="resource-link-list" style={{ marginTop: 10 }}>
+              {resources.map((r, i) => (
+                <li key={`${r.url}-${i}`}>
+                  <a href={r.url} target="_blank" rel="noreferrer">
+                    {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="detail-side">
@@ -141,7 +155,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   if (isApp) {
     return (
-      <DashboardLayout eyebrow="Iniciativas" title="Dossier">
+      <DashboardLayout eyebrow="Emprendimientos" title="Dossier">
         {body}
       </DashboardLayout>
     )

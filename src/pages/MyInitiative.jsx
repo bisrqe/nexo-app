@@ -60,10 +60,10 @@ export default function MyInitiative() {
 
   if (!myInitiative) {
     return (
-      <DashboardLayout eyebrow="Iniciativas" title="Mi iniciativa" subtitle="Todavía no has registrado una iniciativa propia.">
+      <DashboardLayout eyebrow="Emprendimientos" title="Mi emprendimiento" subtitle="Todavía no has registrado un emprendimiento propio.">
         <div className="empty-state">
-          <p>Cuando registres una iniciativa, va a vivir aquí — con su propio dossier y contacto.</p>
-          <Link to="/app/iniciativas/nueva" className="btn btn-primary" style={{ marginTop: 16 }}>Registrar mi iniciativa →</Link>
+          <p>Cuando registres un emprendimiento, va a vivir aquí — con su propio dossier y contacto.</p>
+          <Link to="/app/iniciativas/nueva" className="btn btn-primary" style={{ marginTop: 16 }}>Registrar mi emprendimiento →</Link>
         </div>
       </DashboardLayout>
     )
@@ -71,13 +71,13 @@ export default function MyInitiative() {
 
   const {
     stage, title, org, city, link, odsLabel, odsSecondaryLabel, industryLabel, industrySecondaryLabel,
-    need, desc, longDesc, collaborators, impact, foundedDate, contact, interestedBy,
+    need, desc, longDesc, collaborators, impact, foundedDate, contact, interestedBy, resources,
   } = myInitiative
 
   const running = timeRunning(foundedDate)
 
   return (
-    <DashboardLayout eyebrow="Iniciativas" title="Mi iniciativa">
+    <DashboardLayout eyebrow="Emprendimientos" title="Mi emprendimiento">
       <div className="in">
         <div className="detail-head">
           <div className="cat-id">{stage?.toUpperCase()}</div>
@@ -104,6 +104,20 @@ export default function MyInitiative() {
           {link && (
             <p><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>
           )}
+          {resources?.length > 0 && (
+            <div className="resource-group" style={{ marginTop: 20 }}>
+              <span className="kicker">Documentos y ligas</span>
+              <ul className="resource-link-list" style={{ marginTop: 10 }}>
+                {resources.map((r, i) => (
+                  <li key={`${r.url}-${i}`}>
+                    <a href={r.url} target="_blank" rel="noreferrer">
+                      {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="detail-side">
@@ -121,7 +135,7 @@ export default function MyInitiative() {
         <InterestedPeople uids={interestedBy} />
 
         <div className="form-actions" style={{ marginTop: 32 }}>
-          <Link to="/app/iniciativas/nueva" className="btn btn-ghost">Editar mi iniciativa</Link>
+          <Link to="/app/iniciativas/nueva" className="btn btn-ghost">Editar mi emprendimiento</Link>
         </div>
       </div>
     </DashboardLayout>

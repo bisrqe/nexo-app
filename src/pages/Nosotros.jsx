@@ -4,7 +4,7 @@ import Footer from '../components/Footer.jsx'
 
 const MISSION_VISION = [
   { key: 'mision', label: 'Misión', text: 'Permitir el intercambio de metodologías, procesos y recursos para co-crear soluciones compartidas ante retos comunes.' },
-  { key: 'vision', label: 'Visión', text: 'Conectar al sector público, privado y académico para transformar ideas en iniciativas que impulsen la economía mexicana.' },
+  { key: 'vision', label: 'Visión', text: 'Conectar al sector público, privado y académico para transformar ideas en emprendimientos que impulsen la economía mexicana.' },
 ]
 
 const VALUES = [
@@ -58,7 +58,7 @@ export default function Nosotros() {
             Somos una comunidad multidisciplinaria de jóvenes líderes, investigadores y emprendedores comprometidos con
             construir un México más conectado, sostenible e inclusivo. Creemos que la colaboración intersectorial es la
             clave para pasar de las ideas a la acción — por eso trabajamos para reducir la fragmentación entre
-            iniciativas que buscan un mismo objetivo: impulsar el desarrollo social a través de la tecnología y la
+            emprendimientos que buscan un mismo objetivo: impulsar el desarrollo social a través de la tecnología y la
             innovación.
           </p>
         </div>

@@ -1,6 +1,5 @@
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
-import { GROUPS } from '../data/groups.js'
 import { getCityName } from '../data/cities.js'
 
 // Todo lo que se calcula aquí viene únicamente de las colecciones reales
@@ -29,12 +28,13 @@ function sortedEntries(map) {
     .sort((a, b) => b.value - a.value)
 }
 
-export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [] }) {
+export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [], groups = [] }) {
   const totalProfiles = profiles.length
   const totalInitiatives = initiatives.length
   const totalEvents = events.length
   const totalConversations = conversations.length
   const totalDirectMessages = conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0)
+  const totalGroupMessages = groups.reduce((sum, g) => sum + (g.messageCount || 0), 0)
 
   let totalInterest = 0
   const connectionPairs = new Set()
@@ -68,9 +68,9 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
   const profilesByType = sortedEntries(countBy(profiles, (p) => labelFor(PROFILE_TYPES, p.profileType)))
   const eventsByCity = sortedEntries(countBy(events, (e) => getCityName(e.city) || e.city))
 
-  const groupMembership = GROUPS.map((g) => ({
+  const groupMembership = groups.map((g) => ({
     label: g.name,
-    value: profiles.filter((p) => (p.joinedGroups || []).includes(g.id)).length,
+    value: profiles.filter((p) => (p.joinedGroups || []).includes(g.docId)).length,
   }))
 
   const topInitiatives = [...initiatives]
@@ -129,6 +129,8 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
       cities: citiesSet.size,
       directConversations: totalConversations,
       directMessages: totalDirectMessages,
+      groups: groups.length,
+      groupMessages: totalGroupMessages,
     },
     initiativesByIndustry,
     initiativesByOds,

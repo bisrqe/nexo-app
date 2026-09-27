@@ -4,8 +4,8 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { INITIATIVES } from '../data/initiatives.js'
 import { EVENTS } from '../data/events.js'
-import { GROUPS } from '../data/groups.js'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { useGroups } from '../context/GroupsContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { rankForProfile } from '../lib/recommend.js'
 import { getCityName } from '../data/cities.js'
@@ -18,6 +18,7 @@ function formatDate(dateStr) {
 export default function Dashboard() {
   const { profile } = useProfile()
   const realInitiatives = useFirestoreCollection('initiatives')
+  const { groups } = useGroups()
   const [showAllCities, setShowAllCities] = useState(false)
 
   const allInitiatives = useMemo(() => [...INITIATIVES, ...realInitiatives], [realInitiatives])
@@ -41,15 +42,15 @@ export default function Dashboard() {
   }, [allEvents, profile, showAllCities])
 
   const rankedGroups = useMemo(() => {
-    const ranked = rankForProfile(GROUPS, profile)
-    return (ranked.length > 0 ? ranked : GROUPS).slice(0, 3)
-  }, [profile])
+    const ranked = rankForProfile(groups, profile)
+    return (ranked.length > 0 ? ranked : groups).slice(0, 3)
+  }, [groups, profile])
 
   return (
     <DashboardLayout
       eyebrow="Tu mapa"
       title="Recomendado para ti"
-      subtitle="Iniciativas, eventos y mesas de trabajo afines a tu perfil — por causas, industria y lo que buscas."
+      subtitle="Emprendimientos, eventos y mesas de trabajo afines a tu perfil — por causas, industria y lo que buscas."
     >
       {profile.city && (
         <div className="filters">
@@ -64,11 +65,11 @@ export default function Dashboard() {
 
       <div className="dash-grid">
         <div className="dash-col">
-          <h3 style={{ marginBottom: 16 }}>Iniciativas afines a ti</h3>
+          <h3 style={{ marginBottom: 16 }}>Emprendimientos afines a ti</h3>
           {rankedInitiatives.length === 0 ? (
             <div className="empty-state">
-              <p>Todavía no hay iniciativas en tu zona — sé quien abra la primera.</p>
-              <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar iniciativa →</Link>
+              <p>Todavía no hay emprendimientos en tu zona — sé quien abra el primero.</p>
+              <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar emprendimiento →</Link>
             </div>
           ) : (
             <div className="page-grid">
@@ -87,9 +88,9 @@ export default function Dashboard() {
             ) : (
               <div className="dash-list">
                 {rankedGroups.map((g) => (
-                  <Link to="/app/comunidad" className="dash-list-item" key={g.id}>
+                  <Link to={`/app/comunidad/${g.slug}`} className="dash-list-item" key={g.docId}>
                     <span>{g.name}</span>
-                    <span>{g.odsLabel}</span>
+                    <span>{g.industryLabel}</span>
                   </Link>
                 ))}
               </div>

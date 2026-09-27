@@ -8,7 +8,7 @@ import { INITIATIVES } from '../data/initiatives.js'
 import { EVENTS } from '../data/events.js'
 
 const STATS = [
-  { num: '047', label: 'Iniciativas activas' },
+  { num: '047', label: 'Emprendimientos activos' },
   { num: '12', label: 'Estados de México' },
   { num: '06', label: 'ODS con actividad esta semana' },
   { num: '03', label: 'Recursos nuevos esta semana' },
@@ -39,10 +39,10 @@ export default function Home() {
             </div>
 
             <h1>El punto donde tu proyecto<br />deja de estar <span className="mark">solo</span>.</h1>
-            <p className="lede">Nexo reúne lo que ya existe en tu ecosistema — iniciativas, personas y recursos — para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
+            <p className="lede">Nexo reúne lo que ya existe en tu ecosistema — emprendimientos, personas y recursos — para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
 
             <div className="hero-actions">
-              <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar iniciativas →</Link>
+              <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar emprendimientos →</Link>
               <Link to="/como-funciona" className="btn btn-ghost btn-lg">Ver cómo funciona</Link>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function Home() {
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Explorar</span>
-            <h2>Iniciativas destacadas</h2>
+            <h2>Emprendimientos destacados</h2>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function Home() {
         </div>
 
         <div className="section-cta">
-          <Link to="/iniciativas" className="link-arrow">Ver todas las iniciativas →</Link>
+          <Link to="/iniciativas" className="link-arrow">Ver todos los emprendimientos →</Link>
         </div>
       </section>
 
@@ -131,10 +131,10 @@ export default function Home() {
       <section className="full">
         <div className="cta-band">
           <div>
-            <h2>¿Tu iniciativa <i>todavía</i> no está en el mapa?</h2>
+            <h2>¿Tu emprendimiento <i>todavía</i> no está en el mapa?</h2>
             <p>Créala en cinco minutos. La comunidad se encarga del resto.</p>
           </div>
-          <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar mi iniciativa →</Link>
+          <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar mi emprendimiento →</Link>
         </div>
       </section>
 

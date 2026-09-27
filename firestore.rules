@@ -29,12 +29,42 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
     }
 
-    // Eventos creados por cuentas del dashboard — visibles solo dentro
-    // del dashboard (con sesión), editables solo por su dueño.
+    // Eventos — dossier público, igual que iniciativas (la landing de
+    // /eventos la ve gente sin cuenta). Editables solo por su dueño.
     match /events/{id} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Mesas de trabajo — cualquier cuenta con sesión las puede ver y
+    // unirse (el "unirse" en sí vive en profiles/{uid}.joinedGroups, no
+    // aquí); solo el dueño edita/borra la mesa. El chat de cada mesa
+    // (subcolección messages) solo lo puede leer/escribir quien tenga
+    // ese groupId en su propio perfil — mismo nivel de privacidad que
+    // el chat directo, nadie fuera del grupo ve los mensajes.
+    match /groups/{groupId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      // El dueño puede editar cualquier campo (nombre, descripción, etc.);
+      // cualquier otro miembro solo puede tocar los campos de "último
+      // mensaje" que actualiza el chat al mandar un mensaje.
+      allow update: if request.auth != null && (
+        resource.data.ownerUid == request.auth.uid ||
+        (
+          groupId in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('joinedGroups', []) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastSenderUid', 'updatedAt', 'messageCount'])
+        )
+      );
+      allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+
+      match /messages/{msgId} {
+        allow read: if request.auth != null &&
+          groupId in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('joinedGroups', []);
+        allow create: if request.auth != null &&
+          groupId in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('joinedGroups', []) &&
+          request.resource.data.senderUid == request.auth.uid;
+      }
     }
 
     // Chat directo entre dos cuentas. El id del documento es "uidA_uidB"

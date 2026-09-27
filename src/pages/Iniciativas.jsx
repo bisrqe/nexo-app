@@ -20,8 +20,8 @@ export default function Iniciativas() {
   return (
     <DashboardLayout
       eyebrow="Explorar"
-      title="Todas las iniciativas"
-      subtitle="El catálogo completo — filtra por ODS o por lo que cada una necesita ahora mismo."
+      title="Todos los emprendimientos"
+      subtitle="El catálogo completo — filtra por industria o por lo que cada uno necesita ahora mismo."
     >
       {profile.city && (
         <div className="filters">
@@ -33,7 +33,7 @@ export default function Iniciativas() {
           </button>
         </div>
       )}
-      <InitiativeCatalog initiatives={visible} basePath="/app/iniciativas" />
+      <InitiativeCatalog initiatives={visible} basePath="/app/iniciativas" filterBy="industry" />
     </DashboardLayout>
   )
 }

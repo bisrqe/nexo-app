@@ -10,11 +10,12 @@ export default function AdminKPIs() {
   const initiatives = useFirestoreCollection('initiatives')
   const events = useFirestoreCollection('events')
   const conversations = useFirestoreCollection('conversations')
+  const groups = useFirestoreCollection('groups')
   const [downloading, setDownloading] = useState(false)
 
   const kpis = useMemo(
-    () => computeKpis({ profiles, initiatives, events, conversations }),
-    [profiles, initiatives, events, conversations]
+    () => computeKpis({ profiles, initiatives, events, conversations, groups }),
+    [profiles, initiatives, events, conversations, groups]
   )
   const { totals } = kpis
 
@@ -32,7 +33,7 @@ export default function AdminKPIs() {
     <DashboardLayout
       eyebrow="Solo admin"
       title="Panel de KPIs"
-      subtitle="Métricas reales de la plataforma — perfiles, iniciativas y eventos guardados en Firestore. No incluye el contenido de ejemplo del catálogo."
+      subtitle="Métricas reales de la plataforma — perfiles, emprendimientos y eventos guardados en Firestore. No incluye el contenido de ejemplo del catálogo."
     >
       <div className="kpi-toolbar">
         <button type="button" className="btn btn-primary" onClick={handleDownload} disabled={downloading}>
@@ -47,7 +48,7 @@ export default function AdminKPIs() {
         </div>
         <div className="kpi-stat-card">
           <span className="kpi-stat-num">{totals.initiatives}</span>
-          <span className="kpi-stat-label">Iniciativas activas</span>
+          <span className="kpi-stat-label">Emprendimientos activos</span>
         </div>
         <div className="kpi-stat-card">
           <span className="kpi-stat-num">{totals.events}</span>
@@ -77,19 +78,27 @@ export default function AdminKPIs() {
           <span className="kpi-stat-num">{totals.directMessages}</span>
           <span className="kpi-stat-label">Mensajes directos enviados</span>
         </div>
+        <div className="kpi-stat-card">
+          <span className="kpi-stat-num">{totals.groups}</span>
+          <span className="kpi-stat-label">Mesas de trabajo creadas</span>
+        </div>
+        <div className="kpi-stat-card">
+          <span className="kpi-stat-num">{totals.groupMessages}</span>
+          <span className="kpi-stat-label">Mensajes en mesas de trabajo</span>
+        </div>
       </div>
 
       <div className="kpi-grid">
         <div className="kpi-card">
-          <h3>Iniciativas por industria</h3>
+          <h3>Emprendimientos por industria</h3>
           <BarChart data={kpis.initiativesByIndustry} color="var(--navy)" />
         </div>
         <div className="kpi-card">
-          <h3>Iniciativas por ODS</h3>
+          <h3>Emprendimientos por ODS</h3>
           <BarChart data={kpis.initiativesByOds} color="var(--indigo)" />
         </div>
         <div className="kpi-card">
-          <h3>Iniciativas por etapa</h3>
+          <h3>Emprendimientos por etapa</h3>
           <DonutChart data={kpis.initiativesByStage} />
         </div>
         <div className="kpi-card">
@@ -111,15 +120,15 @@ export default function AdminKPIs() {
       </div>
 
       <div className="kpi-card" style={{ marginTop: 28 }}>
-        <h3>Iniciativas con más interés</h3>
+        <h3>Emprendimientos con más interés</h3>
         {kpis.topInitiatives.length === 0 ? (
-          <p className="kpi-empty">Todavía nadie ha marcado "Me interesa" en ninguna iniciativa.</p>
+          <p className="kpi-empty">Todavía nadie ha marcado "Me interesa" en ningún emprendimiento.</p>
         ) : (
           <div className="kpi-table-wrap">
             <table className="kpi-table">
               <thead>
                 <tr>
-                  <th>Iniciativa</th>
+                  <th>Emprendimiento</th>
                   <th>Organización</th>
                   <th>Industria</th>
                   <th>Interesados</th>
@@ -143,7 +152,7 @@ export default function AdminKPIs() {
       <div className="kpi-card" style={{ marginTop: 28 }}>
         <h3>Actividad por usuario</h3>
         <p className="settings-card-desc" style={{ marginBottom: 16 }}>
-          Actividad registrada (iniciativas creadas, interés mostrado, eventos, mesas unidas) — todavía no se rastrea tiempo de sesión.
+          Actividad registrada (emprendimientos creados, interés mostrado, eventos, mesas unidas) — todavía no se rastrea tiempo de sesión.
         </p>
         {kpis.activityRanking.length === 0 ? (
           <p className="kpi-empty">Todavía no hay actividad registrada.</p>
@@ -154,7 +163,7 @@ export default function AdminKPIs() {
                 <tr>
                   <th>Nombre</th>
                   <th>Ciudad</th>
-                  <th>Iniciativas</th>
+                  <th>Emprendimientos</th>
                   <th>Interés mostrado</th>
                   <th>Eventos</th>
                   <th>Mesas unidas</th>
@@ -177,9 +186,6 @@ export default function AdminKPIs() {
         )}
       </div>
 
-      <p className="kpi-footnote">
-        Nota: los chats de mesas de trabajo todavía son una demo local por navegador — solo los mensajes directos entre personas (arriba) quedan guardados y se contabilizan.
-      </p>
     </DashboardLayout>
   )
 }

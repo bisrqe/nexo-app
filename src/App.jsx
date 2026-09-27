@@ -20,6 +20,7 @@ import Personas from './pages/Personas.jsx'
 import PersonProfile from './pages/PersonProfile.jsx'
 import Recursos from './pages/Recursos.jsx'
 import Comunidad from './pages/Comunidad.jsx'
+import GroupDetail from './pages/GroupDetail.jsx'
 import Eventos from './pages/Eventos.jsx'
 import Mensajes from './pages/Mensajes.jsx'
 import Saved from './pages/Saved.jsx'
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="/app/personas/:slug" element={<RequireAuth><PersonProfile /></RequireAuth>} />
         <Route path="/app/recursos" element={<RequireAuth><Recursos /></RequireAuth>} />
         <Route path="/app/comunidad" element={<RequireAuth><Comunidad /></RequireAuth>} />
+        <Route path="/app/comunidad/:slug" element={<RequireAuth><GroupDetail /></RequireAuth>} />
         <Route path="/app/eventos" element={<RequireAuth><Eventos /></RequireAuth>} />
         <Route path="/app/mensajes" element={<RequireAuth><Mensajes /></RequireAuth>} />
         <Route path="/app/guardado" element={<RequireAuth><Saved /></RequireAuth>} />
