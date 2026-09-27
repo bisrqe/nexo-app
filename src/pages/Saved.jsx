@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useSaved } from '../context/SavedContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 import { getInitiativeBySlug } from '../data/initiatives.js'
 import { EVENTS } from '../data/events.js'
 import { GROUPS } from '../data/groups.js'
@@ -9,10 +10,11 @@ import InitiativeCard from '../components/InitiativeCard.jsx'
 
 export default function Saved() {
   const { saved } = useSaved()
+  const { profile } = useProfile()
 
   const savedInitiatives = saved.initiatives.map(getInitiativeBySlug).filter(Boolean)
   const savedEvents = EVENTS.filter((e) => saved.events.includes(e.id))
-  const savedGroups = GROUPS.filter((g) => saved.groups.includes(g.id))
+  const savedGroups = GROUPS.filter((g) => profile.joinedGroups?.includes(g.id))
 
   const nothingSaved = savedInitiatives.length === 0 && savedEvents.length === 0 && savedGroups.length === 0
 

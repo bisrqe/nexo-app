@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { DEFAULT_PROFILE } from '../data/currentUser.js'
 import { useAuth } from './AuthContext.jsx'
@@ -39,7 +39,18 @@ export function ProfileProvider({ children }) {
     await setDoc(doc(db, 'profiles', user.uid), patch, { merge: true })
   }
 
-  const value = { profile, updateProfile, profileLoading }
+  // Unirse/salir de una mesa de trabajo — a diferencia de "guardado" (que
+  // solo vive en este navegador), esto queda en el perfil real para que
+  // el conteo de miembros y el panel de KPIs reflejen membresías de verdad.
+  const toggleJoinedGroup = async (groupId) => {
+    if (!user) return
+    const joined = profile.joinedGroups?.includes(groupId)
+    await updateDoc(doc(db, 'profiles', user.uid), {
+      joinedGroups: joined ? arrayRemove(groupId) : arrayUnion(groupId),
+    })
+  }
+
+  const value = { profile, updateProfile, profileLoading, toggleJoinedGroup }
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
 }

@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth'
 import { auth } from '../lib/firebase.js'
+import { ADMIN_EMAILS } from '../data/admins.js'
 
 const AuthContext = createContext(null)
 
@@ -24,9 +25,10 @@ export function AuthProvider({ children }) {
   const signUp = (email, password) => createUserWithEmailAndPassword(auth, email, password)
   const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const signOutUser = () => signOut(auth)
+  const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser }}>
+    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

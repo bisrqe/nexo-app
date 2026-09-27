@@ -21,8 +21,10 @@ export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { profile } = useProfile()
-  const { signOutUser } = useAuth()
+  const { signOutUser, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
+
+  const navItems = isAdmin ? [...NAV, { to: '/app/admin', label: 'Panel de KPIs', icon: 'chart' }] : NAV
 
   const isActive = (to) => location.pathname === to
 
@@ -46,7 +48,7 @@ export default function Sidebar() {
 
         <nav className="app-nav">
           <div className="app-nav-inner">
-            {NAV.map(({ to, label, icon }) => (
+            {navItems.map(({ to, label, icon }) => (
               <Link key={to} to={to} className={isActive(to) ? 'active' : ''} onClick={() => setOpen(false)}>
                 <NavIcon name={icon} />
                 <span>{label}</span>

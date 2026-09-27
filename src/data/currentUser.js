@@ -23,6 +23,7 @@ export const DEFAULT_PROFILE = {
   linkedin: '',
   bio: '',
   photo: null,
+  joinedGroups: [],
 }
 
 export function initials(name) {

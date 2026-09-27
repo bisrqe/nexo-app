@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { GROUPS } from '../data/groups.js'
-import { useSaved } from '../context/SavedContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { ODS_FILTERS } from '../data/initiatives.js'
 
@@ -11,7 +11,7 @@ const ODS_LABELS = ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => f.labe
 const EMPTY_GROUP = { name: '', odsLabel: ODS_LABELS[0], desc: '' }
 
 export default function Comunidad() {
-  const { isGroupSaved, toggleGroup } = useSaved()
+  const { profile, toggleJoinedGroup } = useProfile()
   const { myGroups, addGroup } = useUserContent()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_GROUP)
@@ -81,7 +81,7 @@ export default function Comunidad() {
 
       <div className="page-grid">
         {allGroups.map((g) => {
-          const joined = isGroupSaved(g.id)
+          const joined = profile.joinedGroups?.includes(g.id)
           return (
             <div className="group-card" key={g.id}>
               <div className="group-top">
@@ -95,7 +95,7 @@ export default function Comunidad() {
               <div className="group-foot">
                 <button
                   className={joined ? 'btn btn-ghost' : 'btn btn-primary'}
-                  onClick={() => toggleGroup(g.id)}
+                  onClick={() => toggleJoinedGroup(g.id)}
                 >
                   {joined ? '✓ Ya eres parte' : 'Unirme →'}
                 </button>

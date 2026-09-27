@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { GROUPS } from '../data/groups.js'
-import { useSaved } from '../context/SavedContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 import { useMessages } from '../context/MessagesContext.jsx'
 
 export default function Mensajes() {
-  const { saved } = useSaved()
+  const { profile } = useProfile()
   const { getMessages, sendMessage } = useMessages()
-  const myGroups = GROUPS.filter((g) => saved.groups.includes(g.id))
+  const myGroups = GROUPS.filter((g) => profile.joinedGroups?.includes(g.id))
   const [activeId, setActiveId] = useState(myGroups[0]?.id ?? null)
   const [draft, setDraft] = useState('')
 

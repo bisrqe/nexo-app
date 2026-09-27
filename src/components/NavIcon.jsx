@@ -60,6 +60,14 @@ const PATHS = {
       <path d="M5 4h13l-3 4.5L18 13H5" />
     </>
   ),
+  chart: (
+    <>
+      <path d="M3 20h18" />
+      <path d="M6 20v-7" />
+      <path d="M12 20V5" />
+      <path d="M18 20v-10" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 
 // No hay backend: "guardar" algo solo lo recuerda en este navegador
 // (localStorage), no en ninguna base de datos ni cuenta de usuario.
+// (Unirse a una mesa de trabajo sí es real — vive en profiles/{uid}.joinedGroups,
+// ver ProfileContext.jsx.)
 const STORAGE_KEY = 'nexo:saved:v1'
 
 const SavedContext = createContext(null)
@@ -9,15 +11,14 @@ const SavedContext = createContext(null)
 function readStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { initiatives: [], events: [], groups: [] }
+    if (!raw) return { initiatives: [], events: [] }
     const parsed = JSON.parse(raw)
     return {
       initiatives: parsed.initiatives ?? [],
       events: parsed.events ?? [],
-      groups: parsed.groups ?? [],
     }
   } catch {
-    return { initiatives: [], events: [], groups: [] }
+    return { initiatives: [], events: [] }
   }
 }
 
@@ -28,7 +29,7 @@ export function SavedProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     } catch {
-      // localStorage puede fallar en modo privado — no es crítico, se pierde al recargar.
+      // localStorage puede fallar en modo privado — no es crítico.
     }
   }, [saved])
 
@@ -44,10 +45,8 @@ export function SavedProvider({ children }) {
     saved,
     toggleInitiative: (slug) => toggle('initiatives', slug),
     toggleEvent: (id) => toggle('events', id),
-    toggleGroup: (id) => toggle('groups', id),
     isInitiativeSaved: (slug) => saved.initiatives.includes(slug),
     isEventSaved: (id) => saved.events.includes(id),
-    isGroupSaved: (id) => saved.groups.includes(id),
   }
 
   return <SavedContext.Provider value={value}>{children}</SavedContext.Provider>

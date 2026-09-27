@@ -25,7 +25,9 @@ import Mensajes from './pages/Mensajes.jsx'
 import Saved from './pages/Saved.jsx'
 import Ajustes from './pages/Ajustes.jsx'
 import MyInitiative from './pages/MyInitiative.jsx'
+import AdminKPIs from './pages/AdminKPIs.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
+import RequireAdmin from './components/RequireAdmin.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
 // behaviour: scroll to the hash target on route change, otherwise go top.
@@ -76,6 +78,7 @@ export default function App() {
         <Route path="/app/mensajes" element={<RequireAuth><Mensajes /></RequireAuth>} />
         <Route path="/app/guardado" element={<RequireAuth><Saved /></RequireAuth>} />
         <Route path="/app/ajustes" element={<RequireAuth><Ajustes /></RequireAuth>} />
+        <Route path="/app/admin" element={<RequireAuth><RequireAdmin><AdminKPIs /></RequireAdmin></RequireAuth>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
