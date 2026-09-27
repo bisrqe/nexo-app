@@ -1,15 +1,57 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { getPersonBySlug } from '../data/people.js'
+import { ODS_FILTERS } from '../data/initiatives.js'
+import { getCityName } from '../data/cities.js'
+import { db } from '../lib/firebase.js'
 
 function initials(name) {
-  return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+}
+
+function profileToPerson(p) {
+  const odsLabel = ODS_FILTERS.find((f) => f.id === p.interests?.[0])?.label ?? ''
+  return {
+    name: p.name,
+    role: p.occupation,
+    location: getCityName(p.city) || p.location,
+    odsLabel,
+    offers: [p.industryLabel].filter(Boolean),
+    looking: p.bio,
+    bio: p.bio,
+    contact: p.email,
+    linkedin: p.linkedin,
+    photo: p.photo,
+  }
 }
 
 export default function PersonProfile() {
   const { slug } = useParams()
-  const person = getPersonBySlug(slug)
+  const mockPerson = getPersonBySlug(slug)
+  const [remote, setRemote] = useState(undefined)
+
+  useEffect(() => {
+    if (mockPerson) return
+    let cancelled = false
+    getDocs(query(collection(db, 'profiles'), where('username', '==', slug))).then((snap) => {
+      if (cancelled) return
+      setRemote(snap.empty ? null : profileToPerson(snap.docs[0].data()))
+    })
+    return () => { cancelled = true }
+  }, [slug, mockPerson])
+
+  const person = mockPerson || remote
+  const loading = !mockPerson && remote === undefined
+
+  if (loading) {
+    return (
+      <DashboardLayout eyebrow="Personas" title="Perfil">
+        <p className="auth-sub">Cargando…</p>
+      </DashboardLayout>
+    )
+  }
 
   if (!person) {
     return (
@@ -23,7 +65,7 @@ export default function PersonProfile() {
     )
   }
 
-  const { name, role, location, odsLabel, offers, looking, bio, contact } = person
+  const { name, role, location, odsLabel, offers, looking, bio, contact, linkedin, photo } = person
 
   return (
     <DashboardLayout eyebrow="Personas" title="Perfil">
@@ -31,10 +73,12 @@ export default function PersonProfile() {
         <Link to="/app/personas" className="link-arrow back-link">← Volver al directorio</Link>
 
         <div className="detail-head">
-          <div className="person-avatar" style={{ width: 56, height: 56, fontSize: 18 }}>{initials(name)}</div>
+          <div className="person-avatar" style={{ width: 56, height: 56, fontSize: 18 }}>
+            {photo ? <img src={photo} alt="" /> : initials(name)}
+          </div>
           <h1 className="detail-title">{name}</h1>
           <p className="cat-org">{role} — {location}</p>
-          <div className="cat-tags"><span>{odsLabel}</span></div>
+          {odsLabel && <div className="cat-tags"><span>{odsLabel}</span></div>}
         </div>
 
         <div className="detail-body">
@@ -45,7 +89,7 @@ export default function PersonProfile() {
           <div>
             <span className="kicker">Ofrece</span>
             <div className="person-offers">
-              {offers.map((o) => (
+              {(offers || []).map((o) => (
                 <span className="tag-pill" key={o}>{o}</span>
               ))}
             </div>
@@ -57,6 +101,11 @@ export default function PersonProfile() {
           <div className="contact-block">
             <span className="kicker">Contacto directo</span>
             <a href={`mailto:${contact}`} className="btn btn-gold btn-lg">{contact}</a>
+            {linkedin && (
+              <a href={linkedin} target="_blank" rel="noreferrer" className="link-arrow" style={{ marginTop: 10 }}>
+                Ver LinkedIn →
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -25,6 +25,7 @@ import Mensajes from './pages/Mensajes.jsx'
 import Saved from './pages/Saved.jsx'
 import Ajustes from './pages/Ajustes.jsx'
 import MyInitiative from './pages/MyInitiative.jsx'
+import RequireAuth from './components/RequireAuth.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
 // behaviour: scroll to the hash target on route change, otherwise go top.
@@ -61,20 +62,20 @@ export default function App() {
         <Route path="/nosotros" element={<Nosotros />} />
         <Route path="/eventos" element={<EventosPublicos />} />
 
-        {/* ── Zona post-login — separada de la landing ────────── */}
-        <Route path="/app/dashboard" element={<Dashboard />} />
-        <Route path="/app/iniciativas" element={<Iniciativas />} />
-        <Route path="/app/mi-iniciativa" element={<MyInitiative />} />
-        <Route path="/app/iniciativas/nueva" element={<NewInitiative variant="app" />} />
-        <Route path="/app/iniciativas/:slug" element={<InitiativeDetail variant="app" />} />
-        <Route path="/app/personas" element={<Personas />} />
-        <Route path="/app/personas/:slug" element={<PersonProfile />} />
-        <Route path="/app/recursos" element={<Recursos />} />
-        <Route path="/app/comunidad" element={<Comunidad />} />
-        <Route path="/app/eventos" element={<Eventos />} />
-        <Route path="/app/mensajes" element={<Mensajes />} />
-        <Route path="/app/guardado" element={<Saved />} />
-        <Route path="/app/ajustes" element={<Ajustes />} />
+        {/* ── Zona post-login — separada de la landing, requiere sesión ── */}
+        <Route path="/app/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+        <Route path="/app/iniciativas" element={<RequireAuth><Iniciativas /></RequireAuth>} />
+        <Route path="/app/mi-iniciativa" element={<RequireAuth><MyInitiative /></RequireAuth>} />
+        <Route path="/app/iniciativas/nueva" element={<RequireAuth><NewInitiative variant="app" /></RequireAuth>} />
+        <Route path="/app/iniciativas/:slug" element={<RequireAuth><InitiativeDetail variant="app" /></RequireAuth>} />
+        <Route path="/app/personas" element={<RequireAuth><Personas /></RequireAuth>} />
+        <Route path="/app/personas/:slug" element={<RequireAuth><PersonProfile /></RequireAuth>} />
+        <Route path="/app/recursos" element={<RequireAuth><Recursos /></RequireAuth>} />
+        <Route path="/app/comunidad" element={<RequireAuth><Comunidad /></RequireAuth>} />
+        <Route path="/app/eventos" element={<RequireAuth><Eventos /></RequireAuth>} />
+        <Route path="/app/mensajes" element={<RequireAuth><Mensajes /></RequireAuth>} />
+        <Route path="/app/guardado" element={<RequireAuth><Saved /></RequireAuth>} />
+        <Route path="/app/ajustes" element={<RequireAuth><Ajustes /></RequireAuth>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

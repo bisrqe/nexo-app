@@ -3,6 +3,8 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import { EVENTS } from '../data/events.js'
 import { useSaved } from '../context/SavedContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
+import { CITIES, getCityName } from '../data/cities.js'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -10,14 +12,16 @@ function formatDate(dateStr) {
 }
 
 const EMPTY_EVENT = {
-  title: '', date: '', time: '', location: '', category: '', ods: '', description: '', maxAttendees: 30,
+  title: '', date: '', time: '', location: '', city: '', category: '', ods: '', description: '', maxAttendees: 30,
 }
 
 export default function Eventos() {
   const { isEventSaved, toggleEvent } = useSaved()
   const { myEvents, addEvent } = useUserContent()
+  const { profile } = useProfile()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
+  const [onlyMyCity, setOnlyMyCity] = useState(Boolean(profile.city))
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
 
@@ -35,23 +39,21 @@ export default function Eventos() {
 
   const handleFormChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
-  const handleCreateEvent = (e) => {
+  const handleCreateEvent = async (e) => {
     e.preventDefault()
     if (!form.title || !form.date) return
-    const newEvent = {
-      id: `local-${Date.now()}`,
+    await addEvent({
       title: form.title,
       date: form.date,
       time: form.time || '00:00',
       location: form.location || 'Por definir',
+      city: form.city,
       category: form.category || 'Otro',
       ods: form.ods ? form.ods.split(',').map((s) => s.trim()).filter(Boolean) : [],
       description: form.description || 'Sin descripción.',
       attendees: 0,
       maxAttendees: Number(form.maxAttendees) || 30,
-    }
-    addEvent(newEvent)
-    setCounts((c) => ({ ...c, [newEvent.id]: 0 }))
+    })
     setForm(EMPTY_EVENT)
     setShowForm(false)
   }
@@ -61,9 +63,10 @@ export default function Eventos() {
     return allEvents.filter((e) => {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
-      return matchQ && matchCat
+      const matchCity = !onlyMyCity || !profile.city || e.city === profile.city
+      return matchQ && matchCat && matchCity
     })
-  }, [allEvents, query, category])
+  }, [allEvents, query, category, onlyMyCity, profile.city])
 
   return (
     <DashboardLayout
@@ -71,6 +74,16 @@ export default function Eventos() {
       title="Eventos"
       subtitle="Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real."
     >
+      {profile.city && (
+        <div className="filters" style={{ marginBottom: 12 }}>
+          <button className={`chip ${onlyMyCity ? 'active' : ''}`} onClick={() => setOnlyMyCity(true)}>
+            {getCityName(profile.city)}
+          </button>
+          <button className={`chip ${!onlyMyCity ? 'active' : ''}`} onClick={() => setOnlyMyCity(false)}>
+            Ver todas las zonas
+          </button>
+        </div>
+      )}
       <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <input
           className="search-input"
@@ -100,7 +113,7 @@ export default function Eventos() {
       {showForm && (
         <div className="settings-card" style={{ marginBottom: 32 }}>
           <h2>Nuevo evento</h2>
-          <p className="settings-card-desc">Se agrega solo en este navegador — no hay backend detrás todavía.</p>
+          <p className="settings-card-desc">Queda visible para todo el mapa en cuanto lo publicas.</p>
           <form onSubmit={handleCreateEvent} className="auth-form">
             <div className="form-row">
               <label className="form-field">
@@ -128,10 +141,19 @@ export default function Eventos() {
                 <input type="text" name="location" value={form.location} onChange={handleFormChange} placeholder="Lugar o liga de videollamada" />
               </label>
               <label className="form-field">
-                <span>Cupo máximo</span>
-                <input type="number" name="maxAttendees" min="1" value={form.maxAttendees} onChange={handleFormChange} />
+                <span>Ciudad / región</span>
+                <select name="city" value={form.city} onChange={handleFormChange}>
+                  <option value="">Selecciona una ciudad</option>
+                  {CITIES.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </label>
             </div>
+            <label className="form-field">
+              <span>Cupo máximo</span>
+              <input type="number" name="maxAttendees" min="1" value={form.maxAttendees} onChange={handleFormChange} />
+            </label>
             <label className="form-field">
               <span>ODS relacionados (separados por coma)</span>
               <input type="text" name="ods" value={form.ods} onChange={handleFormChange} placeholder="Ej. ODS 4, ODS 9" />
@@ -168,6 +190,7 @@ export default function Eventos() {
                   <p className="event-desc">{event.description}</p>
                   <div className="event-meta">
                     <span>{event.time} hrs — {event.location}</span>
+                    {event.city && <span>{getCityName(event.city)}</span>}
                   </div>
                   {event.ods.length > 0 && (
                     <div className="event-ods">

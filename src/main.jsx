@@ -7,21 +7,24 @@ import { MessagesProvider } from './context/MessagesContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { UserContentProvider } from './context/UserContentContext.jsx'
 import { ProfileProvider } from './context/ProfileContext.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <ProfileProvider>
-          <SavedProvider>
-            <MessagesProvider>
-              <UserContentProvider>
-                <App />
-              </UserContentProvider>
-            </MessagesProvider>
-          </SavedProvider>
-        </ProfileProvider>
+        <AuthProvider>
+          <ProfileProvider>
+            <SavedProvider>
+              <MessagesProvider>
+                <UserContentProvider>
+                  <App />
+                </UserContentProvider>
+              </MessagesProvider>
+            </SavedProvider>
+          </ProfileProvider>
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>

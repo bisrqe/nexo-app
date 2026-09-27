@@ -1,23 +1,27 @@
-// Perfil por defecto de quien "tiene sesión iniciada" — mock. Igual que
-// el resto del proyecto, no hay autenticación real todavía: esto es el
-// punto de partida que se carga la primera vez, y desde Ajustes se puede
-// editar de verdad (queda en este navegador vía ProfileContext).
+// Forma por defecto del perfil — lo que se ve antes de que cargue el doc
+// real de Firestore (profiles/{uid}), o cuando no hay sesión iniciada (las
+// páginas públicas que llaman a useProfile() reciben esta forma vacía en
+// vez de tronar).
 //
 // name, birthDate y gender se capturan una sola vez, al registrarse, y no
 // son editables después — por eso viven aquí igual que el resto, pero
 // Ajustes.jsx los muestra como solo lectura.
 
 export const DEFAULT_PROFILE = {
-  name: 'Diego Marín',
-  username: 'diego.marin',
-  email: 'diego.marin@example.org',
-  birthDate: '1996-04-12',
+  name: '',
+  username: '',
+  email: '',
+  birthDate: '',
   gender: '',
-  occupation: 'Coordinador de proyectos',
-  location: 'Monterrey, Nuevo León',
-  profileType: 'organizacion',
+  occupation: '',
+  location: '',
+  city: '',
+  profileType: 'emprendedor',
+  industry: '',
+  industryLabel: '',
   interests: [],
-  bio: 'Conecta colectivos y voluntarios con las iniciativas del mapa. Todavía no hay backend: este perfil es un ejemplo de cómo se va a ver una vez que conectemos cuentas reales.',
+  linkedin: '',
+  bio: '',
   photo: null,
 }
 

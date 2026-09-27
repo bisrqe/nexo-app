@@ -484,13 +484,16 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .app-nav-inner{display:flex; flex-direction:column; gap:4px; width:100%; min-width:0; margin-top:auto; margin-bottom:auto;}
 
 .app-nav-inner a,
-.app-nav-bottom a{
+.app-nav-bottom a,
+.app-nav-bottom button{
   display:flex; align-items:center; justify-content:center; gap:11px; padding:10px 12px; border-radius:6px;
   font-family:var(--mono); font-size:12.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
   color:#AEBBD0; width:100%; box-sizing:border-box;
+  border:none; background:none; cursor:pointer;
 }
 .app-nav-inner a svg,
-.app-nav-bottom a svg{flex-shrink:0; color:inherit;}
+.app-nav-bottom a svg,
+.app-nav-bottom button svg{flex-shrink:0; color:inherit;}
 
 /* Deliberately NOT using flex-shrink + min-width:0 + overflow:hidden here.
    That combination is the classic way a flex label silently shrinks to
@@ -502,17 +505,20 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
    is explicit so hover/active can't recolor the icon without the label,
    or vice versa. */
 .app-nav-inner a span,
-.app-nav-bottom a span{white-space:nowrap; text-align:left; color:inherit;}
+.app-nav-bottom a span,
+.app-nav-bottom button span{white-space:nowrap; text-align:left; color:inherit;}
 
 .app-nav-inner a:hover,
-.app-nav-bottom a:hover{color:#fff; background:rgba(255,255,255,.06);}
+.app-nav-bottom a:hover,
+.app-nav-bottom button:hover{color:#fff; background:rgba(255,255,255,.06);}
 
 .app-nav-inner a.active{color:var(--ink); background:var(--gold);}
 .app-nav-inner a.active svg,
 .app-nav-inner a.active span{color:var(--ink);}
 
 .app-nav-bottom{display:flex; flex-direction:column; gap:2px; padding-top:16px; border-top:1px solid rgba(255,255,255,.12); width:100%; min-width:0;}
-.app-nav-bottom a{font-size:11.5px; padding:9px 12px; color:#8595AE;}
+.app-nav-bottom a,
+.app-nav-bottom button{font-size:11.5px; padding:9px 12px; color:#8595AE; font-family:var(--mono);}
 .app-nav-bottom a.active{color:var(--gold);}
 .app-nav-bottom a.active svg,
 .app-nav-bottom a.active span{color:var(--gold);}

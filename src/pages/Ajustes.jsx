@@ -3,10 +3,12 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
-import { ODS_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
+import { CITIES } from '../data/cities.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
+const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
 const PHOTO_SIZE = 200
 
 // Redimensiona/recorta la foto a un cuadrado antes de guardarla — así una
@@ -71,9 +73,9 @@ export default function Ajustes() {
     setForm((f) => ({ ...f, photo: null }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    updateProfile(form)
+    await updateProfile(form)
     setSaved(true)
   }
 
@@ -84,7 +86,7 @@ export default function Ajustes() {
     <DashboardLayout
       eyebrow="Mi cuenta"
       title="Perfil y ajustes"
-      subtitle="Todavía no hay cuentas reales conectadas, pero esto sí se guarda de verdad en este navegador."
+      subtitle="Tu perfil real — se guarda en tu cuenta y lo ve el resto del mapa."
     >
       <form onSubmit={handleSubmit} className="settings-grid">
         <div className="settings-card">
@@ -151,16 +153,45 @@ export default function Ajustes() {
               <input type="text" name="occupation" value={form.occupation} onChange={handleChange} />
             </label>
             <label className="form-field">
-              <span>Ubicación</span>
+              <span>Ubicación (texto libre)</span>
               <input type="text" name="location" value={form.location} onChange={handleChange} placeholder="Ciudad, estado" />
             </label>
           </div>
 
+          <div className="form-row">
+            <label className="form-field">
+              <span>Ciudad / región</span>
+              <select name="city" value={form.city} onChange={handleChange}>
+                <option value="">Selecciona tu ciudad</option>
+                {CITIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field">
+              <span>Tipo de perfil</span>
+              <select name="profileType" value={form.profileType} onChange={handleChange}>
+                {PROFILE_TYPES.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
           <label className="form-field">
-            <span>Tipo de perfil</span>
-            <select name="profileType" value={form.profileType} onChange={handleChange}>
-              {PROFILE_TYPES.map((p) => (
-                <option key={p.id} value={p.id}>{p.label}</option>
+            <span>Industria a la que perteneces</span>
+            <select
+              name="industry"
+              value={form.industry}
+              onChange={(e) => {
+                setSaved(false)
+                const industryLabel = INDUSTRY_OPTIONS.find((i) => i.id === e.target.value)?.label ?? ''
+                setForm((f) => ({ ...f, industry: e.target.value, industryLabel }))
+              }}
+            >
+              <option value="">Selecciona una industria</option>
+              {INDUSTRY_OPTIONS.map((i) => (
+                <option key={i.id} value={i.id}>{i.label}</option>
               ))}
             </select>
           </label>
@@ -175,6 +206,11 @@ export default function Ajustes() {
                 </label>
               ))}
             </div>
+          </label>
+
+          <label className="form-field">
+            <span>LinkedIn u otra red</span>
+            <input type="url" name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/tu-usuario" />
           </label>
 
           <label className="form-field">
@@ -211,7 +247,7 @@ export default function Ajustes() {
         </div>
 
         <div className="auth-note">
-          <p><b>Sobre esta cuenta.</b> Todavía no hay autenticación real — estos cambios se guardan solo en este navegador, no en una cuenta que puedas usar en otro dispositivo.</p>
+          <p><b>Sobre esta cuenta.</b> Tu perfil vive en tu cuenta de Nexo — entra desde cualquier dispositivo con tu correo y contraseña y lo vas a encontrar igual.</p>
         </div>
       </form>
     </DashboardLayout>

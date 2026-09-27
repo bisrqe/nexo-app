@@ -2,3 +2,7 @@ node_modules
 dist
 .vercel
 .DS_Store
+.env
+.env.local
+.firebase
+firebase-debug.log

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import NodeMark from './NodeMark.jsx'
 import NavIcon from './NavIcon.jsx'
 import { initials } from '../data/currentUser.js'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
@@ -18,10 +19,18 @@ const NAV = [
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { profile } = useProfile()
+  const { signOutUser } = useAuth()
   const [open, setOpen] = useState(false)
 
   const isActive = (to) => location.pathname === to
+
+  const handleLogout = async () => {
+    setOpen(false)
+    await signOutUser()
+    navigate('/login')
+  }
 
   return (
     <>
@@ -51,10 +60,10 @@ export default function Sidebar() {
             <NavIcon name="bookmark" />
             <span>Guardado</span>
           </Link>
-          <Link to="/login" onClick={() => setOpen(false)}>
+          <button type="button" className="app-nav-logout" onClick={handleLogout}>
             <NavIcon name="logout" />
             <span>Cerrar sesión</span>
-          </Link>
+          </button>
         </div>
 
         <Link

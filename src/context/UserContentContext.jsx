@@ -1,56 +1,81 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { collection, doc, onSnapshot, query, where, addDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from '../lib/firebase.js'
+import { useAuth } from './AuthContext.jsx'
 
-// Contenido creado por quien usa el dashboard: eventos y mesas de trabajo
-// que agrega, y su propia iniciativa. Sin backend: vive en este navegador
-// (localStorage), igual que "Guardado".
-const STORAGE_KEY = 'nexo:userContent:v1'
+// Contenido creado por quien usa el dashboard. Las iniciativas y eventos
+// propios viven en Firestore (colecciones "initiatives" y "events",
+// filtradas por ownerUid) — ya son reales y las ve cualquiera. Las mesas
+// de trabajo que cada quien arma en Comunidad siguen siendo locales por
+// ahora (no se pidió que fueran compartidas todavía).
+const GROUPS_KEY = 'nexo:userContent:groups:v1'
 
-const UserContentContext = createContext(null)
-
-function readStorage() {
+function readGroups() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { events: [], groups: [], myInitiative: null }
-    const parsed = JSON.parse(raw)
-    return {
-      events: parsed.events ?? [],
-      groups: parsed.groups ?? [],
-      myInitiative: parsed.myInitiative ?? null,
-    }
+    const raw = localStorage.getItem(GROUPS_KEY)
+    return raw ? JSON.parse(raw) : []
   } catch {
-    return { events: [], groups: [], myInitiative: null }
+    return []
   }
 }
 
+const UserContentContext = createContext(null)
+
 export function UserContentProvider({ children }) {
-  const [state, setState] = useState(readStorage)
+  const { user } = useAuth()
+  const [groups, setGroups] = useState(readGroups)
+  const [myEvents, setMyEvents] = useState([])
+  const [myInitiative, setMyInitiativeState] = useState(null)
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      localStorage.setItem(GROUPS_KEY, JSON.stringify(groups))
     } catch {
-      // localStorage puede fallar en modo privado — no es crítico, se pierde al recargar.
+      // localStorage puede fallar en modo privado — no es crítico.
     }
-  }, [state])
+  }, [groups])
 
-  const addEvent = (event) => {
-    setState((s) => ({ ...s, events: [...s.events, event] }))
+  useEffect(() => {
+    if (!user) {
+      setMyEvents([])
+      setMyInitiativeState(null)
+      return
+    }
+    const eventsQuery = query(collection(db, 'events'), where('ownerUid', '==', user.uid))
+    const unsubEvents = onSnapshot(eventsQuery, (snap) => {
+      setMyEvents(snap.docs.map((d) => ({ ...d.data(), id: d.id })))
+    })
+
+    const initiativesQuery = query(collection(db, 'initiatives'), where('ownerUid', '==', user.uid))
+    const unsubInitiatives = onSnapshot(initiativesQuery, (snap) => {
+      setMyInitiativeState(snap.empty ? null : { ...snap.docs[0].data(), docId: snap.docs[0].id })
+    })
+
+    return () => {
+      unsubEvents()
+      unsubInitiatives()
+    }
+  }, [user])
+
+  const addEvent = async (event) => {
+    if (!user) return
+    await addDoc(collection(db, 'events'), { ...event, ownerUid: user.uid, createdAt: serverTimestamp() })
   }
 
-  const addGroup = (group) => {
-    setState((s) => ({ ...s, groups: [...s.groups, group] }))
-  }
+  const addGroup = (group) => setGroups((g) => [...g, group])
 
-  const setMyInitiative = (initiative) => {
-    setState((s) => ({ ...s, myInitiative: initiative }))
+  const setMyInitiative = async (initiative) => {
+    if (!user) return
+    const ref = myInitiative ? doc(db, 'initiatives', myInitiative.docId) : doc(collection(db, 'initiatives'))
+    await setDoc(ref, { ...initiative, ownerUid: user.uid, updatedAt: serverTimestamp() }, { merge: true })
   }
 
   const value = {
-    myEvents: state.events,
+    myEvents,
     addEvent,
-    myGroups: state.groups,
+    myGroups: groups,
     addGroup,
-    myInitiative: state.myInitiative,
+    myInitiative,
     setMyInitiative,
   }
 

@@ -1,39 +1,45 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { db } from '../lib/firebase.js'
 import { DEFAULT_PROFILE } from '../data/currentUser.js'
+import { useAuth } from './AuthContext.jsx'
 
-// Perfil de quien usa el dashboard. Sin backend: vive en este navegador
-// (localStorage), pero a diferencia del resto de los formularios "demo"
-// del sitio, este SÍ se guarda de verdad — es lo que alimenta la tarjeta
-// del sidebar y la página de Ajustes.
-const STORAGE_KEY = 'nexo:profile:v1'
-
+// Perfil de quien usa el dashboard. Vive en Firestore, en profiles/{uid} —
+// un documento por cuenta real. Sin sesión, se expone DEFAULT_PROFILE de
+// solo lectura para que las páginas públicas que llaman a useProfile() no
+// truenen (ej. la vista previa de "nueva iniciativa" fuera del dashboard).
 const ProfileContext = createContext(null)
 
-function readStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_PROFILE
-    const parsed = JSON.parse(raw)
-    return { ...DEFAULT_PROFILE, ...parsed }
-  } catch {
-    return DEFAULT_PROFILE
-  }
-}
-
 export function ProfileProvider({ children }) {
-  const [profile, setProfile] = useState(readStorage)
+  const { user } = useAuth()
+  const [profile, setProfile] = useState(DEFAULT_PROFILE)
+  const [profileLoading, setProfileLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
-    } catch {
-      // localStorage puede fallar en modo privado — no es crítico, se pierde al recargar.
+    if (!user) {
+      setProfile(DEFAULT_PROFILE)
+      setProfileLoading(false)
+      return
     }
-  }, [profile])
+    setProfileLoading(true)
+    const ref = doc(db, 'profiles', user.uid)
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        setProfile(snap.exists() ? { ...DEFAULT_PROFILE, ...snap.data() } : DEFAULT_PROFILE)
+        setProfileLoading(false)
+      },
+      () => setProfileLoading(false)
+    )
+    return unsub
+  }, [user])
 
-  const updateProfile = (patch) => setProfile((p) => ({ ...p, ...patch }))
+  const updateProfile = async (patch) => {
+    if (!user) return
+    await setDoc(doc(db, 'profiles', user.uid), patch, { merge: true })
+  }
 
-  const value = { profile, updateProfile }
+  const value = { profile, updateProfile, profileLoading }
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
 }
