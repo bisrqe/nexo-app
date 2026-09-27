@@ -611,7 +611,11 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .resource-title{font-weight:700; font-size:15px; color:var(--ink);}
 .resource-org{font-family:var(--mono); font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.02em;}
 .resource-desc{font-size:13.5px; color:var(--text-soft);}
-.resource-tag{align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:700; background:var(--paper-alt); color:var(--gold-ink); padding:4px 9px; border-radius:3px; margin-top:4px;}
+.resource-tag{
+  display:inline-block; align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:700;
+  background:var(--paper-alt); color:var(--gold-ink); padding:4px 9px; border-radius:3px; margin-top:4px;
+}
+a.resource-tag:hover{background:var(--gold);}
 
 .group-card{background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; display:flex; flex-direction:column; gap:10px;}
 .group-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
