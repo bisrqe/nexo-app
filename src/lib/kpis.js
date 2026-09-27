@@ -29,10 +29,12 @@ function sortedEntries(map) {
     .sort((a, b) => b.value - a.value)
 }
 
-export function computeKpis({ profiles = [], initiatives = [], events = [] }) {
+export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [] }) {
   const totalProfiles = profiles.length
   const totalInitiatives = initiatives.length
   const totalEvents = events.length
+  const totalConversations = conversations.length
+  const totalDirectMessages = conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0)
 
   let totalInterest = 0
   const connectionPairs = new Set()
@@ -125,6 +127,8 @@ export function computeKpis({ profiles = [], initiatives = [], events = [] }) {
       connections: connectionPairs.size,
       connectedPeople: connectedPeople.size,
       cities: citiesSet.size,
+      directConversations: totalConversations,
+      directMessages: totalDirectMessages,
     },
     initiativesByIndustry,
     initiativesByOds,

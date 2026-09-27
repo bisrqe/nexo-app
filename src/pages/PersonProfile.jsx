@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { getPersonBySlug } from '../data/people.js'
 import { ODS_FILTERS } from '../data/initiatives.js'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
+import { useAuth } from '../context/AuthContext.jsx'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
 
-function profileToPerson(p) {
+function profileToPerson(p, uid) {
   const odsLabel = ODS_FILTERS.find((f) => f.id === p.interests?.[0])?.label ?? ''
   return {
+    uid,
     name: p.name,
     role: p.occupation,
     location: getCityName(p.city) || p.location,
@@ -29,6 +31,8 @@ function profileToPerson(p) {
 
 export default function PersonProfile() {
   const { slug } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const mockPerson = getPersonBySlug(slug)
   const [remote, setRemote] = useState(undefined)
 
@@ -37,7 +41,7 @@ export default function PersonProfile() {
     let cancelled = false
     getDocs(query(collection(db, 'profiles'), where('username', '==', slug))).then((snap) => {
       if (cancelled) return
-      setRemote(snap.empty ? null : profileToPerson(snap.docs[0].data()))
+      setRemote(snap.empty ? null : profileToPerson(snap.docs[0].data(), snap.docs[0].id))
     })
     return () => { cancelled = true }
   }, [slug, mockPerson])
@@ -65,7 +69,8 @@ export default function PersonProfile() {
     )
   }
 
-  const { name, role, location, odsLabel, offers, looking, bio, contact, linkedin, photo } = person
+  const { uid, name, role, location, odsLabel, offers, looking, bio, contact, linkedin, photo } = person
+  const canMessage = Boolean(uid && user && uid !== user.uid)
 
   return (
     <DashboardLayout eyebrow="Personas" title="Perfil">
@@ -101,6 +106,16 @@ export default function PersonProfile() {
           <div className="contact-block">
             <span className="kicker">Contacto directo</span>
             <a href={`mailto:${contact}`} className="btn btn-gold btn-lg">{contact}</a>
+            {canMessage && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginTop: 10 }}
+                onClick={() => navigate(`/app/mensajes?to=${uid}`)}
+              >
+                Enviar mensaje →
+              </button>
+            )}
             {linkedin && (
               <a href={linkedin} target="_blank" rel="noreferrer" className="link-arrow" style={{ marginTop: 10 }}>
                 Ver LinkedIn →

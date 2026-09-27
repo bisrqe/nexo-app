@@ -9,9 +9,13 @@ export default function AdminKPIs() {
   const profiles = useFirestoreCollection('profiles')
   const initiatives = useFirestoreCollection('initiatives')
   const events = useFirestoreCollection('events')
+  const conversations = useFirestoreCollection('conversations')
   const [downloading, setDownloading] = useState(false)
 
-  const kpis = useMemo(() => computeKpis({ profiles, initiatives, events }), [profiles, initiatives, events])
+  const kpis = useMemo(
+    () => computeKpis({ profiles, initiatives, events, conversations }),
+    [profiles, initiatives, events, conversations]
+  )
   const { totals } = kpis
 
   const handleDownload = async () => {
@@ -64,6 +68,14 @@ export default function AdminKPIs() {
         <div className="kpi-stat-card">
           <span className="kpi-stat-num">{totals.cities}</span>
           <span className="kpi-stat-label">Ciudades con actividad</span>
+        </div>
+        <div className="kpi-stat-card">
+          <span className="kpi-stat-num">{totals.directConversations}</span>
+          <span className="kpi-stat-label">Chats directos iniciados</span>
+        </div>
+        <div className="kpi-stat-card">
+          <span className="kpi-stat-num">{totals.directMessages}</span>
+          <span className="kpi-stat-label">Mensajes directos enviados</span>
         </div>
       </div>
 
@@ -166,7 +178,7 @@ export default function AdminKPIs() {
       </div>
 
       <p className="kpi-footnote">
-        Nota: la mensajería directa todavía es una demo local por navegador, sin backend compartido — no se contabiliza en este panel.
+        Nota: los chats de mesas de trabajo todavía son una demo local por navegador — solo los mensajes directos entre personas (arriba) quedan guardados y se contabilizan.
       </p>
     </DashboardLayout>
   )

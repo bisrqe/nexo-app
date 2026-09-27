@@ -71,6 +71,8 @@ export async function downloadKpiPdf(kpis) {
       ['Conexiones realizadas (interesado ↔ dueño)', t.connections],
       ['Personas que interactuaron entre sí', t.connectedPeople],
       ['Ciudades con actividad', t.cities],
+      ['Chats directos iniciados', t.directConversations],
+      ['Mensajes directos enviados', t.directMessages],
     ],
   })
 
@@ -138,7 +140,7 @@ export async function downloadKpiPdf(kpis) {
   doc.setFontSize(8.5)
   doc.setTextColor(138, 144, 155)
   doc.text(
-    'Nota: la mensajería directa todavía es una demo local por navegador, sin backend compartido — no se contabiliza en este reporte.',
+    'Nota: los chats de mesas de trabajo todavía son una demo local por navegador — solo los mensajes directos entre personas se contabilizan aquí.',
     14,
     Math.min(y, 285)
   )

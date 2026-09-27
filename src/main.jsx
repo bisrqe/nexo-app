@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { SavedProvider } from './context/SavedContext.jsx'
 import { MessagesProvider } from './context/MessagesContext.jsx'
+import { DirectMessagesProvider } from './context/DirectMessagesContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { UserContentProvider } from './context/UserContentContext.jsx'
 import { ProfileProvider } from './context/ProfileContext.jsx'
@@ -18,9 +19,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <ProfileProvider>
             <SavedProvider>
               <MessagesProvider>
-                <UserContentProvider>
-                  <App />
-                </UserContentProvider>
+                <DirectMessagesProvider>
+                  <UserContentProvider>
+                    <App />
+                  </UserContentProvider>
+                </DirectMessagesProvider>
               </MessagesProvider>
             </SavedProvider>
           </ProfileProvider>

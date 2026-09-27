@@ -36,5 +36,35 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
     }
+
+    // Chat directo entre dos cuentas. El id del documento es "uidA_uidB"
+    // (ordenado), así que solo puede existir una conversación por par de
+    // personas. Nadie fuera de esas dos puede leerla ni escribirla; una
+    // vez creada, no se puede cambiar quiénes son sus participantes, solo
+    // los campos de "último mensaje" que muestra la lista de chats.
+    match /conversations/{convId} {
+      // resource == null cuando el doc todavía no existe (se está
+      // comprobando si ya hay conversación con esa persona antes de
+      // crearla) — sin ese caso, leer un id que no existe truena en vez
+      // de regresar "no existe". La cuenta admin (mismo correo que
+      // ADMIN_EMAILS en src/data/admins.js) puede leer todas para el
+      // panel de KPIs — nunca puede leer los mensajes en sí (ver abajo).
+      allow read: if request.auth != null &&
+        (resource == null || request.auth.uid in resource.data.participants ||
+         request.auth.token.email == 'bismarck@bisrqe.com');
+      allow create: if request.auth != null &&
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants.size() == 2;
+      allow update: if request.auth != null && request.auth.uid in resource.data.participants &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'lastMessage', 'lastSenderUid', 'messageCount']);
+
+      match /messages/{msgId} {
+        allow read: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow create: if request.auth != null &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants &&
+          request.resource.data.senderUid == request.auth.uid;
+      }
+    }
   }
 }
