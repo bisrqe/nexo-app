@@ -8,7 +8,7 @@ import { useGroups } from '../context/GroupsContext.jsx'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { kindFor } from '../lib/initiativeKind.js'
 import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
-import { matchFaq, FAQ_FALLBACK, SUPPORT_EMAIL } from '../data/chatbotFaq.js'
+import { CHATBOT_FAQ, matchFaq, FAQ_FALLBACK, SUPPORT_EMAIL } from '../data/chatbotFaq.js'
 import nexoIconWhite from '../assets/iconotipo-blanco.png'
 
 const OUTSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Puedo orientarte sobre qué es Nexo, cómo registrar tu emprendimiento, eventos y recursos. Si necesitas algo más puntual, escríbenos directo.' }
@@ -84,6 +84,13 @@ export default function Chatbot() {
     }
   }
 
+  // Atajo para las sugerencias que aparecen junto al saludo: evita
+  // depender de matchFaq (que reconoce texto libre) cuando ya sabemos
+  // exactamente qué entrada de la FAQ corresponde.
+  const askSuggested = (entry) => {
+    setMessages((m) => [...m, { role: 'user', content: entry.prompt }, { role: 'assistant', content: entry.answer, link: entry.link }])
+  }
+
   const sendInside = async (text, history) => {
     setLoading(true)
     try {
@@ -140,6 +147,18 @@ export default function Chatbot() {
                 )}
               </div>
             ))}
+            {!isInside && messages.length === 1 && (
+              <div className="nexo-chatbot-suggestions">
+                <p className="nexo-chatbot-suggestions-label">Puedes preguntarme cosas como:</p>
+                <ul>
+                  {CHATBOT_FAQ.map((entry) => (
+                    <li key={entry.id}>
+                      <button type="button" onClick={() => askSuggested(entry)}>{entry.prompt}</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {loading && <div className="nexo-chatbot-msg nexo-chatbot-msg-assistant nexo-chatbot-typing">Escribiendo…</div>}
             <div ref={bottomRef} />
           </div>

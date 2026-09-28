@@ -5,6 +5,7 @@ import logo from '../assets/iconotipo-azul.png'
 const NAV_LINKS = [
   { to: '/', label: 'Inicio', primary: true },
   { to: '/iniciativas', label: 'Emprendimientos', primary: true },
+  { to: '/recursos', label: 'Recursos' },
   { to: '/como-funciona', label: 'Cómo funciona' },
   { to: '/nosotros', label: 'Nosotros' },
   { to: '/eventos', label: 'Eventos', primary: true },
