@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRem
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
+import MembersContacts from '../components/MembersContacts.jsx'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -33,7 +34,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   const initiative = remote
   const loading = remote === undefined
-  const isOwner = Boolean(user && initiative?.ownerUid && initiative.ownerUid === user.uid)
+  const isMember = Boolean(user && initiative?.memberUids?.includes(user.uid))
   const interested = Boolean(user && initiative?.interestedBy?.includes(user.uid))
 
   const toggleInterest = async () => {
@@ -88,7 +89,8 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   const {
     id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
-    industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact, contact, resources,
+    industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact,
+    ownerUid, memberUids, resources,
   } = initiative
 
   const body = (
@@ -135,15 +137,13 @@ export default function InitiativeDetail({ variant = 'public' }) {
           <p className="need-big">{need}</p>
         </div>
 
-        <div className="contact-block">
-          <span className="kicker">Contacto directo</span>
-          <a href={`mailto:${contact}`} className="btn btn-gold btn-lg">{contact}</a>
-          {isApp && user && !isOwner && initiative.docId && (
-            <button type="button" className={`btn ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest}>
-              {interested ? '✓ Ya no me interesa' : 'Me interesa →'}
-            </button>
-          )}
-        </div>
+        <MembersContacts ownerUid={ownerUid} memberUids={memberUids} linkToProfiles={isApp} />
+
+        {isApp && user && !isMember && initiative.docId && (
+          <button type="button" className={`btn ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest} style={{ marginTop: 16 }}>
+            {interested ? '✓ Ya no me interesa' : 'Me interesa →'}
+          </button>
+        )}
       </div>
     </div>
   )

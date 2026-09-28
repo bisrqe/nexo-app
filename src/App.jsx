@@ -29,6 +29,7 @@ import MyInitiative from './pages/MyInitiative.jsx'
 import AdminKPIs from './pages/AdminKPIs.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
 import RequireAdmin from './components/RequireAdmin.jsx'
+import Chatbot from './components/Chatbot.jsx'
 
 // React Router doesn't scroll for you. This mimics normal <a href="#x">
 // behaviour: scroll to the hash target on route change, otherwise go top.
@@ -84,6 +85,7 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Chatbot />
     </>
   )
 }

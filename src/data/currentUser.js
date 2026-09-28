@@ -19,6 +19,8 @@ export const DEFAULT_PROFILE = {
   profileType: 'emprendedor',
   industry: '',
   industryLabel: '',
+  industrySecondary: '',
+  industrySecondaryLabel: '',
   interests: [],
   linkedin: '',
   bio: '',

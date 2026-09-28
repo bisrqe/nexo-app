@@ -7,8 +7,8 @@ import InitiativeCard from '../components/InitiativeCard.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
-import { useProfile } from '../context/ProfileContext.jsx'
 import { uploadFile } from '../lib/uploads.js'
+import { labelFor } from '../lib/catalogLabel.js'
 
 const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
@@ -19,7 +19,7 @@ const EMPTY = {
   ods: 'ods4', odsOtra: '', odsSecondary: '', odsSecondaryOtra: '',
   industry: '', industryOtra: '', industrySecondary: '', industrySecondaryOtra: '',
   stage: 'Idea', desc: '', need: '',
-  collaboratorsText: '', impact: '', foundedDate: '', contact: '',
+  collaboratorsText: '', impact: '', foundedDate: '',
   resources: [],
 }
 
@@ -29,11 +29,6 @@ function slugify(str) {
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-+|-+$)/g, '') || 'emprendimiento'
-}
-
-function labelFor(list, id, otraLabel) {
-  if (id === 'otra') return otraLabel?.trim() || 'Otra'
-  return list.find((o) => o.id === id)?.label ?? ''
 }
 
 function resourceTypeFor(url) {
@@ -48,7 +43,6 @@ function resourceTypeFor(url) {
 export default function NewInitiative({ variant = 'public' }) {
   const isApp = variant === 'app'
   const { myInitiative, setMyInitiative } = useUserContent()
-  const { profile } = useProfile()
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [preview, setPreview] = useState(null)
@@ -79,7 +73,6 @@ export default function NewInitiative({ variant = 'public' }) {
         collaboratorsText: (myInitiative.collaborators || []).join(', '),
         impact: myInitiative.impact || '',
         foundedDate: myInitiative.foundedDate || '',
-        contact: myInitiative.contact || '',
         resources: myInitiative.resources || [],
       })
       setPrefilled(true)
@@ -155,7 +148,6 @@ export default function NewInitiative({ variant = 'public' }) {
       collaborators,
       impact: form.impact,
       foundedDate: form.foundedDate,
-      contact: form.contact || profile.email,
       resources: form.resources,
     }
     setPreview(built)

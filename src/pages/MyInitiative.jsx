@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
+import MembersContacts from '../components/MembersContacts.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
-import { db } from '../lib/firebase.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useProfilesByUids } from '../lib/useProfilesByUids.js'
 import { initials } from '../data/currentUser.js'
 import { getCityName } from '../data/cities.js'
 
@@ -20,21 +21,7 @@ function timeRunning(foundedDate) {
 }
 
 function InterestedPeople({ uids }) {
-  const [people, setPeople] = useState([])
-
-  useEffect(() => {
-    let cancelled = false
-    if (!uids || uids.length === 0) {
-      setPeople([])
-      return
-    }
-    Promise.all(uids.map((uid) => getDoc(doc(db, 'profiles', uid)))).then((snaps) => {
-      if (cancelled) return
-      setPeople(snaps.filter((s) => s.exists()).map((s) => ({ uid: s.id, ...s.data() })))
-    })
-    return () => { cancelled = true }
-  }, [uids])
-
+  const people = useProfilesByUids(uids)
   if (!uids || uids.length === 0) return null
 
   return (
@@ -55,8 +42,53 @@ function InterestedPeople({ uids }) {
   )
 }
 
+function AddMemberForm({ onAdd }) {
+  const [username, setUsername] = useState('')
+  const [status, setStatus] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!username.trim() || busy) return
+    setBusy(true)
+    setStatus(null)
+    const result = await onAdd(username)
+    setBusy(false)
+    if (result?.error) {
+      setStatus({ type: 'error', text: result.error })
+    } else {
+      setStatus({ type: 'ok', text: 'Cuenta ligada correctamente.' })
+      setUsername('')
+    }
+  }
+
+  return (
+    <form onSubmit={submit} style={{ marginTop: 16 }}>
+      <label className="form-field">
+        <span>Ligar otra cuenta a este emprendimiento (ej. un cofundador)</span>
+        <div className="resource-add-row">
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="@usuario"
+            disabled={busy}
+          />
+          <button type="submit" className="btn btn-ghost" disabled={busy}>{busy ? 'Ligando…' : 'Ligar cuenta'}</button>
+        </div>
+      </label>
+      {status && (
+        <p style={{ color: status.type === 'error' ? '#c0392b' : 'inherit', fontSize: 13.5, marginTop: 6 }}>
+          {status.text}
+        </p>
+      )}
+    </form>
+  )
+}
+
 export default function MyInitiative() {
-  const { myInitiative } = useUserContent()
+  const { myInitiative, addInitiativeMember, removeInitiativeMember } = useUserContent()
+  const { user } = useAuth()
 
   if (!myInitiative) {
     return (
@@ -71,10 +103,11 @@ export default function MyInitiative() {
 
   const {
     stage, title, org, city, link, odsLabel, odsSecondaryLabel, industryLabel, industrySecondaryLabel,
-    need, desc, longDesc, collaborators, impact, foundedDate, contact, interestedBy, resources,
+    need, desc, longDesc, collaborators, impact, foundedDate, ownerUid, memberUids, interestedBy, resources,
   } = myInitiative
 
   const running = timeRunning(foundedDate)
+  const isOwner = Boolean(user && ownerUid === user.uid)
 
   return (
     <DashboardLayout eyebrow="Emprendimientos" title="Mi emprendimiento">
@@ -126,11 +159,10 @@ export default function MyInitiative() {
             <p className="need-big">{need}</p>
           </div>
 
-          <div className="contact-block">
-            <span className="kicker">Contacto</span>
-            <a href={`mailto:${contact}`} className="btn btn-gold btn-lg">{contact}</a>
-          </div>
+          <MembersContacts ownerUid={ownerUid} memberUids={memberUids} onRemove={removeInitiativeMember} canManage={isOwner} linkToProfiles />
         </div>
+
+        {isOwner && <AddMemberForm onAdd={addInitiativeMember} />}
 
         <InterestedPeople uids={interestedBy} />
 

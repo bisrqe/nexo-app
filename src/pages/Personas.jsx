@@ -21,7 +21,7 @@ function profileToPerson(p) {
     location: getCityName(p.city) || p.location,
     city: p.city,
     odsLabel,
-    offers: [p.industryLabel].filter(Boolean),
+    offers: [p.industryLabel, p.industrySecondaryLabel].filter(Boolean),
     looking: p.bio,
     bio: p.bio,
     contact: p.email,

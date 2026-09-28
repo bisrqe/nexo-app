@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
+import { labelFor } from '../lib/catalogLabel.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -29,6 +30,9 @@ const EMPTY = {
   city: '',
   profileType: 'emprendedor',
   industry: '',
+  industryOtra: '',
+  industrySecondary: '',
+  industrySecondaryOtra: '',
   interests: [],
   linkedin: '',
   bio: '',
@@ -69,7 +73,10 @@ export default function Register() {
     setLoading(true)
     try {
       const cred = await signUp(form.email, form.password)
-      const industryLabel = INDUSTRY_OPTIONS.find((i) => i.id === form.industry)?.label ?? ''
+      const industryLabel = labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra)
+      const industrySecondaryLabel = form.industrySecondary
+        ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
+        : ''
       await setDoc(doc(db, 'profiles', cred.user.uid), {
         name: form.name,
         username: form.username,
@@ -82,6 +89,8 @@ export default function Register() {
         profileType: form.profileType,
         industry: form.industry,
         industryLabel,
+        industrySecondary: form.industrySecondary,
+        industrySecondaryLabel,
         interests: form.interests,
         linkedin: form.linkedin,
         bio: form.bio,
@@ -188,15 +197,39 @@ export default function Register() {
               </label>
             </div>
 
-            <label className="form-field">
-              <span>Industria a la que perteneces</span>
-              <select name="industry" value={form.industry} onChange={handleChange}>
-                <option value="">Selecciona una industria</option>
-                {INDUSTRY_OPTIONS.map((i) => (
-                  <option key={i.id} value={i.id}>{i.label}</option>
-                ))}
-              </select>
-            </label>
+            <div className="form-row">
+              <label className="form-field">
+                <span>Industria a la que perteneces</span>
+                <select name="industry" value={form.industry} onChange={handleChange}>
+                  <option value="">Selecciona una industria</option>
+                  {INDUSTRY_OPTIONS.map((i) => (
+                    <option key={i.id} value={i.id}>{i.label}</option>
+                  ))}
+                </select>
+              </label>
+              {form.industry === 'otra' ? (
+                <label className="form-field">
+                  <span>Especifica la industria</span>
+                  <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                </label>
+              ) : (
+                <label className="form-field">
+                  <span>Segunda industria (opcional)</span>
+                  <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
+                    <option value="">Ninguna</option>
+                    {INDUSTRY_OPTIONS.filter((i) => i.id !== form.industry).map((i) => (
+                      <option key={i.id} value={i.id}>{i.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+            {form.industrySecondary === 'otra' && (
+              <label className="form-field">
+                <span>Especifica la segunda industria</span>
+                <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+              </label>
+            )}
 
             <label className="form-field">
               <span>ODS de interés</span>

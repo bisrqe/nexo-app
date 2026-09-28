@@ -11,15 +11,24 @@ service cloud.firestore {
     }
 
     // Iniciativas — dossier público (lo ve cualquier visitante, con o sin
-    // cuenta). Solo el dueño puede crear/editar/borrar, salvo el campo
-    // interestedBy: cualquier cuenta puede agregar o quitar únicamente su
-    // propio uid ahí (el botón "Me interesa"). .get(field, default) evita
-    // truene si la iniciativa todavía no tiene ese campo.
+    // cuenta). El dueño puede editar/borrar cualquier cosa, incluyendo a
+    // quién más está ligado (memberUids) — así es como se agrega a un
+    // cofundador con cuenta distinta al mismo emprendimiento. Cualquier
+    // otro miembro ya ligado puede editar el contenido, pero no puede
+    // tocar ownerUid ni memberUids (eso solo lo mueve el dueño). Aparte,
+    // cualquier cuenta puede agregar o quitar únicamente su propio uid en
+    // interestedBy (el botón "Me interesa"). .get(field, default) evita
+    // que truene si la iniciativa todavía no tiene ese campo.
     match /initiatives/{id} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
       allow update: if request.auth != null && (
         resource.data.ownerUid == request.auth.uid ||
+        (
+          request.auth.uid in resource.data.get('memberUids', []) &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.get('memberUids', []) == resource.data.get('memberUids', [])
+        ) ||
         (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['interestedBy']) &&
           (request.auth.uid in request.resource.data.get('interestedBy', [])) !=

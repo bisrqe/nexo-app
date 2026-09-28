@@ -19,7 +19,7 @@ function profileToPerson(p, uid) {
     role: p.occupation,
     location: getCityName(p.city) || p.location,
     odsLabel,
-    offers: [p.industryLabel].filter(Boolean),
+    offers: [p.industryLabel, p.industrySecondaryLabel].filter(Boolean),
     looking: p.bio,
     bio: p.bio,
     contact: p.email,

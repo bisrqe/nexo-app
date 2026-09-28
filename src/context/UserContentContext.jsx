@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { collection, doc, onSnapshot, query, where, addDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import {
+  collection, doc, onSnapshot, query, where, addDoc, setDoc, updateDoc,
+  getDocs, arrayUnion, arrayRemove, serverTimestamp,
+} from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 
@@ -39,7 +42,7 @@ export function UserContentProvider({ children }) {
       setMyInitiativeState(null)
       return
     }
-    const initiativesQuery = query(collection(db, 'initiatives'), where('ownerUid', '==', user.uid))
+    const initiativesQuery = query(collection(db, 'initiatives'), where('memberUids', 'array-contains', user.uid))
     const unsubInitiatives = onSnapshot(initiativesQuery, (snap) => {
       setMyInitiativeState(snap.empty ? null : { ...snap.docs[0].data(), docId: snap.docs[0].id })
     })
@@ -54,10 +57,40 @@ export function UserContentProvider({ children }) {
 
   const addGroup = (group) => setGroups((g) => [...g, group])
 
+  // Cualquier miembro (no solo el dueño) puede editar el contenido del
+  // emprendimiento — por eso solo se fija ownerUid/memberUids al crearlo;
+  // en ediciones posteriores no se vuelven a mandar, para no pisarlos con
+  // los del uid de quien esté editando en ese momento.
   const setMyInitiative = async (initiative) => {
     if (!user) return
     const ref = myInitiative ? doc(db, 'initiatives', myInitiative.docId) : doc(collection(db, 'initiatives'))
-    await setDoc(ref, { ...initiative, ownerUid: user.uid, updatedAt: serverTimestamp() }, { merge: true })
+    const patch = { ...initiative, updatedAt: serverTimestamp() }
+    if (!myInitiative) {
+      patch.ownerUid = user.uid
+      patch.memberUids = [user.uid]
+    }
+    await setDoc(ref, patch, { merge: true })
+  }
+
+  // Ligar una cuenta distinta (ej. un cofundador) al mismo emprendimiento
+  // — solo el dueño puede hacerlo, buscando por @usuario.
+  const addInitiativeMember = async (username) => {
+    if (!user || !myInitiative || myInitiative.ownerUid !== user.uid) {
+      return { error: 'Solo el dueño del emprendimiento puede agregar personas.' }
+    }
+    const clean = (username || '').trim().replace(/^@/, '')
+    if (!clean) return { error: 'Escribe un nombre de usuario.' }
+    const snap = await getDocs(query(collection(db, 'profiles'), where('username', '==', clean)))
+    if (snap.empty) return { error: 'No encontramos ninguna cuenta con ese usuario.' }
+    const uid = snap.docs[0].id
+    if ((myInitiative.memberUids || []).includes(uid)) return { error: 'Esa cuenta ya está ligada a este emprendimiento.' }
+    await updateDoc(doc(db, 'initiatives', myInitiative.docId), { memberUids: arrayUnion(uid) })
+    return { ok: true }
+  }
+
+  const removeInitiativeMember = async (uid) => {
+    if (!user || !myInitiative || myInitiative.ownerUid !== user.uid || uid === myInitiative.ownerUid) return
+    await updateDoc(doc(db, 'initiatives', myInitiative.docId), { memberUids: arrayRemove(uid) })
   }
 
   const value = {
@@ -66,6 +99,8 @@ export function UserContentProvider({ children }) {
     addGroup,
     myInitiative,
     setMyInitiative,
+    addInitiativeMember,
+    removeInitiativeMember,
   }
 
   return <UserContentContext.Provider value={value}>{children}</UserContentContext.Provider>
