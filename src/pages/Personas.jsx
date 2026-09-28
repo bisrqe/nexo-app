@@ -38,7 +38,7 @@ function profileToPerson(p) {
 export default function Personas() {
   const { profile } = useProfile()
   const { user } = useAuth()
-  const realProfiles = useFirestoreCollection('profiles')
+  const [realProfiles] = useFirestoreCollection('profiles')
   const [query, setQuery] = useState('')
   const [showAllCities, setShowAllCities] = useState(false)
 

@@ -16,9 +16,9 @@ function formatDate(dateStr) {
 
 export default function Dashboard() {
   const { profile } = useProfile()
-  const allInitiatives = useFirestoreCollection('initiatives')
-  const realEvents = useFirestoreCollection('events')
-  const allProfiles = useFirestoreCollection('profiles')
+  const [allInitiatives, initiativesLoading] = useFirestoreCollection('initiatives')
+  const [realEvents, eventsLoading] = useFirestoreCollection('events')
+  const [allProfiles] = useFirestoreCollection('profiles')
   const { groups } = useGroups()
   const [showAllCities, setShowAllCities] = useState(false)
 
@@ -42,14 +42,16 @@ export default function Dashboard() {
   }, [allEvents, profile, showAllCities])
 
   const rankedGroups = useMemo(() => {
-    const ranked = rankForProfile(groups, profile)
-    return (ranked.length > 0 ? ranked : groups).slice(0, 3)
-  }, [groups, profile])
+    const pool = groups.filter(inMyCity)
+    const ranked = rankForProfile(pool, profile)
+    return (ranked.length > 0 ? ranked : pool).slice(0, 3)
+  }, [groups, profile, showAllCities])
 
   const rankedMentors = useMemo(() => {
     if (profile.profileType === 'mentor') return []
-    return rankMentorsForProfile(allProfiles.filter((p) => p.profileType === 'mentor'), profile, 3)
-  }, [allProfiles, profile])
+    const pool = allProfiles.filter((p) => p.profileType === 'mentor').filter(inMyCity)
+    return rankMentorsForProfile(pool, profile, 3)
+  }, [allProfiles, profile, showAllCities])
 
   return (
     <DashboardLayout
@@ -70,8 +72,10 @@ export default function Dashboard() {
 
       <div className="dash-grid">
         <div className="dash-col">
-          <h3 style={{ marginBottom: 16 }}>Emprendimientos afines a ti</h3>
-          {rankedInitiatives.length === 0 ? (
+          <h2 className="dash-col-heading">Emprendimientos afines a ti</h2>
+          {initiativesLoading ? (
+            <p className="auth-sub">Cargando…</p>
+          ) : rankedInitiatives.length === 0 ? (
             <div className="empty-state">
               <p>Todavía no hay emprendimientos en tu zona — sé quien abra el primero.</p>
               {!PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType) && (
@@ -120,12 +124,14 @@ export default function Dashboard() {
 
           <div className="dash-widget">
             <h3>Eventos afines a ti</h3>
-            {rankedEvents.length === 0 ? (
+            {eventsLoading ? (
+              <p className="auth-sub">Cargando…</p>
+            ) : rankedEvents.length === 0 ? (
               <p className="dash-empty">Todavía no hay eventos. <Link to="/app/eventos" className="link-arrow">Ver eventos →</Link></p>
             ) : (
               <div className="dash-list">
                 {rankedEvents.map((e) => (
-                  <div className="dash-list-item" key={e.docId}>
+                  <div className="dash-list-item dash-list-item-static" key={e.docId}>
                     <span>{e.title}</span>
                     <span>{formatDate(e.date)}</span>
                   </div>

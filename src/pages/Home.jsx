@@ -12,8 +12,8 @@ function formatEventDate(dateStr) {
 }
 
 export default function Home() {
-  const initiatives = useFirestoreCollection('initiatives')
-  const events = useFirestoreCollection('events')
+  const [initiatives] = useFirestoreCollection('initiatives')
+  const [events] = useFirestoreCollection('events')
 
   const stats = useMemo(() => {
     const cities = new Set(initiatives.map((i) => i.city).filter(Boolean))

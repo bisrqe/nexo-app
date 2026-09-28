@@ -5,7 +5,7 @@ import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
 export default function IniciativasPublicas() {
-  const allInitiatives = useFirestoreCollection('initiatives')
+  const [allInitiatives] = useFirestoreCollection('initiatives')
 
   return (
     <>

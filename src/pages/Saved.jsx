@@ -13,8 +13,8 @@ export default function Saved() {
   const { profile } = useProfile()
   const { user } = useAuth()
   const { groups } = useGroups()
-  const initiatives = useFirestoreCollection('initiatives')
-  const events = useFirestoreCollection('events')
+  const [initiatives] = useFirestoreCollection('initiatives')
+  const [events] = useFirestoreCollection('events')
 
   const savedInitiatives = initiatives.filter((i) => saved.initiatives.includes(i.slug))
   const savedEvents = events.filter((e) => user && e.attendees?.includes(user.uid))

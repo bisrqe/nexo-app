@@ -6,11 +6,11 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { computeKpis } from '../lib/kpis.js'
 
 export default function AdminKPIs() {
-  const profiles = useFirestoreCollection('profiles')
-  const initiatives = useFirestoreCollection('initiatives')
-  const events = useFirestoreCollection('events')
-  const conversations = useFirestoreCollection('conversations')
-  const groups = useFirestoreCollection('groups')
+  const [profiles] = useFirestoreCollection('profiles')
+  const [initiatives] = useFirestoreCollection('initiatives')
+  const [events] = useFirestoreCollection('events')
+  const [conversations] = useFirestoreCollection('conversations')
+  const [groups] = useFirestoreCollection('groups')
   const [downloading, setDownloading] = useState(false)
 
   const kpis = useMemo(

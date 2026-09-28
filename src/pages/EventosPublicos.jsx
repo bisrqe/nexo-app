@@ -10,7 +10,7 @@ function formatDate(dateStr) {
 }
 
 export default function EventosPublicos() {
-  const realEvents = useFirestoreCollection('events')
+  const [realEvents] = useFirestoreCollection('events')
   const events = useMemo(() => [...realEvents].sort((a, b) => a.date.localeCompare(b.date)), [realEvents])
 
   return (

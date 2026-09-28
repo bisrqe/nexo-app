@@ -7,7 +7,7 @@ import { getCityName } from '../data/cities.js'
 
 export default function Iniciativas() {
   const { profile } = useProfile()
-  const allInitiatives = useFirestoreCollection('initiatives')
+  const [allInitiatives] = useFirestoreCollection('initiatives')
   const [showAllCities, setShowAllCities] = useState(false)
 
   const visible = useMemo(

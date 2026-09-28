@@ -21,7 +21,7 @@ export default function Eventos() {
   const { user } = useAuth()
   const { addEvent } = useUserContent()
   const { profile } = useProfile()
-  const realEvents = useFirestoreCollection('events')
+  const [realEvents] = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
   const [onlyMyCity, setOnlyMyCity] = useState(Boolean(profile.city))
