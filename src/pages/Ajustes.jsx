@@ -6,6 +6,7 @@ import { initials, calculateAge } from '../data/currentUser.js'
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
+import { labelFor } from '../lib/catalogLabel.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -40,24 +41,30 @@ function resizePhoto(file) {
 export default function Ajustes() {
   const { isDark, toggleTheme } = useTheme()
   const { profile, updateProfile } = useProfile()
-  const [form, setForm] = useState(profile)
+  const [form, setForm] = useState({
+    ...profile,
+    industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
+    industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
+  })
   const [saved, setSaved] = useState(false)
 
   // Si el perfil cambia desde otro lado (poco probable, pero por si acaso
   // hay más de una pestaña abierta), refleja el valor guardado.
-  useEffect(() => setForm(profile), [profile])
+  useEffect(() => setForm({
+    ...profile,
+    industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
+    industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
+  }), [profile])
 
   const handleChange = (e) => {
     setSaved(false)
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  const toggleInterest = (id) => {
+  const handleOdsChange = (e) => {
     setSaved(false)
-    setForm((f) => ({
-      ...f,
-      interests: f.interests.includes(id) ? f.interests.filter((x) => x !== id) : [...f.interests, id],
-    }))
+    const value = e.target.value
+    setForm((f) => ({ ...f, interests: value ? [value] : [] }))
   }
 
   const handlePhotoChange = async (e) => {
@@ -83,7 +90,18 @@ export default function Ajustes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await updateProfile(form)
+    const { industryOtra, industrySecondaryOtra, ...rest } = form
+    const isEmprendedor = profile.profileType === 'emprendedor'
+    await updateProfile({
+      ...rest,
+      industry: isEmprendedor ? form.industry : '',
+      industryLabel: isEmprendedor ? labelFor(INDUSTRY_OPTIONS, form.industry, industryOtra) : '',
+      industrySecondary: isEmprendedor ? form.industrySecondary : '',
+      industrySecondaryLabel: isEmprendedor && form.industrySecondary
+        ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, industrySecondaryOtra)
+        : '',
+      profileType: profile.profileType,
+    })
     setSaved(true)
   }
 
@@ -129,9 +147,13 @@ export default function Ajustes() {
               <span className="locked-field-label">Género</span>
               <span className="locked-field-value">{genderLabel}</span>
             </div>
+            <div className="locked-field">
+              <span className="locked-field-label">Tipo de perfil</span>
+              <span className="locked-field-value">{PROFILE_TYPES.find((p) => p.id === profile.profileType)?.label ?? profile.profileType}</span>
+            </div>
           </div>
           <p className="settings-card-desc" style={{ marginTop: -14 }}>
-            Nombre, edad y género se definieron al registrarte y no se pueden cambiar aquí.
+            Nombre, edad, género y tipo de perfil se definieron al registrarte y no se pueden cambiar aquí.
           </p>
 
           <label className="form-field">
@@ -166,55 +188,95 @@ export default function Ajustes() {
             </label>
           </div>
 
-          <div className="form-row">
-            <label className="form-field">
-              <span>Ciudad / región</span>
-              <select name="city" value={form.city} onChange={handleChange}>
-                <option value="">Selecciona tu ciudad</option>
-                {CITIES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Tipo de perfil</span>
-              <select name="profileType" value={form.profileType} onChange={handleChange}>
-                {PROFILE_TYPES.map((p) => (
-                  <option key={p.id} value={p.id}>{p.label}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
           <label className="form-field">
-            <span>Industria a la que perteneces</span>
-            <select
-              name="industry"
-              value={form.industry}
-              onChange={(e) => {
-                setSaved(false)
-                const industryLabel = INDUSTRY_OPTIONS.find((i) => i.id === e.target.value)?.label ?? ''
-                setForm((f) => ({ ...f, industry: e.target.value, industryLabel }))
-              }}
-            >
-              <option value="">Selecciona una industria</option>
-              {INDUSTRY_OPTIONS.map((i) => (
-                <option key={i.id} value={i.id}>{i.label}</option>
+            <span>Ciudad / región</span>
+            <select name="city" value={form.city} onChange={handleChange}>
+              <option value="">Selecciona tu ciudad</option>
+              {CITIES.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </label>
 
-          <label className="form-field">
-            <span>Causas / ODS de interés</span>
-            <div className="checkbox-group">
-              {ODS_OPTIONS.map((o) => (
-                <label key={o.id} className={`checkbox-pill ${form.interests.includes(o.id) ? 'checked' : ''}`}>
-                  <input type="checkbox" checked={form.interests.includes(o.id)} onChange={() => toggleInterest(o.id)} />
-                  {o.label}
+          {profile.profileType === 'emprendedor' && (
+            <>
+              <div className="form-row">
+                <label className="form-field">
+                  <span>Industria a la que perteneces</span>
+                  <select name="industry" value={form.industry} onChange={handleChange}>
+                    <option value="">Selecciona una industria</option>
+                    {INDUSTRY_OPTIONS.map((i) => (
+                      <option key={i.id} value={i.id}>{i.label}</option>
+                    ))}
+                  </select>
                 </label>
-              ))}
-            </div>
-          </label>
+                {form.industry === 'otra' ? (
+                  <label className="form-field">
+                    <span>Especifica la industria</span>
+                    <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                  </label>
+                ) : (
+                  <label className="form-field">
+                    <span>Segunda industria (opcional)</span>
+                    <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
+                      <option value="">Ninguna</option>
+                      {INDUSTRY_OPTIONS.filter((i) => i.id !== form.industry).map((i) => (
+                        <option key={i.id} value={i.id}>{i.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              {form.industrySecondary === 'otra' && (
+                <label className="form-field">
+                  <span>Especifica la segunda industria</span>
+                  <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                </label>
+              )}
+            </>
+          )}
+
+          {(profile.profileType === 'estudiante' || profile.profileType === 'voluntario') && (
+            <label className="form-field">
+              <span>{profile.profileType === 'estudiante' ? 'ODS que ataca tu iniciativa' : 'ODS de tu interés'}</span>
+              <select value={form.interests?.[0] || ''} onChange={handleOdsChange}>
+                <option value="">Selecciona un ODS</option>
+                {ODS_OPTIONS.filter((o) => o.id !== 'otra').map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {profile.profileType === 'mentor' && (
+            <>
+              <label className="form-field">
+                <span>Área de expertise</span>
+                <input type="text" name="expertise" value={form.expertise} onChange={handleChange} placeholder="Ej. Finanzas para startups, marketing digital" />
+              </label>
+              <label className="form-field">
+                <span>¿En qué puedes brindar asesoría?</span>
+                <textarea name="advisoryOffer" rows={3} value={form.advisoryOffer} onChange={handleChange} />
+              </label>
+            </>
+          )}
+
+          {profile.profileType === 'organizacion' && (
+            <>
+              <label className="form-field">
+                <span>Causa que atiende tu institución/organización</span>
+                <input type="text" name="cause" value={form.cause} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+              </label>
+              <label className="form-field">
+                <span>¿Qué hace tu institución/organización?</span>
+                <textarea name="orgActivity" rows={3} value={form.orgActivity} onChange={handleChange} />
+              </label>
+              <label className="form-field">
+                <span>¿A qué público atienden?</span>
+                <input type="text" name="orgAudience" value={form.orgAudience} onChange={handleChange} placeholder="Ej. Estudiantes universitarios de últimos semestres" />
+              </label>
+            </>
+          )}
 
           <label className="form-field">
             <span>LinkedIn u otra red</span>

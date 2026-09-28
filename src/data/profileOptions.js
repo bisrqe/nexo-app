@@ -4,8 +4,8 @@
 
 export const PROFILE_TYPES = [
   { id: 'emprendedor', label: 'Emprendedor/a' },
+  { id: 'estudiante', label: 'Estudiante' },
   { id: 'mentor', label: 'Mentor/a' },
-  { id: 'inversionista', label: 'Inversionista' },
   { id: 'voluntario', label: 'Voluntario/a' },
   { id: 'organizacion', label: 'Institución / organización' },
 ]

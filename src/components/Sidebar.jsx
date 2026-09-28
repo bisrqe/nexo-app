@@ -6,16 +6,23 @@ import { initials } from '../data/currentUser.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
-const NAV = [
+const BASE_NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
   { to: '/app/iniciativas', label: 'Emprendimientos', icon: 'compass' },
-  { to: '/app/mi-iniciativa', label: 'Mi emprendimiento', icon: 'flag' },
   { to: '/app/personas', label: 'Personas', icon: 'users' },
   { to: '/app/recursos', label: 'Recursos', icon: 'box' },
   { to: '/app/comunidad', label: 'Comunidad', icon: 'chat' },
   { to: '/app/mensajes', label: 'Mensajes', icon: 'mail' },
   { to: '/app/eventos', label: 'Eventos', icon: 'calendar' },
 ]
+
+// Mentores y voluntarios no registran un emprendimiento/iniciativa propio
+// — ese nav item ni aparece para ellos.
+const MY_ITEM_LABEL = {
+  emprendedor: 'Mi emprendimiento',
+  estudiante: 'Mi iniciativa',
+  organizacion: 'Mi institución',
+}
 
 export default function Sidebar() {
   const location = useLocation()
@@ -24,7 +31,11 @@ export default function Sidebar() {
   const { signOutUser, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
 
-  const navItems = isAdmin ? [...NAV, { to: '/app/admin', label: 'Panel de KPIs', icon: 'chart' }] : NAV
+  const myItemLabel = MY_ITEM_LABEL[profile.profileType]
+  const nav = myItemLabel
+    ? [...BASE_NAV.slice(0, 2), { to: '/app/mi-iniciativa', label: myItemLabel, icon: 'flag' }, ...BASE_NAV.slice(2)]
+    : BASE_NAV
+  const navItems = isAdmin ? [...nav, { to: '/app/admin', label: 'Panel de KPIs', icon: 'chart' }] : nav
 
   const isActive = (to) => location.pathname === to
 

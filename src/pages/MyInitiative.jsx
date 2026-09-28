@@ -4,9 +4,11 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import MembersContacts from '../components/MembersContacts.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 import { useProfilesByUids } from '../lib/useProfilesByUids.js'
 import { initials } from '../data/currentUser.js'
 import { getCityName } from '../data/cities.js'
+import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
 function timeRunning(foundedDate) {
   if (!foundedDate) return null
@@ -42,7 +44,7 @@ function InterestedPeople({ uids }) {
   )
 }
 
-function AddMemberForm({ onAdd }) {
+function AddMemberForm({ onAdd, noun }) {
   const [username, setUsername] = useState('')
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -65,7 +67,7 @@ function AddMemberForm({ onAdd }) {
   return (
     <form onSubmit={submit} style={{ marginTop: 16 }}>
       <label className="form-field">
-        <span>Ligar otra cuenta a este emprendimiento (ej. un cofundador)</span>
+        <span>Ligar otra cuenta a {noun === 'institución/organización' ? 'esta' : 'este'} {noun} (ej. un cofundador)</span>
         <div className="resource-add-row">
           <input
             type="text"
@@ -89,13 +91,29 @@ function AddMemberForm({ onAdd }) {
 export default function MyInitiative() {
   const { myInitiative, addInitiativeMember, removeInitiativeMember } = useUserContent()
   const { user } = useAuth()
+  const { profile } = useProfile()
 
   if (!myInitiative) {
+    if (PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)) {
+      return (
+        <DashboardLayout eyebrow="Emprendimientos" title="No aplica para tu tipo de perfil">
+          <div className="empty-state">
+            <p>
+              {profile.profileType === 'mentor'
+                ? 'Como mentor/a no registras un emprendimiento propio — tu área de expertise ya está en tu perfil, para que otros te encuentren.'
+                : 'Como voluntario/a no registras un emprendimiento propio — puedes explorar el catálogo y contactar a quienes sí tienen uno.'}
+            </p>
+            <Link to="/app/iniciativas" className="btn btn-primary" style={{ marginTop: 16 }}>Explorar emprendimientos →</Link>
+          </div>
+        </DashboardLayout>
+      )
+    }
+    const kind = kindFor(profile.profileType)
     return (
-      <DashboardLayout eyebrow="Emprendimientos" title="Mi emprendimiento" subtitle="Todavía no has registrado un emprendimiento propio.">
+      <DashboardLayout eyebrow={kind.eyebrow} title={kind.my} subtitle={`Todavía no has registrado ${kind.un} ${kind.noun} propi${kind.un === 'una' ? 'a' : 'o'}.`}>
         <div className="empty-state">
-          <p>Cuando registres un emprendimiento, va a vivir aquí — con su propio dossier y contacto.</p>
-          <Link to="/app/iniciativas/nueva" className="btn btn-primary" style={{ marginTop: 16 }}>Registrar mi emprendimiento →</Link>
+          <p>Cuando registres {kind.un} {kind.noun}, va a vivir aquí — con su propio dossier y contacto.</p>
+          <Link to="/app/iniciativas/nueva" className="btn btn-primary" style={{ marginTop: 16 }}>Registrar {kind.my.toLowerCase()} →</Link>
         </div>
       </DashboardLayout>
     )
@@ -103,14 +121,15 @@ export default function MyInitiative() {
 
   const {
     stage, title, org, city, link, odsLabel, odsSecondaryLabel, industryLabel, industrySecondaryLabel,
-    need, desc, longDesc, collaborators, impact, foundedDate, ownerUid, memberUids, interestedBy, resources,
+    need, desc, longDesc, collaborators, impact, foundedDate, ownerUid, ownerProfileType, memberUids, interestedBy, resources,
   } = myInitiative
 
   const running = timeRunning(foundedDate)
   const isOwner = Boolean(user && ownerUid === user.uid)
+  const kind = kindFor(ownerProfileType)
 
   return (
-    <DashboardLayout eyebrow="Emprendimientos" title="Mi emprendimiento">
+    <DashboardLayout eyebrow={kind.eyebrow} title={kind.my}>
       <div className="in">
         <div className="detail-head">
           <div className="cat-id">{stage?.toUpperCase()}</div>
@@ -162,12 +181,12 @@ export default function MyInitiative() {
           <MembersContacts ownerUid={ownerUid} memberUids={memberUids} onRemove={removeInitiativeMember} canManage={isOwner} linkToProfiles />
         </div>
 
-        {isOwner && <AddMemberForm onAdd={addInitiativeMember} />}
+        {isOwner && <AddMemberForm onAdd={addInitiativeMember} noun={kind.noun} />}
 
         <InterestedPeople uids={interestedBy} />
 
         <div className="form-actions" style={{ marginTop: 32 }}>
-          <Link to="/app/iniciativas/nueva" className="btn btn-ghost">Editar mi emprendimiento</Link>
+          <Link to="/app/iniciativas/nueva" className="btn btn-ghost">Editar {kind.my.toLowerCase()}</Link>
         </div>
       </div>
     </DashboardLayout>

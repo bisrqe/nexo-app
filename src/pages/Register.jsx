@@ -33,7 +33,12 @@ const EMPTY = {
   industryOtra: '',
   industrySecondary: '',
   industrySecondaryOtra: '',
-  interests: [],
+  odsInterest: '',
+  expertise: '',
+  advisoryOffer: '',
+  cause: '',
+  orgActivity: '',
+  orgAudience: '',
   linkedin: '',
   bio: '',
 }
@@ -60,21 +65,15 @@ export default function Register() {
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
-  const toggleInterest = (id) => {
-    setForm((f) => ({
-      ...f,
-      interests: f.interests.includes(id) ? f.interests.filter((x) => x !== id) : [...f.interests, id],
-    }))
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       const cred = await signUp(form.email, form.password)
-      const industryLabel = labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra)
-      const industrySecondaryLabel = form.industrySecondary
+      const isEmprendedor = form.profileType === 'emprendedor'
+      const industryLabel = isEmprendedor ? labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra) : ''
+      const industrySecondaryLabel = isEmprendedor && form.industrySecondary
         ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
         : ''
       await setDoc(doc(db, 'profiles', cred.user.uid), {
@@ -87,11 +86,16 @@ export default function Register() {
         location: form.location,
         city: form.city,
         profileType: form.profileType,
-        industry: form.industry,
+        industry: isEmprendedor ? form.industry : '',
         industryLabel,
-        industrySecondary: form.industrySecondary,
+        industrySecondary: isEmprendedor ? form.industrySecondary : '',
         industrySecondaryLabel,
-        interests: form.interests,
+        interests: form.odsInterest ? [form.odsInterest] : [],
+        expertise: form.profileType === 'mentor' ? form.expertise : '',
+        advisoryOffer: form.profileType === 'mentor' ? form.advisoryOffer : '',
+        cause: form.profileType === 'organizacion' ? form.cause : '',
+        orgActivity: form.profileType === 'organizacion' ? form.orgActivity : '',
+        orgAudience: form.profileType === 'organizacion' ? form.orgAudience : '',
         linkedin: form.linkedin,
         bio: form.bio,
         photo: null,
@@ -163,7 +167,7 @@ export default function Register() {
               </label>
             </div>
             <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
-              Nombre, fecha de nacimiento y género no se podrán cambiar después de registrarte.
+              Nombre, fecha de nacimiento, género y tipo de perfil no se podrán cambiar después de registrarte.
             </p>
 
             <div className="form-row">
@@ -197,55 +201,95 @@ export default function Register() {
               </label>
             </div>
 
-            <div className="form-row">
+            <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
+              {{
+                emprendedor: 'Como emprendedor/a vas a poder registrar tu emprendimiento.',
+                estudiante: 'Como estudiante vas a poder registrar tu iniciativa.',
+                mentor: 'Como mentor/a no registras un emprendimiento — compartes tu área de expertise para que otros te encuentren.',
+                voluntario: 'Como voluntario/a puedes explorar y contactar emprendimientos e iniciativas, sin registrar uno propio.',
+                organizacion: 'Como institución/organización vas a poder registrar tu institución y lo que ofrece.',
+              }[form.profileType]}
+            </p>
+
+            {form.profileType === 'emprendedor' && (
+              <>
+                <div className="form-row">
+                  <label className="form-field">
+                    <span>Industria a la que perteneces</span>
+                    <select name="industry" value={form.industry} onChange={handleChange}>
+                      <option value="">Selecciona una industria</option>
+                      {INDUSTRY_OPTIONS.map((i) => (
+                        <option key={i.id} value={i.id}>{i.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {form.industry === 'otra' ? (
+                    <label className="form-field">
+                      <span>Especifica la industria</span>
+                      <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                    </label>
+                  ) : (
+                    <label className="form-field">
+                      <span>Segunda industria (opcional)</span>
+                      <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
+                        <option value="">Ninguna</option>
+                        {INDUSTRY_OPTIONS.filter((i) => i.id !== form.industry).map((i) => (
+                          <option key={i.id} value={i.id}>{i.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
+                {form.industrySecondary === 'otra' && (
+                  <label className="form-field">
+                    <span>Especifica la segunda industria</span>
+                    <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                  </label>
+                )}
+              </>
+            )}
+
+            {(form.profileType === 'estudiante' || form.profileType === 'voluntario') && (
               <label className="form-field">
-                <span>Industria a la que perteneces</span>
-                <select name="industry" value={form.industry} onChange={handleChange}>
-                  <option value="">Selecciona una industria</option>
-                  {INDUSTRY_OPTIONS.map((i) => (
-                    <option key={i.id} value={i.id}>{i.label}</option>
+                <span>{form.profileType === 'estudiante' ? 'ODS que ataca tu iniciativa' : 'ODS de tu interés'}</span>
+                <select name="odsInterest" value={form.odsInterest} onChange={handleChange}>
+                  <option value="">Selecciona un ODS</option>
+                  {ODS_OPTIONS.filter((o) => o.id !== 'otra').map((o) => (
+                    <option key={o.id} value={o.id}>{o.label}</option>
                   ))}
                 </select>
               </label>
-              {form.industry === 'otra' ? (
-                <label className="form-field">
-                  <span>Especifica la industria</span>
-                  <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
-                </label>
-              ) : (
-                <label className="form-field">
-                  <span>Segunda industria (opcional)</span>
-                  <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
-                    <option value="">Ninguna</option>
-                    {INDUSTRY_OPTIONS.filter((i) => i.id !== form.industry).map((i) => (
-                      <option key={i.id} value={i.id}>{i.label}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </div>
-            {form.industrySecondary === 'otra' && (
-              <label className="form-field">
-                <span>Especifica la segunda industria</span>
-                <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
-              </label>
             )}
 
-            <label className="form-field">
-              <span>ODS de interés</span>
-              <div className="checkbox-group">
-                {ODS_OPTIONS.map((o) => (
-                  <label key={o.id} className={`checkbox-pill ${form.interests.includes(o.id) ? 'checked' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={form.interests.includes(o.id)}
-                      onChange={() => toggleInterest(o.id)}
-                    />
-                    {o.label}
-                  </label>
-                ))}
-              </div>
-            </label>
+            {form.profileType === 'mentor' && (
+              <>
+                <label className="form-field">
+                  <span>Área de expertise</span>
+                  <input type="text" name="expertise" value={form.expertise} onChange={handleChange} placeholder="Ej. Finanzas para startups, marketing digital" />
+                </label>
+                <label className="form-field">
+                  <span>¿En qué puedes brindar asesoría?</span>
+                  <textarea name="advisoryOffer" rows={3} value={form.advisoryOffer} onChange={handleChange} placeholder="Ej. Mentoría en estrategia de precios y levantamiento de capital semilla" />
+                </label>
+              </>
+            )}
+
+            {form.profileType === 'organizacion' && (
+              <>
+                <label className="form-field">
+                  <span>Causa que atiende tu institución/organización</span>
+                  <input type="text" name="cause" value={form.cause} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                </label>
+                <label className="form-field">
+                  <span>¿Qué hace tu institución/organización?</span>
+                  <textarea name="orgActivity" rows={3} value={form.orgActivity} onChange={handleChange} placeholder="Describe brevemente a qué se dedica" />
+                </label>
+                <label className="form-field">
+                  <span>¿A qué público atienden?</span>
+                  <input type="text" name="orgAudience" value={form.orgAudience} onChange={handleChange} placeholder="Ej. Estudiantes universitarios de últimos semestres" />
+                </label>
+              </>
+            )}
 
             <label className="form-field">
               <span>LinkedIn u otra red (opcional)</span>

@@ -8,6 +8,7 @@ import MembersContacts from '../components/MembersContacts.jsx'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { kindFor } from '../lib/initiativeKind.js'
 
 // Vive en dos rutas distintas según de dónde vengas:
 //  - /iniciativas/:slug        (variant="public") — parte de la landing, con Header/Footer.
@@ -90,15 +91,19 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const {
     id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
     industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact,
-    ownerUid, memberUids, resources,
+    ownerUid, ownerProfileType, memberUids, resources,
   } = initiative
+  const kind = kindFor(ownerProfileType)
 
   const body = (
     <div className="in">
       <Link to={backTo} className="link-arrow back-link">← Volver al catálogo</Link>
 
       <div className="detail-head">
-        <div className="cat-id">N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}</div>
+        <div className="cat-id">
+          N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
+          {(ownerProfileType === 'estudiante' || ownerProfileType === 'organizacion') && ` · ${kind.Noun.toUpperCase()}`}
+        </div>
         <h1 className="detail-title">{title}</h1>
         <p className="cat-org">{org} — {getCityName(city) || location}</p>
         <div className="cat-tags">

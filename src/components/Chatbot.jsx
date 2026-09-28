@@ -1,10 +1,63 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { db } from '../lib/firebase.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
+import { useGroups } from '../context/GroupsContext.jsx'
+import { PROFILE_TYPES } from '../data/profileOptions.js'
+import { kindFor } from '../lib/initiativeKind.js'
+import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
 
 const GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Pregúntame cómo registrar tu emprendimiento, unirte a una mesa de trabajo, o cualquier otra duda sobre la plataforma.' }
 
+// Arma un resumen corto y real (nombres, no inventado) de qué le conviene
+// ver a esta cuenta ahora mismo — se manda como contexto al chatbot "de
+// adentro" para que recomiende en vez de solo explicar la plataforma. Solo
+// se llama al mandar un mensaje dentro del dashboard, no en cada render.
+async function buildInsideContext(profile, groups) {
+  const [initSnap, mentorSnap] = await Promise.all([
+    getDocs(collection(db, 'initiatives')),
+    getDocs(query(collection(db, 'profiles'), where('profileType', '==', 'mentor'))),
+  ])
+  const initiatives = initSnap.docs.map((d) => ({ ...d.data(), docId: d.id }))
+  const mentors = mentorSnap.docs.map((d) => ({ ...d.data(), docId: d.id }))
+
+  const rankedInitiatives = rankForProfile(initiatives, profile).slice(0, 4)
+  const rankedMentors = profile.profileType === 'mentor' ? [] : rankMentorsForProfile(mentors, profile, 3)
+  const rankedGroups = rankForProfile(groups, profile).slice(0, 3)
+
+  return {
+    name: profile.name,
+    profileTypeLabel: PROFILE_TYPES.find((p) => p.id === profile.profileType)?.label || profile.profileType,
+    industryLabel: profile.industryLabel,
+    cause: profile.cause || profile.expertise || '',
+    city: profile.city,
+    recommended: {
+      initiatives: rankedInitiatives.map((i) => ({
+        title: i.title,
+        kind: kindFor(i.ownerProfileType).noun,
+        tag: i.industryLabel || i.odsLabel,
+        need: (i.need || '').slice(0, 100),
+      })),
+      mentors: rankedMentors.map((m) => ({ name: m.name, expertise: (m.expertise || '').slice(0, 100) })),
+      groups: rankedGroups.map((g) => ({ name: g.name, industryLabel: g.industryLabel })),
+    },
+  }
+}
+
 // Vive montado una sola vez en App.jsx (fuera de <Routes>), así que
-// aparece igual en la landing pública y en todo el dashboard.
+// aparece igual en la landing pública y en todo el dashboard — pero se
+// comporta distinto: dentro de /app conoce el perfil real de la cuenta y
+// recomienda recursos/personas/emprendimientos concretos; fuera solo
+// orienta sobre qué es Nexo, sin datos de nadie.
 export default function Chatbot() {
+  const location = useLocation()
+  const { user } = useAuth()
+  const { profile } = useProfile()
+  const { groups } = useGroups()
+  const isInside = user && location.pathname.startsWith('/app')
+
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
@@ -26,10 +79,11 @@ export default function Chatbot() {
     setInput('')
     setLoading(true)
     try {
+      const context = isInside ? await buildInsideContext(profile, groups) : null
       const res = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, context }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Error del servidor')

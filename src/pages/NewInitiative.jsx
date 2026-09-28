@@ -7,8 +7,10 @@ import InitiativeCard from '../components/InitiativeCard.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
+import { useProfile } from '../context/ProfileContext.jsx'
 import { uploadFile } from '../lib/uploads.js'
 import { labelFor } from '../lib/catalogLabel.js'
+import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
 const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
@@ -43,6 +45,8 @@ function resourceTypeFor(url) {
 export default function NewInitiative({ variant = 'public' }) {
   const isApp = variant === 'app'
   const { myInitiative, setMyInitiative } = useUserContent()
+  const { profile } = useProfile()
+  const kind = kindFor(profile.profileType)
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [preview, setPreview] = useState(null)
@@ -157,13 +161,28 @@ export default function NewInitiative({ variant = 'public' }) {
     if (isApp) setMyInitiative(built)
   }
 
+  if (isApp && PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)) {
+    return (
+      <DashboardLayout eyebrow="Emprendimientos" title="No aplica para tu tipo de perfil">
+        <div className="empty-state">
+          <p>
+            {profile.profileType === 'mentor'
+              ? 'Como mentor/a no registras un emprendimiento propio — tu área de expertise ya está en tu perfil, para que otros te encuentren.'
+              : 'Como voluntario/a no registras un emprendimiento propio — puedes explorar el catálogo y contactar a quienes sí tienen uno.'}
+          </p>
+          <Link to="/app/iniciativas" className="btn btn-primary" style={{ marginTop: 16 }}>Explorar emprendimientos →</Link>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   const content = (
     <div className="auth-card auth-card-wide">
-      <span className="kicker">Nuevo emprendimiento</span>
+      <span className="kicker">{kind.nuevo} {kind.noun}</span>
       <h1 className="auth-title">Súmala al mapa</h1>
       <p className="auth-sub">
         {isApp
-          ? 'Este dossier queda guardado de verdad y es lo que otras personas ven cuando entran a tu emprendimiento.'
+          ? `Este dossier queda guardado de verdad y es lo que otras personas ven cuando entran a tu ${kind.noun}.`
           : 'Al enviar el formulario verás una vista previa de cómo se vería tu tarjeta en el catálogo — para publicarla de verdad necesitas una cuenta.'}
       </p>
 
@@ -176,12 +195,12 @@ export default function NewInitiative({ variant = 'public' }) {
           <div className="auth-note">
             <p>
               {isApp
-                ? 'Ya quedó guardado como tu emprendimiento — puedes verlo y editarlo desde "Mi emprendimiento" en el sidebar.'
+                ? `Ya quedó guardado como tu ${kind.noun} — puedes verlo y editarlo desde "${kind.my}" en el sidebar.`
                 : 'Para publicarla de verdad vas a necesitar una cuenta — eso llega en la siguiente etapa del proyecto.'}
             </p>
             <div className="form-actions">
               <button className="btn btn-ghost" onClick={() => setPreview(null)}>Editar</button>
-              {isApp && <button className="btn btn-primary" onClick={() => navigate('/app/mi-iniciativa')}>Ver mi emprendimiento →</button>}
+              {isApp && <button className="btn btn-primary" onClick={() => navigate('/app/mi-iniciativa')}>Ver {kind.my.toLowerCase()} →</button>}
               {!isApp && <Link to="/register" className="btn btn-primary">Crear cuenta</Link>}
             </div>
           </div>
@@ -190,7 +209,7 @@ export default function NewInitiative({ variant = 'public' }) {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-row">
             <label className="form-field">
-              <span>Nombre del emprendimiento</span>
+              <span>Nombre de{kind.el === 'la' ? ' la' : 'l'} {kind.noun}</span>
               <input type="text" name="title" required value={form.title} onChange={handleChange} placeholder="Ej. Huertos urbanos escolares" />
             </label>
             <label className="form-field">
@@ -343,7 +362,7 @@ export default function NewInitiative({ variant = 'public' }) {
             )}
             {isApp && !myInitiative?.docId && (
               <p className="settings-card-desc" style={{ marginTop: 6 }}>
-                Guarda primero tu emprendimiento para poder subir documentos o imágenes — mientras tanto puedes agregar ligas.
+                Guarda primero tu {kind.noun} para poder subir documentos o imágenes — mientras tanto puedes agregar ligas.
               </p>
             )}
             {form.resources.length > 0 && (
@@ -366,7 +385,7 @@ export default function NewInitiative({ variant = 'public' }) {
 
   if (isApp) {
     return (
-      <DashboardLayout eyebrow="Emprendimientos" title={myInitiative ? 'Editar mi emprendimiento' : 'Registrar nuevo emprendimiento'}>
+      <DashboardLayout eyebrow={kind.eyebrow} title={myInitiative ? `Editar ${kind.my.toLowerCase()}` : `Registrar ${kind.un} ${kind.noun}`}>
         {content}
       </DashboardLayout>
     )

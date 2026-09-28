@@ -13,6 +13,11 @@ function initials(name) {
 
 function profileToPerson(p) {
   const odsLabel = ODS_FILTERS.find((f) => f.id === p.interests?.[0])?.label ?? ''
+  const offers = p.profileType === 'mentor'
+    ? [p.expertise].filter(Boolean)
+    : p.profileType === 'organizacion'
+      ? [p.cause].filter(Boolean)
+      : [p.industryLabel, p.industrySecondaryLabel].filter(Boolean)
   return {
     id: p.docId,
     slug: p.username || p.docId,
@@ -21,7 +26,7 @@ function profileToPerson(p) {
     location: getCityName(p.city) || p.location,
     city: p.city,
     odsLabel,
-    offers: [p.industryLabel, p.industrySecondaryLabel].filter(Boolean),
+    offers,
     looking: p.bio,
     bio: p.bio,
     contact: p.email,

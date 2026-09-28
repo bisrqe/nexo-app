@@ -6,6 +6,7 @@ import { ODS_FILTERS } from '../data/initiatives.js'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
+import { PROFILE_TYPES } from '../data/profileOptions.js'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -13,13 +14,22 @@ function initials(name) {
 
 function profileToPerson(p, uid) {
   const odsLabel = ODS_FILTERS.find((f) => f.id === p.interests?.[0])?.label ?? ''
+  const offers = p.profileType === 'mentor'
+    ? [p.expertise].filter(Boolean)
+    : p.profileType === 'organizacion'
+      ? [p.cause].filter(Boolean)
+      : [p.industryLabel, p.industrySecondaryLabel].filter(Boolean)
   return {
     uid,
     name: p.name,
     role: p.occupation,
     location: getCityName(p.city) || p.location,
     odsLabel,
-    offers: [p.industryLabel, p.industrySecondaryLabel].filter(Boolean),
+    profileTypeLabel: PROFILE_TYPES.find((t) => t.id === p.profileType)?.label,
+    offers,
+    advisoryOffer: p.advisoryOffer,
+    orgActivity: p.orgActivity,
+    orgAudience: p.orgAudience,
     looking: p.bio,
     bio: p.bio,
     contact: p.email,
@@ -66,7 +76,10 @@ export default function PersonProfile() {
     )
   }
 
-  const { uid, name, role, location, odsLabel, offers, looking, bio, contact, linkedin, photo } = person
+  const {
+    uid, name, role, location, odsLabel, profileTypeLabel, offers, advisoryOffer, orgActivity, orgAudience,
+    looking, bio, contact, linkedin, photo,
+  } = person
   const canMessage = Boolean(uid && user && uid !== user.uid)
 
   return (
@@ -80,11 +93,17 @@ export default function PersonProfile() {
           </div>
           <h1 className="detail-title">{name}</h1>
           <p className="cat-org">{role} — {location}</p>
-          {odsLabel && <div className="cat-tags"><span>{odsLabel}</span></div>}
+          <div className="cat-tags">
+            {profileTypeLabel && <span>{profileTypeLabel}</span>}
+            {odsLabel && <span>{odsLabel}</span>}
+          </div>
         </div>
 
         <div className="detail-body">
           <p className="detail-lede">{bio}</p>
+          {advisoryOffer && <p><b>En qué puede asesorar: </b>{advisoryOffer}</p>}
+          {orgActivity && <p><b>Qué hace: </b>{orgActivity}</p>}
+          {orgAudience && <p><b>A quién atiende: </b>{orgAudience}</p>}
         </div>
 
         <div className="detail-side">

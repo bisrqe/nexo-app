@@ -5,8 +5,9 @@ import InitiativeCard from '../components/InitiativeCard.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { rankForProfile } from '../lib/recommend.js'
+import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
 import { getCityName } from '../data/cities.js'
+import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const { profile } = useProfile()
   const allInitiatives = useFirestoreCollection('initiatives')
   const realEvents = useFirestoreCollection('events')
+  const allProfiles = useFirestoreCollection('profiles')
   const { groups } = useGroups()
   const [showAllCities, setShowAllCities] = useState(false)
 
@@ -44,6 +46,11 @@ export default function Dashboard() {
     return (ranked.length > 0 ? ranked : groups).slice(0, 3)
   }, [groups, profile])
 
+  const rankedMentors = useMemo(() => {
+    if (profile.profileType === 'mentor') return []
+    return rankMentorsForProfile(allProfiles.filter((p) => p.profileType === 'mentor'), profile, 3)
+  }, [allProfiles, profile])
+
   return (
     <DashboardLayout
       eyebrow="Tu mapa"
@@ -67,7 +74,9 @@ export default function Dashboard() {
           {rankedInitiatives.length === 0 ? (
             <div className="empty-state">
               <p>Todavía no hay emprendimientos en tu zona — sé quien abra el primero.</p>
-              <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar emprendimiento →</Link>
+              {!PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType) && (
+                <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar {kindFor(profile.profileType).noun} →</Link>
+              )}
             </div>
           ) : (
             <div className="page-grid">
@@ -79,6 +88,20 @@ export default function Dashboard() {
         </div>
 
         <div className="dash-col">
+          {rankedMentors.length > 0 && (
+            <div className="dash-widget">
+              <h3>Mentores afines a ti</h3>
+              <div className="dash-list">
+                {rankedMentors.map((m) => (
+                  <Link to={`/app/personas/${m.username || m.docId}`} className="dash-list-item" key={m.docId}>
+                    <span>{m.name}</span>
+                    <span>{m.expertise}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="dash-widget">
             <h3>Mesas de trabajo afines a ti</h3>
             {rankedGroups.length === 0 ? (

@@ -2,10 +2,12 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useSaved } from '../context/SavedContext.jsx'
 import NavIcon from './NavIcon.jsx'
+import { kindFor } from '../lib/initiativeKind.js'
 
 export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true, tagMode = 'ods' }) {
-  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, need } = initiative
+  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, need, ownerProfileType } = initiative
   const tagLabel = tagMode === 'industry' ? (industryLabel || odsLabel) : odsLabel
+  const kind = kindFor(ownerProfileType)
   const { isInitiativeSaved, toggleInitiative } = useSaved()
   const isPreview = slug === 'vista-previa'
   const saved = !isPreview && isInitiativeSaved(slug)
@@ -13,7 +15,10 @@ export default function InitiativeCard({ initiative, basePath = '/iniciativas', 
   return (
     <div className="cat-card">
       <div className="cat-top-row">
-        <div className="cat-id">N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}</div>
+        <div className="cat-id">
+          N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
+          {(ownerProfileType === 'estudiante' || ownerProfileType === 'organizacion') && ` · ${kind.Noun.toUpperCase()}`}
+        </div>
         {!isPreview && allowSave && (
           <button
             className={`save-btn ${saved ? 'saved' : ''}`}

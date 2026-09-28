@@ -5,6 +5,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from './AuthContext.jsx'
+import { useProfile } from './ProfileContext.jsx'
 
 // Contenido creado por quien usa el dashboard. Las iniciativas y eventos
 // propios viven en Firestore (colecciones "initiatives" y "events",
@@ -26,6 +27,7 @@ const UserContentContext = createContext(null)
 
 export function UserContentProvider({ children }) {
   const { user } = useAuth()
+  const { profile } = useProfile()
   const [groups, setGroups] = useState(readGroups)
   const [myInitiative, setMyInitiativeState] = useState(null)
 
@@ -68,6 +70,7 @@ export function UserContentProvider({ children }) {
     if (!myInitiative) {
       patch.ownerUid = user.uid
       patch.memberUids = [user.uid]
+      patch.ownerProfileType = profile.profileType
     }
     await setDoc(ref, patch, { merge: true })
   }

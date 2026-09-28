@@ -16,6 +16,18 @@ function normalizeOds(value) {
     .filter(Boolean)
 }
 
+// Qué tipos de emprendimiento/iniciativa le conviene ver más arriba a cada
+// tipo de perfil — prioriza, no oculta: todo sigue apareciendo, esto solo
+// mueve hacia arriba lo más relevante según el principio de Nexo (recomendar
+// por perfil e intereses sin limitar la exploración del resto).
+const PROFILE_TYPE_PRIORITY = {
+  emprendedor: ['emprendedor'],
+  estudiante: ['mentor', 'emprendedor', 'estudiante'],
+  organizacion: ['estudiante'],
+  mentor: ['estudiante', 'emprendedor'],
+  voluntario: [],
+}
+
 export function scoreForProfile(item, profile) {
   if (!profile) return 0
   let score = 0
@@ -34,7 +46,40 @@ export function scoreForProfile(item, profile) {
 
   if (item.city && profile.city && item.city === profile.city) score += 2
 
+  const priority = PROFILE_TYPE_PRIORITY[profile.profileType] || []
+  if (item.ownerProfileType && priority.includes(item.ownerProfileType)) score += 2
+
+  // Un mentor busca a quién asesorar según su expertise, no ODS/industria
+  // propios (no los captura) — empareja por palabras compartidas entre su
+  // expertise y lo que la iniciativa dice que necesita o a qué se dedica.
+  if (profile.profileType === 'mentor' && profile.expertise) {
+    const expertiseWords = profile.expertise.toLowerCase().split(/\W+/).filter((w) => w.length > 3)
+    const itemText = `${item.need || ''} ${item.desc || ''} ${item.industryLabel || ''}`.toLowerCase()
+    if (expertiseWords.some((w) => itemText.includes(w))) score += 3
+  }
+
   return score
+}
+
+// Emparejar mentores no usa ods/industria (no los capturan) — se comparan
+// palabras entre su expertise/asesoría y lo que describe al perfil que
+// pregunta (industria, bio, ocupación), más la ciudad.
+export function scoreMentorForProfile(mentor, profile) {
+  let score = 0
+  const mentorText = `${mentor.expertise || ''} ${mentor.advisoryOffer || ''}`.toLowerCase()
+  const profileText = `${profile.industryLabel || ''} ${profile.bio || ''} ${profile.occupation || ''}`.toLowerCase()
+  const words = mentorText.split(/\W+/).filter((w) => w.length > 3)
+  words.forEach((w) => { if (profileText.includes(w)) score += 1 })
+  if (mentor.city && profile.city && mentor.city === profile.city) score += 2
+  return score
+}
+
+export function rankMentorsForProfile(mentors, profile, limit = 3) {
+  return mentors
+    .map((m) => ({ item: m, score: scoreMentorForProfile(m, profile) }))
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.item)
+    .slice(0, limit)
 }
 
 export function rankForProfile(items, profile, { onlyPositive = true } = {}) {
