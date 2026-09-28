@@ -120,7 +120,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
               {resources.map((r, i) => (
                 <li key={`${r.url}-${i}`}>
                   <a href={r.url} target="_blank" rel="noreferrer">
-                    {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                    {r.type === 'video' ? '▶' : r.type === 'file' ? '📎' : '🔗'} {r.label}
                   </a>
                 </li>
               ))}

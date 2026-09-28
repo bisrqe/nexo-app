@@ -111,7 +111,7 @@ export default function MyInitiative() {
                 {resources.map((r, i) => (
                   <li key={`${r.url}-${i}`}>
                     <a href={r.url} target="_blank" rel="noreferrer">
-                      {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                      {r.type === 'video' ? '▶' : r.type === 'file' ? '📎' : '🔗'} {r.label}
                     </a>
                   </li>
                 ))}

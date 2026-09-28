@@ -62,14 +62,22 @@ export function GroupsProvider({ children }) {
     await updateDoc(doc(db, 'groups', groupId), { ...patch, updatedAt: serverTimestamp() })
   }
 
-  const sendGroupMessage = async (groupId, text) => {
+  // file, si viene, es { url, name, type } (ver src/lib/uploads.js).
+  const sendGroupMessage = async (groupId, text, file) => {
     const trimmed = text.trim()
-    if (!user || !groupId || !trimmed) return
+    if (!user || !groupId || (!trimmed && !file)) return
     const batch = writeBatch(db)
     const msgRef = doc(collection(db, 'groups', groupId, 'messages'))
-    batch.set(msgRef, { senderUid: user.uid, senderName: profile.name || 'Alguien', text: trimmed, createdAt: serverTimestamp() })
+    const payload = { senderUid: user.uid, senderName: profile.name || 'Alguien', createdAt: serverTimestamp() }
+    if (trimmed) payload.text = trimmed
+    if (file) {
+      payload.fileUrl = file.url
+      payload.fileName = file.name
+      payload.fileType = file.type
+    }
+    batch.set(msgRef, payload)
     batch.update(doc(db, 'groups', groupId), {
-      lastMessage: trimmed,
+      lastMessage: trimmed || `📎 ${file?.name || 'Archivo'}`,
       lastSenderUid: user.uid,
       updatedAt: serverTimestamp(),
       messageCount: increment(1),

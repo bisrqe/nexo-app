@@ -62,14 +62,23 @@ export function DirectMessagesProvider({ children }) {
     return convId
   }
 
-  const sendDirectMessage = async (convId, text) => {
+  // file, si viene, es { url, name, type } (ver src/lib/uploads.js) — un
+  // mensaje puede llevar texto, un archivo, o ambos.
+  const sendDirectMessage = async (convId, text, file) => {
     const trimmed = text.trim()
-    if (!user || !convId || !trimmed) return
+    if (!user || !convId || (!trimmed && !file)) return
     const batch = writeBatch(db)
     const msgRef = doc(collection(db, 'conversations', convId, 'messages'))
-    batch.set(msgRef, { senderUid: user.uid, text: trimmed, createdAt: serverTimestamp() })
+    const payload = { senderUid: user.uid, createdAt: serverTimestamp() }
+    if (trimmed) payload.text = trimmed
+    if (file) {
+      payload.fileUrl = file.url
+      payload.fileName = file.name
+      payload.fileType = file.type
+    }
+    batch.set(msgRef, payload)
     batch.update(doc(db, 'conversations', convId), {
-      lastMessage: trimmed,
+      lastMessage: trimmed || `📎 ${file?.name || 'Archivo'}`,
       lastSenderUid: user.uid,
       updatedAt: serverTimestamp(),
       messageCount: increment(1),

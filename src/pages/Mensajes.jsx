@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
@@ -7,11 +7,28 @@ import { useGroups } from '../context/GroupsContext.jsx'
 import { useGroupMessages } from '../hooks/useGroupMessages.js'
 import { useDirectMessages } from '../context/DirectMessagesContext.jsx'
 import { useConversationMessages } from '../hooks/useConversationMessages.js'
+import { uploadFile } from '../lib/uploads.js'
 import { initials } from '../data/currentUser.js'
 
 function formatTime(ts) {
   if (!ts?.toDate) return ''
   return ts.toDate().toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })
+}
+
+function Attachment({ url, name, type }) {
+  if (!url) return null
+  if (type?.startsWith('image/')) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer" className="msg-attachment">
+        <img src={url} alt={name} />
+      </a>
+    )
+  }
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="msg-attachment msg-attachment-file">
+      📎 {name}
+    </a>
+  )
 }
 
 export default function Mensajes() {
@@ -24,6 +41,8 @@ export default function Mensajes() {
   const myGroups = groups.filter((g) => profile.joinedGroups?.includes(g.docId))
   const [activeKey, setActiveKey] = useState(null)
   const [draft, setDraft] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
 
   // Se puede llegar aquí desde "Enviar mensaje" en un perfil (?to=uid) o
   // desde "Ir al chat" en una mesa de trabajo (?group=id) — en ambos casos
@@ -62,13 +81,32 @@ export default function Mensajes() {
 
   const nothingToShow = myGroups.length === 0 && conversations.length === 0
 
+  const send = async (file) => {
+    if (activeGroup) await sendGroupMessage(activeGroup.docId, draft, file)
+    else if (activeConv) await sendDirectMessage(activeConv.docId, draft, file)
+    setDraft('')
+  }
+
   const handleSend = (e) => {
     e.preventDefault()
-    if (!draft.trim()) return
-    if (activeGroup) sendGroupMessage(activeGroup.docId, draft)
-    else if (activeConv) sendDirectMessage(activeConv.docId, draft)
-    else return
-    setDraft('')
+    if (!draft.trim() || uploading) return
+    send()
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || (!activeGroup && !activeConv)) return
+    setUploading(true)
+    try {
+      const folder = activeGroup ? `groups/${activeGroup.docId}` : `conversations/${activeConv.docId}`
+      const uploaded = await uploadFile(folder, file)
+      await send(uploaded)
+    } catch (err) {
+      alert(err.message || 'No se pudo subir el archivo.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   if (nothingToShow) {
@@ -86,6 +124,9 @@ export default function Mensajes() {
       </DashboardLayout>
     )
   }
+
+  const activeName = activeGroup ? activeGroup.name : otherName
+  const messages = activeGroup ? groupMessages : directMessages
 
   return (
     <DashboardLayout
@@ -133,53 +174,27 @@ export default function Mensajes() {
         </div>
 
         <div className="chat-pane">
-          {activeGroup ? (
-            <>
-              <div className="chat-header">
-                <div className="group-name person-name">{activeGroup.name}</div>
-                <span className="conv-meta">{activeGroup.industryLabel}</span>
-              </div>
-
-              <div className="chat-messages">
-                {groupMessages.length === 0 ? (
-                  <p className="dash-empty">Todavía no hay mensajes en esta mesa. Sé quien abra la conversación.</p>
-                ) : (
-                  groupMessages.map((m) => (
-                    <div className={`msg-bubble ${m.senderUid === user.uid ? 'self' : ''}`} key={m.id}>
-                      <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : m.senderName}</div>
-                      <div className="msg-text">{m.text}</div>
-                      <div className="msg-time">{formatTime(m.createdAt)}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <form className="chat-input-row" onSubmit={handleSend}>
-                <input
-                  className="search-input"
-                  type="text"
-                  placeholder={`Escribe algo para ${activeGroup.name}...`}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                />
-                <button type="submit" className="btn btn-primary" disabled={!draft.trim()}>Enviar</button>
-              </form>
-            </>
-          ) : activeConv ? (
+          {activeGroup || activeConv ? (
             <>
               <div className="chat-header" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div className="person-avatar" style={{ width: 32, height: 32, fontSize: 13, marginBottom: 0 }}>{initials(otherName)}</div>
-                <div className="group-name person-name">{otherName}</div>
+                {activeConv && (
+                  <div className="person-avatar" style={{ width: 32, height: 32, fontSize: 13, marginBottom: 0 }}>{initials(otherName)}</div>
+                )}
+                <div>
+                  <div className="group-name person-name">{activeName}</div>
+                  {activeGroup && <span className="conv-meta">{activeGroup.industryLabel}</span>}
+                </div>
               </div>
 
               <div className="chat-messages">
-                {directMessages.length === 0 ? (
+                {messages.length === 0 ? (
                   <p className="dash-empty">Todavía no hay mensajes — sé quien abra la conversación.</p>
                 ) : (
-                  directMessages.map((m) => (
+                  messages.map((m) => (
                     <div className={`msg-bubble ${m.senderUid === user.uid ? 'self' : ''}`} key={m.id}>
-                      <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : otherName}</div>
-                      <div className="msg-text">{m.text}</div>
+                      <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : (m.senderName || otherName)}</div>
+                      {m.text && <div className="msg-text">{m.text}</div>}
+                      {m.fileUrl && <Attachment url={m.fileUrl} name={m.fileName} type={m.fileType} />}
                       <div className="msg-time">{formatTime(m.createdAt)}</div>
                     </div>
                   ))
@@ -187,14 +202,26 @@ export default function Mensajes() {
               </div>
 
               <form className="chat-input-row" onSubmit={handleSend}>
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} hidden />
+                <button
+                  type="button"
+                  className="btn btn-ghost chat-attach-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  aria-label="Adjuntar archivo"
+                  title="Adjuntar archivo"
+                >
+                  📎
+                </button>
                 <input
                   className="search-input"
                   type="text"
-                  placeholder={`Escribe algo para ${otherName}...`}
+                  placeholder={uploading ? 'Subiendo archivo…' : `Escribe algo para ${activeName}...`}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  disabled={uploading}
                 />
-                <button type="submit" className="btn btn-primary" disabled={!draft.trim()}>Enviar</button>
+                <button type="submit" className="btn btn-primary" disabled={!draft.trim() || uploading}>Enviar</button>
               </form>
             </>
           ) : (

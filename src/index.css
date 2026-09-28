@@ -713,6 +713,14 @@ a.resource-tag:hover{background:var(--gold);}
 .msg-bubble.self .msg-time{color:#AEBBD0;}
 .chat-input-row{display:flex; gap:10px; padding:14px 22px; border-top:1px solid var(--line);}
 .chat-input-row .search-input{max-width:none;}
+.chat-attach-btn{flex-shrink:0; padding:0 14px; font-size:16px;}
+.msg-attachment{display:block; margin-top:6px;}
+.msg-attachment img{max-width:220px; max-height:220px; border-radius:6px; display:block;}
+.msg-attachment-file{
+  display:inline-flex; align-items:center; gap:6px; font-size:12.5px;
+  background:rgba(0,0,0,.06); padding:6px 10px; border-radius:4px;
+}
+.msg-bubble.self .msg-attachment-file{background:rgba(255,255,255,.15); color:#fff;}
 .chat-empty{display:flex; align-items:center; justify-content:center; flex:1; color:var(--text-faint); font-size:13.5px; padding:40px;}
 
 @media (max-width:700px){

@@ -8,6 +8,7 @@ import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { uploadFile } from '../lib/uploads.js'
 
 const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
@@ -53,6 +54,7 @@ export default function NewInitiative({ variant = 'public' }) {
   const [preview, setPreview] = useState(null)
   const [prefilled, setPrefilled] = useState(false)
   const [resourceDraft, setResourceDraft] = useState({ label: '', url: '' })
+  const [uploadingFile, setUploadingFile] = useState(false)
 
   useEffect(() => {
     if (isApp && myInitiative && !prefilled) {
@@ -101,6 +103,24 @@ export default function NewInitiative({ variant = 'public' }) {
 
   const removeResource = (index) => {
     setForm((f) => ({ ...f, resources: f.resources.filter((_, i) => i !== index) }))
+  }
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !myInitiative?.docId) return
+    setUploadingFile(true)
+    try {
+      const uploaded = await uploadFile(`initiatives/${myInitiative.docId}`, file)
+      setForm((f) => ({
+        ...f,
+        resources: [...f.resources, { type: 'file', label: uploaded.name, url: uploaded.url }],
+      }))
+    } catch (err) {
+      alert(err.message || 'No se pudo subir el archivo.')
+    } finally {
+      setUploadingFile(false)
+    }
   }
 
   const handleSubmit = (e) => {
@@ -323,11 +343,22 @@ export default function NewInitiative({ variant = 'public' }) {
               />
               <button type="button" className="btn btn-ghost" onClick={addResource}>Agregar +</button>
             </div>
+            {isApp && myInitiative?.docId && (
+              <label className="btn btn-ghost" style={{ marginTop: 10, display: 'inline-flex' }}>
+                {uploadingFile ? 'Subiendo…' : 'Subir documento o imagen 📎'}
+                <input type="file" onChange={handleFileUpload} hidden disabled={uploadingFile} />
+              </label>
+            )}
+            {isApp && !myInitiative?.docId && (
+              <p className="settings-card-desc" style={{ marginTop: 6 }}>
+                Guarda primero tu emprendimiento para poder subir documentos o imágenes — mientras tanto puedes agregar ligas.
+              </p>
+            )}
             {form.resources.length > 0 && (
               <ul className="resource-link-list">
                 {form.resources.map((r, i) => (
                   <li key={`${r.url}-${i}`}>
-                    <span>{r.type === 'video' ? '▶' : '🔗'} {r.label}</span>
+                    <span>{r.type === 'video' ? '▶' : r.type === 'file' ? '📎' : '🔗'} {r.label}</span>
                     <button type="button" className="link-arrow" onClick={() => removeResource(i)}>Quitar</button>
                   </li>
                 ))}
