@@ -73,6 +73,14 @@ export default function Ajustes() {
     setForm((f) => ({ ...f, photo: null }))
   }
 
+  const toggleNotification = (key) => {
+    setSaved(false)
+    setForm((f) => ({
+      ...f,
+      notificationPrefs: { ...f.notificationPrefs, [key]: !f.notificationPrefs?.[key] },
+    }))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     await updateProfile(form)
@@ -240,6 +248,79 @@ export default function Ajustes() {
               role="switch"
               aria-checked={isDark}
               aria-label="Activar modo oscuro"
+            >
+              <span className="theme-toggle-knob" />
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-card">
+          <h2>Notificaciones por correo</h2>
+          <p className="settings-card-desc">Elige qué te avisamos por correo — se guarda con el resto de tu perfil.</p>
+
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Alguien te escribe</div>
+              <div className="settings-row-desc">Un mensaje directo nuevo de otra persona.</div>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle ${form.notificationPrefs?.onMessage ? 'on' : ''}`}
+              onClick={() => toggleNotification('onMessage')}
+              role="switch"
+              aria-checked={Boolean(form.notificationPrefs?.onMessage)}
+              aria-label="Avisarme cuando alguien me escribe"
+            >
+              <span className="theme-toggle-knob" />
+            </button>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Actividad en tus mesas de trabajo</div>
+              <div className="settings-row-desc">Alguien se une a una mesa que creaste.</div>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle ${form.notificationPrefs?.onGroupActivity ? 'on' : ''}`}
+              onClick={() => toggleNotification('onGroupActivity')}
+              role="switch"
+              aria-checked={Boolean(form.notificationPrefs?.onGroupActivity)}
+              aria-label="Avisarme de actividad en mis mesas de trabajo"
+            >
+              <span className="theme-toggle-knob" />
+            </button>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Interés en tu emprendimiento</div>
+              <div className="settings-row-desc">Alguien marca "Me interesa" en tu emprendimiento.</div>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle ${form.notificationPrefs?.onInterest ? 'on' : ''}`}
+              onClick={() => toggleNotification('onInterest')}
+              role="switch"
+              aria-checked={Boolean(form.notificationPrefs?.onInterest)}
+              aria-label="Avisarme cuando alguien muestra interés en mi emprendimiento"
+            >
+              <span className="theme-toggle-knob" />
+            </button>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Publicidad y novedades</div>
+              <div className="settings-row-desc">Convocatorias, recursos nuevos y noticias de la comunidad.</div>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle ${form.notificationPrefs?.marketing ? 'on' : ''}`}
+              onClick={() => toggleNotification('marketing')}
+              role="switch"
+              aria-checked={Boolean(form.notificationPrefs?.marketing)}
+              aria-label="Avisarme sobre publicidad y novedades"
             >
               <span className="theme-toggle-knob" />
             </button>

@@ -24,6 +24,12 @@ export const DEFAULT_PROFILE = {
   bio: '',
   photo: null,
   joinedGroups: [],
+  notificationPrefs: {
+    onMessage: true,
+    onGroupActivity: true,
+    onInterest: true,
+    marketing: false,
+  },
 }
 
 export function initials(name) {

@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { auth } from '../lib/firebase.js'
 import { ADMIN_EMAILS } from '../data/admins.js'
@@ -25,10 +26,11 @@ export function AuthProvider({ children }) {
   const signUp = (email, password) => createUserWithEmailAndPassword(auth, email, password)
   const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const signOutUser = () => signOut(auth)
+  const resendVerificationEmail = () => auth.currentUser && sendEmailVerification(auth.currentUser)
   const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser, isAdmin }}>
+    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser, resendVerificationEmail, isAdmin }}>
       {children}
     </AuthContext.Provider>
   )

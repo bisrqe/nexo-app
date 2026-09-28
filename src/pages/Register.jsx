@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { doc, setDoc } from 'firebase/firestore'
+import { sendEmailVerification } from 'firebase/auth'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import { db } from '../lib/firebase.js'
@@ -86,6 +87,7 @@ export default function Register() {
         bio: form.bio,
         photo: null,
       })
+      sendEmailVerification(cred.user).catch(() => {})
       navigate('/app/dashboard', { replace: true })
     } catch (err) {
       setError(firebaseErrorMessage(err))
