@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import NodeMark from './NodeMark.jsx'
 import NavIcon from './NavIcon.jsx'
+import logo from '../assets/iconotipo-azul.png'
 import { initials } from '../data/currentUser.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -42,7 +42,7 @@ export default function Sidebar() {
 
       <aside className={`app-sidebar ${open ? 'open' : ''}`}>
         <Link to="/app/dashboard" className="app-brand">
-          <NodeMark color="#FFD77F" />
+          <img src={logo} alt="" width="24" height="24" />
           NEXO.
         </Link>
 
