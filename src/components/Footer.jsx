@@ -15,7 +15,7 @@ export default function Footer() {
         </div>
         <div className="foot-col">
           <h4>Plataforma</h4>
-          <Link to="/app/recursos">Recursos</Link>
+          <Link to="/recursos">Recursos</Link>
           <Link to="/iniciativas">Emprendimientos</Link>
         </div>
         <div className="foot-col">
@@ -31,7 +31,7 @@ export default function Footer() {
       </div>
       <div className="foot-bottom">
         <span>© {new Date().getFullYear()} NEXO — hecho en México.</span>
-        <span>join.nexo.mx@gmail.com</span>
+        <span>support@nexohub.mx</span>
       </div>
     </footer>
   )

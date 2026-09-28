@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -8,8 +8,11 @@ import { useGroups } from '../context/GroupsContext.jsx'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { kindFor } from '../lib/initiativeKind.js'
 import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
+import { matchFaq, FAQ_FALLBACK, SUPPORT_EMAIL } from '../data/chatbotFaq.js'
+import nexoIconWhite from '../assets/iconotipo-blanco.png'
 
-const GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Pregúntame cómo registrar tu emprendimiento, unirte a una mesa de trabajo, o cualquier otra duda sobre la plataforma.' }
+const OUTSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Puedo orientarte sobre qué es Nexo, cómo registrar tu emprendimiento, eventos y recursos. Si necesitas algo más puntual, escríbenos directo.' }
+const INSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Pregúntame cómo registrar tu emprendimiento, unirte a una mesa de trabajo, o cualquier otra duda sobre la plataforma.' }
 
 // Arma un resumen corto y real (nombres, no inventado) de qué le conviene
 // ver a esta cuenta ahora mismo — se manda como contexto al chatbot "de
@@ -59,7 +62,7 @@ export default function Chatbot() {
   const isInside = user && location.pathname.startsWith('/app')
 
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState([GREETING])
+  const [messages, setMessages] = useState(() => [isInside ? INSIDE_GREETING : OUTSIDE_GREETING])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -69,17 +72,22 @@ export default function Chatbot() {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open, loading])
 
-  const send = async (e) => {
-    e.preventDefault()
-    const text = input.trim()
-    if (!text || loading) return
-    setError(false)
-    const history = messages.slice(1).map((m) => ({ role: m.role, content: m.content }))
-    setMessages((m) => [...m, { role: 'user', content: text }])
-    setInput('')
+  // Fuera del dashboard, el bot responde con FAQ locales — sin red, sin
+  // costo por token, y 100% predecible. Dentro del dashboard sigue usando
+  // la API con contexto real de la cuenta (ver buildInsideContext arriba).
+  const sendOutside = (text) => {
+    const match = matchFaq(text)
+    if (match) {
+      setMessages((m) => [...m, { role: 'assistant', content: match.answer, link: match.link }])
+    } else {
+      setMessages((m) => [...m, { role: 'assistant', content: FAQ_FALLBACK.content, link: FAQ_FALLBACK.link }])
+    }
+  }
+
+  const sendInside = async (text, history) => {
     setLoading(true)
     try {
-      const context = isInside ? await buildInsideContext(profile, groups) : null
+      const context = await buildInsideContext(profile, groups)
       const res = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -90,9 +98,24 @@ export default function Chatbot() {
       setMessages((m) => [...m, { role: 'assistant', content: data.reply }])
     } catch (err) {
       setError(true)
-      setMessages((m) => [...m, { role: 'assistant', content: 'No pude responder justo ahora — intenta de nuevo en un momento.' }])
+      setMessages((m) => [...m, { role: 'assistant', content: `No pude responder justo ahora — intenta de nuevo, o escríbenos a ${SUPPORT_EMAIL}.` }])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const send = (e) => {
+    e.preventDefault()
+    const text = input.trim()
+    if (!text || loading) return
+    setError(false)
+    const history = messages.slice(1).map((m) => ({ role: m.role, content: m.content }))
+    setMessages((m) => [...m, { role: 'user', content: text }])
+    setInput('')
+    if (isInside) {
+      sendInside(text, history)
+    } else {
+      sendOutside(text)
     }
   }
 
@@ -106,7 +129,16 @@ export default function Chatbot() {
           </div>
           <div className="nexo-chatbot-body">
             {messages.map((m, i) => (
-              <div key={i} className={`nexo-chatbot-msg nexo-chatbot-msg-${m.role}`}>{m.content}</div>
+              <div key={i} className={`nexo-chatbot-msg nexo-chatbot-msg-${m.role}`}>
+                {m.content}
+                {m.link && (
+                  m.link.to ? (
+                    <Link to={m.link.to} className="nexo-chatbot-link" onClick={() => setOpen(false)}>{m.link.label}</Link>
+                  ) : (
+                    <a href={m.link.href} className="nexo-chatbot-link">{m.link.label}</a>
+                  )
+                )}
+              </div>
             ))}
             {loading && <div className="nexo-chatbot-msg nexo-chatbot-msg-assistant nexo-chatbot-typing">Escribiendo…</div>}
             <div ref={bottomRef} />
@@ -121,7 +153,8 @@ export default function Chatbot() {
             />
             <button type="submit" disabled={loading || !input.trim()}>Enviar</button>
           </form>
-          {error && <p className="nexo-chatbot-error">Si el problema sigue, escríbenos directamente desde Ajustes.</p>}
+          {error && <p className="nexo-chatbot-error">Si el problema sigue, escríbenos directamente.</p>}
+          <p className="nexo-chatbot-footnote">¿Prefieres escribirnos? <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></p>
         </div>
       )}
       <button
@@ -130,7 +163,7 @@ export default function Chatbot() {
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Cerrar asistente de Nexo' : 'Abrir asistente de Nexo'}
       >
-        {open ? '✕' : '💬'}
+        {open ? '✕' : <img src={nexoIconWhite} alt="" width="22" height="22" />}
       </button>
     </div>
   )

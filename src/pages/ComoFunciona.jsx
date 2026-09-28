@@ -40,8 +40,6 @@ export default function ComoFunciona() {
             </div>
           ))}
         </div>
-
-        <p className="head-desc-below in">Nexo no es un espacio para publicar. Es el inventario de lo que tu comunidad ya construyó, ya sabe hacer, o ya está dispuesta a prestar.</p>
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────── */}

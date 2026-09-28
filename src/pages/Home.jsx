@@ -11,6 +11,11 @@ function formatEventDate(dateStr) {
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// Below this many real records, a partial grid reads as broken rather than
+// "early" — the confident empty-state copy sells the pitch better than one
+// lonely card.
+const MIN_FEATURED_ITEMS = 3
+
 export default function Home() {
   const initiatives = useFirestoreCollection('initiatives')
   const events = useFirestoreCollection('events')
@@ -73,7 +78,11 @@ export default function Home() {
           {stats.map((s) => (
             <div className="stat-item" key={s.label}>
               <span className="stat-num">{s.num}</span>
-              <span className="stat-label">{s.label}</span>
+              <span className="stat-label">
+                {s.label === 'ODS con actividad' ? (
+                  <><abbr title="Objetivos de Desarrollo Sostenible (ONU)">ODS</abbr> con actividad</>
+                ) : s.label}
+              </span>
             </div>
           ))}
         </div>
@@ -100,7 +109,7 @@ export default function Home() {
           </div>
         </div>
 
-        {featuredInitiatives.length > 0 ? (
+        {featuredInitiatives.length >= MIN_FEATURED_ITEMS ? (
           <div className="catalog-grid">
             {featuredInitiatives.map((i) => (
               <InitiativeCard key={i.docId} initiative={i} allowSave={false} tagMode="industry" />
@@ -126,7 +135,7 @@ export default function Home() {
           </div>
         </div>
 
-        {upcomingEvents.length > 0 ? (
+        {upcomingEvents.length >= MIN_FEATURED_ITEMS ? (
           <div className="page-grid in">
             {upcomingEvents.map((event) => (
               <div className="event-card" key={event.docId}>

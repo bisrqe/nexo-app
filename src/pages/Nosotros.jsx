@@ -151,7 +151,7 @@ export default function Nosotros() {
           <p className="head-desc-below" style={{ marginTop: 4, marginBottom: 24 }}>
             Dudas, alianzas institucionales o prensa — escríbenos directamente.
           </p>
-          <a href="mailto:join.nexo.mx@gmail.com" className="btn btn-gold btn-lg">join.nexo.mx@gmail.com</a>
+          <a href="mailto:support@nexohub.mx" className="btn btn-gold btn-lg">support@nexohub.mx</a>
 
           <p className="founders-credit">
             Un proyecto fundado por Bismarck Sebastian Animas Roque · Regina Ramos Gil.

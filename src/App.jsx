@@ -11,6 +11,7 @@ import IniciativasPublicas from './pages/IniciativasPublicas.jsx'
 import ComoFunciona from './pages/ComoFunciona.jsx'
 import Nosotros from './pages/Nosotros.jsx'
 import EventosPublicos from './pages/EventosPublicos.jsx'
+import RecursosPublicos from './pages/RecursosPublicos.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 // Zona post-login — todo vive bajo /app/*, con el shell de Sidebar.
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/nosotros" element={<Nosotros />} />
         <Route path="/eventos" element={<EventosPublicos />} />
+        <Route path="/recursos" element={<RecursosPublicos />} />
 
         {/* ── Zona post-login — separada de la landing, requiere sesión ── */}
         <Route path="/app/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
