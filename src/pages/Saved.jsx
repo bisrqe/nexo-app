@@ -3,18 +3,21 @@ import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useSaved } from '../context/SavedContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
-import { getInitiativeBySlug } from '../data/initiatives.js'
-import { EVENTS } from '../data/events.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 
 export default function Saved() {
   const { saved } = useSaved()
   const { profile } = useProfile()
+  const { user } = useAuth()
   const { groups } = useGroups()
+  const initiatives = useFirestoreCollection('initiatives')
+  const events = useFirestoreCollection('events')
 
-  const savedInitiatives = saved.initiatives.map(getInitiativeBySlug).filter(Boolean)
-  const savedEvents = EVENTS.filter((e) => saved.events.includes(e.id))
+  const savedInitiatives = initiatives.filter((i) => saved.initiatives.includes(i.slug))
+  const savedEvents = events.filter((e) => user && e.attendees?.includes(user.uid))
   const savedGroups = groups.filter((g) => profile.joinedGroups?.includes(g.docId))
 
   const nothingSaved = savedInitiatives.length === 0 && savedEvents.length === 0 && savedGroups.length === 0
@@ -23,7 +26,7 @@ export default function Saved() {
     <DashboardLayout
       eyebrow="Mi espacio"
       title="Guardado"
-      subtitle="Solo vive en este navegador — todavía no hay cuenta ni backend detrás de esto."
+      subtitle="Emprendimientos que guardaste, eventos donde estás inscrito y mesas de trabajo a las que te uniste."
     >
       {nothingSaved && (
         <div className="empty-state">
@@ -37,7 +40,7 @@ export default function Saved() {
           <h3>Emprendimientos guardados</h3>
           <div className="page-grid">
             {savedInitiatives.map((i) => (
-              <InitiativeCard key={i.id} initiative={i} basePath="/app/iniciativas" />
+              <InitiativeCard key={i.docId} initiative={i} basePath="/app/iniciativas" />
             ))}
           </div>
         </div>
@@ -48,7 +51,7 @@ export default function Saved() {
           <h3>Eventos donde estás inscrito</h3>
           <div className="page-grid">
             {savedEvents.map((e) => (
-              <div className="resource-card" key={e.id}>
+              <div className="resource-card" key={e.docId}>
                 <div className="resource-title">{e.title}</div>
                 <div className="resource-org">{e.location}</div>
                 <p className="resource-desc">{e.date} — {e.time} hrs</p>

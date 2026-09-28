@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react'
+import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { EVENTS } from '../data/events.js'
-import { useSaved } from '../context/SavedContext.jsx'
+import { db } from '../lib/firebase.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { CITIES, getCityName } from '../data/cities.js'
 
 function formatDate(dateStr) {
@@ -16,25 +18,29 @@ const EMPTY_EVENT = {
 }
 
 export default function Eventos() {
-  const { isEventSaved, toggleEvent } = useSaved()
-  const { myEvents, addEvent } = useUserContent()
+  const { user } = useAuth()
+  const { addEvent } = useUserContent()
   const { profile } = useProfile()
+  const realEvents = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
   const [onlyMyCity, setOnlyMyCity] = useState(Boolean(profile.city))
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
 
-  const allEvents = useMemo(() => [...EVENTS, ...myEvents], [myEvents])
-
-  const [counts, setCounts] = useState(() => Object.fromEntries(EVENTS.map((e) => [e.id, e.attendees])))
+  const allEvents = useMemo(
+    () => [...realEvents].sort((a, b) => new Date(a.date) - new Date(b.date)),
+    [realEvents]
+  )
 
   const categories = ['Todos', ...new Set(allEvents.map((e) => e.category).filter(Boolean))]
 
-  const handleToggle = (event) => {
-    const wasRegistered = isEventSaved(event.id)
-    toggleEvent(event.id)
-    setCounts((c) => ({ ...c, [event.id]: (c[event.id] ?? event.attendees) + (wasRegistered ? -1 : 1) }))
+  const handleToggle = async (event) => {
+    if (!user) return
+    const registered = (event.attendees || []).includes(user.uid)
+    await updateDoc(doc(db, 'events', event.docId), {
+      attendees: registered ? arrayRemove(user.uid) : arrayUnion(user.uid),
+    })
   }
 
   const handleFormChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -51,7 +57,7 @@ export default function Eventos() {
       category: form.category || 'Otro',
       ods: form.ods ? form.ods.split(',').map((s) => s.trim()).filter(Boolean) : [],
       description: form.description || 'Sin descripción.',
-      attendees: 0,
+      attendees: [],
       maxAttendees: Number(form.maxAttendees) || 30,
     })
     setForm(EMPTY_EVENT)
@@ -172,14 +178,14 @@ export default function Eventos() {
       ) : (
         <div className="page-grid">
           {filtered.map((event) => {
-            const registered = isEventSaved(event.id)
-            const count = counts[event.id] ?? event.attendees
+            const registered = Boolean(user && event.attendees?.includes(user.uid))
+            const count = event.attendees?.length || 0
             const pct = Math.min(100, Math.round((count / event.maxAttendees) * 100))
             const full = count >= event.maxAttendees && !registered
             const barClass = pct >= 90 ? 'high' : pct >= 70 ? 'mid' : ''
 
             return (
-              <div className="event-card" key={event.id}>
+              <div className="event-card" key={event.docId}>
                 <div className={`event-stripe ${registered ? 'registered' : ''}`} />
                 <div className="event-body">
                   <div className="event-top">

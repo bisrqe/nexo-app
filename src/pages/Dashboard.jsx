@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
-import { INITIATIVES } from '../data/initiatives.js'
-import { EVENTS } from '../data/events.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
@@ -17,14 +15,14 @@ function formatDate(dateStr) {
 
 export default function Dashboard() {
   const { profile } = useProfile()
-  const realInitiatives = useFirestoreCollection('initiatives')
+  const allInitiatives = useFirestoreCollection('initiatives')
+  const realEvents = useFirestoreCollection('events')
   const { groups } = useGroups()
   const [showAllCities, setShowAllCities] = useState(false)
 
-  const allInitiatives = useMemo(() => [...INITIATIVES, ...realInitiatives], [realInitiatives])
   const allEvents = useMemo(
-    () => [...EVENTS].sort((a, b) => new Date(a.date) - new Date(b.date)),
-    []
+    () => [...realEvents].sort((a, b) => new Date(a.date) - new Date(b.date)),
+    [realEvents]
   )
 
   const inMyCity = (item) => showAllCities || !profile.city || !item.city || item.city === profile.city
@@ -99,14 +97,18 @@ export default function Dashboard() {
 
           <div className="dash-widget">
             <h3>Eventos afines a ti</h3>
-            <div className="dash-list">
-              {rankedEvents.map((e) => (
-                <div className="dash-list-item" key={e.id}>
-                  <span>{e.title}</span>
-                  <span>{formatDate(e.date)}</span>
-                </div>
-              ))}
-            </div>
+            {rankedEvents.length === 0 ? (
+              <p className="dash-empty">Todavía no hay eventos. <Link to="/app/eventos" className="link-arrow">Ver eventos →</Link></p>
+            ) : (
+              <div className="dash-list">
+                {rankedEvents.map((e) => (
+                  <div className="dash-list-item" key={e.docId}>
+                    <span>{e.title}</span>
+                    <span>{formatDate(e.date)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <p style={{ marginTop: '14px' }}>
               <Link to="/app/eventos" className="link-arrow">Ver todos →</Link>
             </p>

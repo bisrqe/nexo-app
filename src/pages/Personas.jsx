@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { PEOPLE } from '../data/people.js'
 import { ODS_FILTERS } from '../data/initiatives.js'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
@@ -39,10 +38,9 @@ export default function Personas() {
   const [showAllCities, setShowAllCities] = useState(false)
 
   const allPeople = useMemo(() => {
-    const real = realProfiles
+    return realProfiles
       .filter((p) => p.docId !== user?.uid && p.name)
       .map(profileToPerson)
-    return [...real, ...PEOPLE]
   }, [realProfiles, user])
 
   const filtered = useMemo(() => {

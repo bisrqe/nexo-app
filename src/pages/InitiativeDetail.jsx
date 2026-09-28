@@ -4,7 +4,6 @@ import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRem
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { getInitiativeBySlug } from '../data/initiatives.js'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -13,20 +12,16 @@ import { useAuth } from '../context/AuthContext.jsx'
 //  - /iniciativas/:slug        (variant="public") — parte de la landing, con Header/Footer.
 //  - /app/iniciativas/:slug    (variant="app")    — parte del dashboard, nunca te saca a la landing.
 // El contenido del dossier es el mismo en ambos casos; solo cambia el
-// "chrome" alrededor y a dónde regresa el link de "volver". Si el slug no
-// está en el catálogo mock, se busca en Firestore — así los dossiers de
-// iniciativas reales también tienen su propia página.
+// "chrome" alrededor y a dónde regresa el link de "volver".
 export default function InitiativeDetail({ variant = 'public' }) {
   const { slug } = useParams()
   const isApp = variant === 'app'
   const backTo = isApp ? '/app/iniciativas' : '/iniciativas'
   const { user } = useAuth()
 
-  const mockInitiative = getInitiativeBySlug(slug)
   const [remote, setRemote] = useState(undefined)
 
   useEffect(() => {
-    if (mockInitiative) return
     let cancelled = false
     setRemote(undefined)
     getDocs(query(collection(db, 'initiatives'), where('slug', '==', slug))).then((snap) => {
@@ -34,10 +29,10 @@ export default function InitiativeDetail({ variant = 'public' }) {
       setRemote(snap.empty ? null : { ...snap.docs[0].data(), docId: snap.docs[0].id })
     })
     return () => { cancelled = true }
-  }, [slug, mockInitiative])
+  }, [slug])
 
-  const initiative = mockInitiative || remote
-  const loading = !mockInitiative && remote === undefined
+  const initiative = remote
+  const loading = remote === undefined
   const isOwner = Boolean(user && initiative?.ownerUid && initiative.ownerUid === user.uid)
   const interested = Boolean(user && initiative?.interestedBy?.includes(user.uid))
 

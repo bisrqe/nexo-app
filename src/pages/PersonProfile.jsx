@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { getPersonBySlug } from '../data/people.js'
 import { ODS_FILTERS } from '../data/initiatives.js'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
@@ -33,21 +32,19 @@ export default function PersonProfile() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const mockPerson = getPersonBySlug(slug)
   const [remote, setRemote] = useState(undefined)
 
   useEffect(() => {
-    if (mockPerson) return
     let cancelled = false
     getDocs(query(collection(db, 'profiles'), where('username', '==', slug))).then((snap) => {
       if (cancelled) return
       setRemote(snap.empty ? null : profileToPerson(snap.docs[0].data(), snap.docs[0].id))
     })
     return () => { cancelled = true }
-  }, [slug, mockPerson])
+  }, [slug])
 
-  const person = mockPerson || remote
-  const loading = !mockPerson && remote === undefined
+  const person = remote
+  const loading = remote === undefined
 
   if (loading) {
     return (

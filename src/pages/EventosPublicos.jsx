@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
-import { EVENTS } from '../data/events.js'
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -10,7 +10,8 @@ function formatDate(dateStr) {
 }
 
 export default function EventosPublicos() {
-  const events = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date))
+  const realEvents = useFirestoreCollection('events')
+  const events = useMemo(() => [...realEvents].sort((a, b) => a.date.localeCompare(b.date)), [realEvents])
 
   return (
     <>
@@ -31,10 +32,11 @@ export default function EventosPublicos() {
           ) : (
             <div className="page-grid">
               {events.map((event) => {
-                const pct = Math.min(100, Math.round((event.attendees / event.maxAttendees) * 100))
+                const count = event.attendees?.length || 0
+                const pct = Math.min(100, Math.round((count / event.maxAttendees) * 100))
                 const barClass = pct >= 90 ? 'high' : pct >= 70 ? 'mid' : ''
                 return (
-                  <div className="event-card" key={event.id}>
+                  <div className="event-card" key={event.docId}>
                     <div className="event-stripe" />
                     <div className="event-body">
                       <div className="event-top">
@@ -46,7 +48,7 @@ export default function EventosPublicos() {
                       <div className="event-meta">
                         <span>{event.time} hrs — {event.location}</span>
                       </div>
-                      {event.ods.length > 0 && (
+                      {event.ods?.length > 0 && (
                         <div className="event-ods">
                           {event.ods.map((o) => (
                             <span className="tag-pill" key={o}>{o}</span>
@@ -55,7 +57,7 @@ export default function EventosPublicos() {
                       )}
                       <div>
                         <div className="capacity-row">
-                          <span>{event.attendees} inscritos</span>
+                          <span>{count} inscritos</span>
                           <span>{event.maxAttendees} cupos</span>
                         </div>
                         <div className="capacity-bar">

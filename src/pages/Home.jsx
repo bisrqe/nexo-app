@@ -1,21 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
-import { INITIATIVES } from '../data/initiatives.js'
-import { EVENTS } from '../data/events.js'
-
-const STATS = [
-  { num: '047', label: 'Emprendimientos activos' },
-  { num: '12', label: 'Estados de México' },
-  { num: '06', label: 'ODS con actividad esta semana' },
-  { num: '03', label: 'Recursos nuevos esta semana' },
-]
-
-const FEATURED_INITIATIVES = INITIATIVES.slice(0, 3)
-const UPCOMING_EVENTS = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3)
+import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
 function formatEventDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -23,6 +12,31 @@ function formatEventDate(dateStr) {
 }
 
 export default function Home() {
+  const initiatives = useFirestoreCollection('initiatives')
+  const events = useFirestoreCollection('events')
+
+  const stats = useMemo(() => {
+    const cities = new Set(initiatives.map((i) => i.city).filter(Boolean))
+    const ods = new Set(initiatives.flatMap((i) => i.ods || []).filter(Boolean))
+    return [
+      { num: String(initiatives.length).padStart(2, '0'), label: 'Emprendimientos activos' },
+      { num: String(cities.size).padStart(2, '0'), label: 'Ciudades con presencia' },
+      { num: String(ods.size).padStart(2, '0'), label: 'ODS con actividad' },
+      { num: String(events.length).padStart(2, '0'), label: 'Eventos programados' },
+    ]
+  }, [initiatives, events])
+
+  const featuredInitiatives = useMemo(
+    () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 3),
+    [initiatives]
+  )
+
+  const today = new Date().toISOString().slice(0, 10)
+  const upcomingEvents = useMemo(
+    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3),
+    [events, today]
+  )
+
   return (
     <>
       <Header />
@@ -56,7 +70,7 @@ export default function Home() {
       {/* ── STAT STRIP ───────────────────────────── */}
       <section className="stat-section">
         <div className="stat-strip">
-          {STATS.map((s) => (
+          {stats.map((s) => (
             <div className="stat-item" key={s.label}>
               <span className="stat-num">{s.num}</span>
               <span className="stat-label">{s.label}</span>
@@ -86,11 +100,17 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="catalog-grid">
-          {FEATURED_INITIATIVES.map((i) => (
-            <InitiativeCard key={i.id} initiative={i} allowSave={false} tagMode="industry" />
-          ))}
-        </div>
+        {featuredInitiatives.length > 0 ? (
+          <div className="catalog-grid">
+            {featuredInitiatives.map((i) => (
+              <InitiativeCard key={i.docId} initiative={i} allowSave={false} tagMode="industry" />
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>Este mapa cambia cada semana. Sé quien registre el primer emprendimiento.</p>
+          </div>
+        )}
 
         <div className="section-cta">
           <Link to="/iniciativas" className="link-arrow">Ver todos los emprendimientos →</Link>
@@ -106,21 +126,27 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="page-grid in">
-          {UPCOMING_EVENTS.map((event) => (
-            <div className="event-card" key={event.id}>
-              <div className="event-stripe" />
-              <div className="event-body">
-                <div className="event-top">
-                  <span className="event-cat">{event.category}</span>
-                  <span className="event-date">{formatEventDate(event.date)}</span>
+        {upcomingEvents.length > 0 ? (
+          <div className="page-grid in">
+            {upcomingEvents.map((event) => (
+              <div className="event-card" key={event.docId}>
+                <div className="event-stripe" />
+                <div className="event-body">
+                  <div className="event-top">
+                    <span className="event-cat">{event.category}</span>
+                    <span className="event-date">{formatEventDate(event.date)}</span>
+                  </div>
+                  <div className="event-title">{event.title}</div>
+                  <p className="event-desc">{event.description}</p>
                 </div>
-                <div className="event-title">{event.title}</div>
-                <p className="event-desc">{event.description}</p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state in">
+            <p>Todavía no hay eventos programados.</p>
+          </div>
+        )}
 
         <div className="section-cta">
           <Link to="/eventos" className="link-arrow">Ver todos los eventos →</Link>

@@ -1,13 +1,11 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
-import { INITIATIVES } from '../data/initiatives.js'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
 export default function IniciativasPublicas() {
-  const realInitiatives = useFirestoreCollection('initiatives')
-  const allInitiatives = useMemo(() => [...INITIATIVES, ...realInitiatives], [realInitiatives])
+  const allInitiatives = useFirestoreCollection('initiatives')
 
   return (
     <>

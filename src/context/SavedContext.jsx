@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-// No hay backend: "guardar" algo solo lo recuerda en este navegador
-// (localStorage), no en ninguna base de datos ni cuenta de usuario.
-// (Unirse a una mesa de trabajo sí es real — vive en profiles/{uid}.joinedGroups,
-// ver ProfileContext.jsx.)
+// "Guardar" un emprendimiento es un marcador personal, solo de este
+// navegador (no hay backend detrás, ni falta que le hace). Unirse a una
+// mesa de trabajo, inscribirse a un evento o marcar "me interesa" en un
+// emprendimiento SÍ son reales — viven en Firestore (ver ProfileContext,
+// Eventos.jsx e InitiativeDetail.jsx respectivamente).
 const STORAGE_KEY = 'nexo:saved:v1'
 
 const SavedContext = createContext(null)
@@ -11,14 +12,11 @@ const SavedContext = createContext(null)
 function readStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { initiatives: [], events: [] }
+    if (!raw) return { initiatives: [] }
     const parsed = JSON.parse(raw)
-    return {
-      initiatives: parsed.initiatives ?? [],
-      events: parsed.events ?? [],
-    }
+    return { initiatives: parsed.initiatives ?? [] }
   } catch {
-    return { initiatives: [], events: [] }
+    return { initiatives: [] }
   }
 }
 
@@ -33,20 +31,18 @@ export function SavedProvider({ children }) {
     }
   }, [saved])
 
-  const toggle = (bucket, id) => {
+  const toggleInitiative = (slug) => {
     setSaved((prev) => {
-      const list = prev[bucket]
-      const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
-      return { ...prev, [bucket]: next }
+      const list = prev.initiatives
+      const next = list.includes(slug) ? list.filter((x) => x !== slug) : [...list, slug]
+      return { ...prev, initiatives: next }
     })
   }
 
   const value = {
     saved,
-    toggleInitiative: (slug) => toggle('initiatives', slug),
-    toggleEvent: (id) => toggle('events', id),
+    toggleInitiative,
     isInitiativeSaved: (slug) => saved.initiatives.includes(slug),
-    isEventSaved: (id) => saved.events.includes(id),
   }
 
   return <SavedContext.Provider value={value}>{children}</SavedContext.Provider>

@@ -3,10 +3,8 @@ import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { getCityName } from '../data/cities.js'
 
 // Todo lo que se calcula aquí viene únicamente de las colecciones reales
-// de Firestore (profiles/initiatives/events) — nunca de los catálogos de
-// ejemplo (INITIATIVES/EVENTS/PEOPLE) que se usan para poblar el catálogo
-// mientras la comunidad todavía es chica. Un reporte de KPIs con datos
-// inventados no sirve de nada.
+// de Firestore (profiles/initiatives/events/groups/conversations). Un
+// reporte de KPIs con datos inventados no sirve de nada.
 
 function labelFor(list, id) {
   return list.find((o) => o.id === id)?.label ?? (id || 'Sin especificar')

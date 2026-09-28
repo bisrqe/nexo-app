@@ -1,17 +1,15 @@
 import React, { useMemo, useState } from 'react'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
-import { INITIATIVES } from '../data/initiatives.js'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { getCityName } from '../data/cities.js'
 
 export default function Iniciativas() {
   const { profile } = useProfile()
-  const realInitiatives = useFirestoreCollection('initiatives')
+  const allInitiatives = useFirestoreCollection('initiatives')
   const [showAllCities, setShowAllCities] = useState(false)
 
-  const allInitiatives = useMemo(() => [...INITIATIVES, ...realInitiatives], [realInitiatives])
   const visible = useMemo(
     () => allInitiatives.filter((i) => showAllCities || !profile.city || !i.city || i.city === profile.city),
     [allInitiatives, profile.city, showAllCities]

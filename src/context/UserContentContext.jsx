@@ -24,7 +24,6 @@ const UserContentContext = createContext(null)
 export function UserContentProvider({ children }) {
   const { user } = useAuth()
   const [groups, setGroups] = useState(readGroups)
-  const [myEvents, setMyEvents] = useState([])
   const [myInitiative, setMyInitiativeState] = useState(null)
 
   useEffect(() => {
@@ -37,24 +36,15 @@ export function UserContentProvider({ children }) {
 
   useEffect(() => {
     if (!user) {
-      setMyEvents([])
       setMyInitiativeState(null)
       return
     }
-    const eventsQuery = query(collection(db, 'events'), where('ownerUid', '==', user.uid))
-    const unsubEvents = onSnapshot(eventsQuery, (snap) => {
-      setMyEvents(snap.docs.map((d) => ({ ...d.data(), id: d.id })))
-    })
-
     const initiativesQuery = query(collection(db, 'initiatives'), where('ownerUid', '==', user.uid))
     const unsubInitiatives = onSnapshot(initiativesQuery, (snap) => {
       setMyInitiativeState(snap.empty ? null : { ...snap.docs[0].data(), docId: snap.docs[0].id })
     })
 
-    return () => {
-      unsubEvents()
-      unsubInitiatives()
-    }
+    return unsubInitiatives
   }, [user])
 
   const addEvent = async (event) => {
@@ -71,7 +61,6 @@ export function UserContentProvider({ children }) {
   }
 
   const value = {
-    myEvents,
     addEvent,
     myGroups: groups,
     addGroup,

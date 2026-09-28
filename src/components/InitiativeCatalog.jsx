@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import InitiativeCard from './InitiativeCard.jsx'
-import { INITIATIVES, ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 
 // Shared by the public /iniciativas page and the one inside the app
 // (/app/iniciativas) — same filtering logic, so it can't drift between
 // the two. The public page hides the save button (view-only, no cuenta);
 // ambas filtran por industria.
 export default function InitiativeCatalog({
-  initiatives = INITIATIVES,
+  initiatives = [],
   basePath = '/iniciativas',
   filterBy = 'industry',
   allowSave = true,
@@ -45,7 +45,7 @@ export default function InitiativeCatalog({
       {filtered.length > 0 ? (
         <div className="catalog-grid">
           {filtered.map((i) => (
-            <InitiativeCard key={i.id} initiative={i} basePath={basePath} allowSave={allowSave} tagMode={filterBy} />
+            <InitiativeCard key={i.docId || i.id} initiative={i} basePath={basePath} allowSave={allowSave} tagMode={filterBy} />
           ))}
         </div>
       ) : (
