@@ -26,11 +26,15 @@ export function GroupsProvider({ children }) {
   const [groups, setGroups] = useState([])
 
   useEffect(() => {
+    if (!user) {
+      setGroups([])
+      return
+    }
     const unsub = onSnapshot(collection(db, 'groups'), (snap) => {
       setGroups(snap.docs.map((d) => ({ ...d.data(), docId: d.id })))
     })
     return unsub
-  }, [])
+  }, [user])
 
   // Crea la mesa y en el mismo batch se auto-une el dueño a su propia
   // mesa (si no, no podría escribir en su propio chat de grupo).
