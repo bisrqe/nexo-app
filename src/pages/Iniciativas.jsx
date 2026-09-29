@@ -13,8 +13,8 @@ export default function Iniciativas() {
 
   const visible = useMemo(() => {
     const inCity = allInitiatives.filter((i) => showAllCities || !profile.city || !i.city || i.city === profile.city)
-    return sortByOwnProjectType(inCity, profile.profileType)
-  }, [allInitiatives, profile.city, profile.profileType, showAllCities])
+    return sortByOwnProjectType(inCity, profile.profileType, profile.subtype)
+  }, [allInitiatives, profile.city, profile.profileType, profile.subtype, showAllCities])
 
   return (
     <DashboardLayout

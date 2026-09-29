@@ -7,9 +7,10 @@ import Footer from '../components/Footer.jsx'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
 import { labelFor } from '../lib/catalogLabel.js'
+import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -30,6 +31,7 @@ const EMPTY = {
   location: '',
   city: '',
   profileType: 'emprendedor',
+  subtype: '',
   industry: '',
   industryOtra: '',
   industrySecondary: '',
@@ -73,7 +75,7 @@ export default function Register() {
     setLoading(true)
     try {
       const cred = await signUp(form.email, form.password)
-      const isEmprendedor = form.profileType === 'emprendedor'
+      const isEmprendedor = form.profileType === 'emprendedor' || isStudentEntrepreneur(form.profileType, form.subtype)
       const industryLabel = isEmprendedor ? labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra) : ''
       const industrySecondaryLabel = isEmprendedor && form.industrySecondary
         ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
@@ -90,6 +92,7 @@ export default function Register() {
         location: form.location,
         city: form.city,
         profileType: form.profileType,
+        subtype: form.profileType === 'estudiante' ? form.subtype : '',
         industry: isEmprendedor ? form.industry : '',
         industryLabel,
         industrySecondary: isEmprendedor ? form.industrySecondary : '',
@@ -216,7 +219,23 @@ export default function Register() {
               }[form.profileType]}
             </p>
 
-            {form.profileType === 'emprendedor' && (
+            {form.profileType === 'estudiante' && (
+              <label className="form-field">
+                <span>Subcategoría (opcional)</span>
+                <select name="subtype" value={form.subtype} onChange={handleChange}>
+                  {STUDENT_SUBTYPES.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+                {form.subtype === 'emprendedor' && (
+                  <span className="settings-card-desc" style={{ marginTop: 6 }}>
+                    Si además de estudiar ya tienes un emprendimiento propio, esto hace que lo registres como emprendimiento (con industria) en vez de como iniciativa, y que el resto del sitio te recomiende como a cualquier otro emprendedor/a.
+                  </span>
+                )}
+              </label>
+            )}
+
+            {(form.profileType === 'emprendedor' || isStudentEntrepreneur(form.profileType, form.subtype)) && (
               <>
                 <div className="form-row">
                   <label className="form-field">

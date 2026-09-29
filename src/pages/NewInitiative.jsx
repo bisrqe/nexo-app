@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
@@ -41,14 +41,17 @@ function resourceTypeFor(url) {
 
 // Igual que InitiativeDetail: vive en /iniciativas/nueva (público) y en
 // /app/iniciativas/nueva (dashboard) — mismo formulario, distinto chrome.
-// En el dashboard, si ya existe "mi emprendimiento" el formulario arranca
-// precargado con esos datos (antes siempre arrancaba vacío, aunque dijera
-// "editar").
+// Dentro del dashboard, una cuenta puede tener varios emprendimientos/
+// iniciativas (ver UserContentContext), así que esta página SIEMPRE crea
+// uno nuevo — salvo que venga con :slug (ruta /app/iniciativas/:slug/editar,
+// enlazada desde el dossier), en cuyo caso precarga y edita ESE existente.
 export default function NewInitiative({ variant = 'public' }) {
   const isApp = variant === 'app'
-  const { myInitiative, setMyInitiative } = useUserContent()
+  const { slug: editSlug } = useParams()
+  const { myInitiatives, createInitiative, updateInitiative } = useUserContent()
   const { profile } = useProfile()
-  const kind = kindFor(profile.profileType)
+  const editingInitiative = isApp && editSlug ? myInitiatives.find((i) => i.slug === editSlug) : null
+  const kind = kindFor(profile.profileType, profile.subtype)
   const isOrg = profile.profileType === 'organizacion'
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
@@ -58,35 +61,35 @@ export default function NewInitiative({ variant = 'public' }) {
   const [uploadingFile, setUploadingFile] = useState(false)
 
   useEffect(() => {
-    if (isApp && myInitiative && !prefilled) {
-      const ods = myInitiative.ods?.[0] || 'ods4'
-      const odsSecondary = myInitiative.ods?.[1] || ''
+    if (isApp && editingInitiative && !prefilled) {
+      const ods = editingInitiative.ods?.[0] || 'ods4'
+      const odsSecondary = editingInitiative.ods?.[1] || ''
       setForm({
-        title: myInitiative.title || '',
-        org: myInitiative.org || '',
-        city: myInitiative.city || '',
-        link: myInitiative.link || '',
+        title: editingInitiative.title || '',
+        org: editingInitiative.org || '',
+        city: editingInitiative.city || '',
+        link: editingInitiative.link || '',
         ods,
-        odsOtra: ods === 'otra' ? myInitiative.odsLabel || '' : '',
+        odsOtra: ods === 'otra' ? editingInitiative.odsLabel || '' : '',
         odsSecondary,
-        odsSecondaryOtra: odsSecondary === 'otra' ? myInitiative.odsSecondaryLabel || '' : '',
-        industry: myInitiative.industry || '',
-        industryOtra: myInitiative.industry === 'otra' ? myInitiative.industryLabel || '' : '',
-        industrySecondary: myInitiative.industrySecondary || '',
-        industrySecondaryOtra: myInitiative.industrySecondary === 'otra' ? myInitiative.industrySecondaryLabel || '' : '',
-        cause: myInitiative.cause || '',
-        causeOtra: myInitiative.cause === 'otra' ? myInitiative.causeLabel || '' : '',
-        stage: myInitiative.stage || 'Idea',
-        desc: myInitiative.desc || '',
-        need: myInitiative.need || '',
-        collaboratorsText: (myInitiative.collaborators || []).join(', '),
-        impact: myInitiative.impact || '',
-        foundedDate: myInitiative.foundedDate || '',
-        resources: myInitiative.resources || [],
+        odsSecondaryOtra: odsSecondary === 'otra' ? editingInitiative.odsSecondaryLabel || '' : '',
+        industry: editingInitiative.industry || '',
+        industryOtra: editingInitiative.industry === 'otra' ? editingInitiative.industryLabel || '' : '',
+        industrySecondary: editingInitiative.industrySecondary || '',
+        industrySecondaryOtra: editingInitiative.industrySecondary === 'otra' ? editingInitiative.industrySecondaryLabel || '' : '',
+        cause: editingInitiative.cause || '',
+        causeOtra: editingInitiative.cause === 'otra' ? editingInitiative.causeLabel || '' : '',
+        stage: editingInitiative.stage || 'Idea',
+        desc: editingInitiative.desc || '',
+        need: editingInitiative.need || '',
+        collaboratorsText: (editingInitiative.collaborators || []).join(', '),
+        impact: editingInitiative.impact || '',
+        foundedDate: editingInitiative.foundedDate || '',
+        resources: editingInitiative.resources || [],
       })
       setPrefilled(true)
     }
-  }, [isApp, myInitiative, prefilled])
+  }, [isApp, editingInitiative, prefilled])
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -110,10 +113,10 @@ export default function NewInitiative({ variant = 'public' }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file || !myInitiative?.docId) return
+    if (!file || !editingInitiative?.docId) return
     setUploadingFile(true)
     try {
-      const uploaded = await uploadFile(`initiatives/${myInitiative.docId}`, file)
+      const uploaded = await uploadFile(`initiatives/${editingInitiative.docId}`, file)
       setForm((f) => ({
         ...f,
         resources: [...f.resources, { type: 'file', label: uploaded.name, url: uploaded.url }],
@@ -138,7 +141,7 @@ export default function NewInitiative({ variant = 'public' }) {
 
     const built = {
       id: Math.floor(Math.random() * 900) + 100,
-      slug: isApp ? (myInitiative?.slug || `${slugify(form.title)}-${Math.random().toString(36).slice(2, 6)}`) : 'vista-previa',
+      slug: isApp ? (editingInitiative?.slug || `${slugify(form.title)}-${Math.random().toString(36).slice(2, 6)}`) : 'vista-previa',
       stage: form.stage,
       title: form.title || 'Tu emprendimiento',
       org: form.org || 'Tu organización',
@@ -164,9 +167,24 @@ export default function NewInitiative({ variant = 'public' }) {
     }
     setPreview(built)
 
-    // Dentro del dashboard, esto sí "queda guardado" como el emprendimiento
-    // propio de quien usa el sitio — se puede ver luego en /app/mi-iniciativa.
-    if (isApp) setMyInitiative(built)
+    // Dentro del dashboard, esto sí "queda guardado" de verdad — editingInitiative
+    // decide si actualiza uno existente o crea otro nuevo.
+    if (isApp) {
+      if (editingInitiative) updateInitiative(editingInitiative.docId, built)
+      else createInitiative(built)
+    }
+  }
+
+  // Si se acaba de crear (no editingInitiative) y desde la vista previa se
+  // pide "Editar", se manda a la ruta de edición de ESE nuevo registro en
+  // vez de solo reabrir el formulario local — así, si vuelve a guardar,
+  // actualiza el que ya se creó en vez de crear otro más.
+  const handleEditAgain = () => {
+    if (isApp && !editingInitiative && preview) {
+      navigate(`/app/iniciativas/${preview.slug}/editar`, { replace: true })
+      return
+    }
+    setPreview(null)
   }
 
   if (isApp && PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)) {
@@ -179,6 +197,19 @@ export default function NewInitiative({ variant = 'public' }) {
               : 'Como voluntario/a no registras un emprendimiento propio — puedes explorar el catálogo y contactar a quienes sí tienen uno.'}
           </p>
           <Link to="/app/iniciativas" className="btn btn-primary" style={{ marginTop: 16 }}>Explorar emprendimientos →</Link>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // editSlug viene en la URL pero todavía no aparece en myInitiatives — o
+  // no existe, o esta cuenta no es miembro (Firestore ya lo filtra así).
+  if (isApp && editSlug && !editingInitiative && !preview) {
+    return (
+      <DashboardLayout eyebrow={kind.eyebrow} title="No encontrado">
+        <div className="empty-state">
+          <p>No encontramos ese registro, o todavía se está cargando.</p>
+          <Link to="/app/mi-iniciativa" className="link-arrow">Volver a {kind.myPlural.toLowerCase()} →</Link>
         </div>
       </DashboardLayout>
     )
@@ -198,17 +229,17 @@ export default function NewInitiative({ variant = 'public' }) {
         <div className="preview-block">
           <p className="preview-label">Así se vería en el catálogo:</p>
           <div className="catalog-grid catalog-grid-single">
-            <InitiativeCard initiative={{ ...preview, ownerProfileType: myInitiative?.ownerProfileType || profile.profileType }} />
+            <InitiativeCard initiative={{ ...preview, ownerProfileType: profile.profileType, ownerProfileSubtype: profile.subtype }} />
           </div>
           <div className="auth-note">
             <p>
               {isApp
-                ? `Ya quedó guardado como tu ${kind.noun} — puedes verlo y editarlo desde "${kind.my}" en el sidebar.`
+                ? `Ya quedó guardado como ${kind.un} ${kind.noun} tuy${kind.un === 'una' ? 'a' : 'o'} — puedes verlo y editarlo desde "${kind.myPlural}" en el sidebar.`
                 : 'Para publicarla de verdad vas a necesitar una cuenta — eso llega en la siguiente etapa del proyecto.'}
             </p>
             <div className="form-actions">
-              <button className="btn btn-ghost" onClick={() => setPreview(null)}>Editar</button>
-              {isApp && <button className="btn btn-primary" onClick={() => navigate('/app/mi-iniciativa')}>Ver {kind.my.toLowerCase()} →</button>}
+              <button className="btn btn-ghost" onClick={handleEditAgain}>Editar</button>
+              {isApp && <button className="btn btn-primary" onClick={() => navigate(`/app/iniciativas/${preview.slug}`)}>Ver {kind.noun} →</button>}
               {!isApp && <Link to="/register" className="btn btn-primary">Crear cuenta</Link>}
             </div>
           </div>
@@ -384,13 +415,13 @@ export default function NewInitiative({ variant = 'public' }) {
               />
               <button type="button" className="btn btn-ghost" onClick={addResource}>Agregar +</button>
             </div>
-            {isApp && myInitiative?.docId && (
+            {isApp && editingInitiative?.docId && (
               <label className="btn btn-ghost" style={{ marginTop: 10, display: 'inline-flex' }}>
                 {uploadingFile ? 'Subiendo…' : 'Subir documento o imagen 📎'}
                 <input type="file" onChange={handleFileUpload} hidden disabled={uploadingFile} />
               </label>
             )}
-            {isApp && !myInitiative?.docId && (
+            {isApp && !editingInitiative?.docId && (
               <p className="settings-card-desc" style={{ marginTop: 6 }}>
                 Guarda primero tu {kind.noun} para poder subir documentos o imágenes — mientras tanto puedes agregar ligas.
               </p>
@@ -415,7 +446,7 @@ export default function NewInitiative({ variant = 'public' }) {
 
   if (isApp) {
     return (
-      <DashboardLayout eyebrow={kind.eyebrow} title={myInitiative ? `Editar ${kind.my.toLowerCase()}` : `Registrar ${kind.un} ${kind.noun}`}>
+      <DashboardLayout eyebrow={kind.eyebrow} title={editingInitiative ? `Editar ${kind.my.toLowerCase()}` : `Registrar ${kind.un} ${kind.noun}`}>
         {content}
       </DashboardLayout>
     )

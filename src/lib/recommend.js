@@ -2,6 +2,7 @@
 // de quien está viendo el dashboard. Un solo criterio reutilizable en vez
 // de comparar ODS a mano en cada página — así "recomendado para ti"
 // significa lo mismo en todas partes.
+import { isStudentEntrepreneur } from './initiativeKind.js'
 
 // Los ODS de eventos/grupos vienen como "ODS 4" (mock viejo) en vez de
 // "ods4" (id usado en perfiles/iniciativas) — se normaliza antes de comparar.
@@ -46,8 +47,17 @@ export function scoreForProfile(item, profile) {
 
   if (item.city && profile.city && item.city === profile.city) score += 2
 
-  const priority = PROFILE_TYPE_PRIORITY[profile.profileType] || []
-  if (item.ownerProfileType && priority.includes(item.ownerProfileType)) score += 2
+  // Union en vez de reemplazo: un estudiante-emprendedor conserva las
+  // prioridades de estudiante (compañeros, mentores) Y suma las de
+  // emprendedor, en vez de perder unas por ganar las otras. Mismo criterio
+  // para decidir si el ITEM cuenta como "emprendedor" a ojos de quien mira.
+  const priority = isStudentEntrepreneur(profile.profileType, profile.subtype)
+    ? [...(PROFILE_TYPE_PRIORITY[profile.profileType] || []), ...PROFILE_TYPE_PRIORITY.emprendedor]
+    : (PROFILE_TYPE_PRIORITY[profile.profileType] || [])
+  const itemCountsAsEmprendedor = isStudentEntrepreneur(item.ownerProfileType, item.ownerProfileSubtype)
+  if (item.ownerProfileType && (priority.includes(item.ownerProfileType) || (itemCountsAsEmprendedor && priority.includes('emprendedor')))) {
+    score += 2
+  }
 
   // Un mentor busca a quién asesorar según su expertise, no ODS/industria
   // propios (no los captura) — empareja por palabras compartidas entre su

@@ -6,7 +6,7 @@ import { ODS_FILTERS } from '../data/initiatives.js'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { PROFILE_TYPES } from '../data/profileOptions.js'
+import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -19,13 +19,15 @@ function profileToPerson(p, uid) {
     : p.profileType === 'organizacion'
       ? [p.causeLabel].filter(Boolean)
       : [p.industryLabel, p.industrySecondaryLabel].filter(Boolean)
+  const baseTypeLabel = PROFILE_TYPES.find((t) => t.id === p.profileType)?.label
+  const subtypeLabel = p.profileType === 'estudiante' ? STUDENT_SUBTYPES.find((s) => s.id === p.subtype)?.label : ''
   return {
     uid,
     name: p.name,
     role: p.occupation,
     location: getCityName(p.city) || p.location,
     odsLabel,
-    profileTypeLabel: PROFILE_TYPES.find((t) => t.id === p.profileType)?.label,
+    profileTypeLabel: subtypeLabel ? `${baseTypeLabel} · ${subtypeLabel}` : baseTypeLabel,
     offers,
     advisoryOffer: p.advisoryOffer,
     orgActivity: p.orgActivity,

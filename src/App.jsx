@@ -85,6 +85,7 @@ export default function App() {
         <Route path="/app/iniciativas" element={<RequireAuth><Iniciativas /></RequireAuth>} />
         <Route path="/app/mi-iniciativa" element={<RequireAuth><MyInitiative /></RequireAuth>} />
         <Route path="/app/iniciativas/nueva" element={<RequireAuth><NewInitiative variant="app" /></RequireAuth>} />
+        <Route path="/app/iniciativas/:slug/editar" element={<RequireAuth><NewInitiative variant="app" /></RequireAuth>} />
         <Route path="/app/iniciativas/:slug" element={<RequireAuth><InitiativeDetail variant="app" /></RequireAuth>} />
         <Route path="/app/personas" element={<RequireAuth><Personas /></RequireAuth>} />
         <Route path="/app/personas/:slug" element={<RequireAuth><PersonProfile /></RequireAuth>} />

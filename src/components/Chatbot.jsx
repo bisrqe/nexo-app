@@ -5,7 +5,7 @@ import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
-import { PROFILE_TYPES } from '../data/profileOptions.js'
+import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 import { kindFor } from '../lib/initiativeKind.js'
 import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
 import { CHATBOT_FAQ, matchFaq, FAQ_FALLBACK, SUPPORT_EMAIL } from '../data/chatbotFaq.js'
@@ -30,16 +30,19 @@ async function buildInsideContext(profile, groups) {
   const rankedMentors = profile.profileType === 'mentor' ? [] : rankMentorsForProfile(mentors, profile, 3)
   const rankedGroups = rankForProfile(groups, profile).slice(0, 3)
 
+  const baseTypeLabel = PROFILE_TYPES.find((p) => p.id === profile.profileType)?.label || profile.profileType
+  const subtypeLabel = profile.profileType === 'estudiante' ? STUDENT_SUBTYPES.find((s) => s.id === profile.subtype)?.label : ''
+
   return {
     name: profile.name,
-    profileTypeLabel: PROFILE_TYPES.find((p) => p.id === profile.profileType)?.label || profile.profileType,
+    profileTypeLabel: subtypeLabel ? `${baseTypeLabel} · ${subtypeLabel}` : baseTypeLabel,
     industryLabel: profile.industryLabel,
     cause: profile.cause || profile.expertise || '',
     city: profile.city,
     recommended: {
       initiatives: rankedInitiatives.map((i) => ({
         title: i.title,
-        kind: kindFor(i.ownerProfileType).noun,
+        kind: kindFor(i.ownerProfileType, i.ownerProfileSubtype).noun,
         tag: i.industryLabel || i.odsLabel,
         need: (i.need || '').slice(0, 100),
       })),

@@ -10,6 +10,16 @@ export const PROFILE_TYPES = [
   { id: 'organizacion', label: 'Institución / organización' },
 ]
 
+// Subcategoría de perfil — por ahora solo aplica a "estudiante": permite
+// marcar que además de estudiante, la persona ya trae un emprendimiento
+// propio (estudiante-emprendedor). Ver src/lib/initiativeKind.js
+// (isStudentEntrepreneur) para cómo esto reclasifica lo que registra y
+// cómo lo priorizan los algoritmos de recomendación.
+export const STUDENT_SUBTYPES = [
+  { id: '', label: 'Ninguna' },
+  { id: 'emprendedor', label: 'Emprendedor/a' },
+]
+
 export const GENDERS = [
   { id: 'femenino', label: 'Femenino' },
   { id: 'masculino', label: 'Masculino' },

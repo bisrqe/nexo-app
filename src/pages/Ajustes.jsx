@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
 import { labelFor } from '../lib/catalogLabel.js'
+import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -122,7 +123,7 @@ export default function Ajustes() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const { industryOtra, industrySecondaryOtra, causeOtra, ...rest } = form
-    const isEmprendedor = profile.profileType === 'emprendedor'
+    const isEmprendedor = profile.profileType === 'emprendedor' || isStudentEntrepreneur(profile.profileType, form.subtype)
     const isOrganizacion = profile.profileType === 'organizacion'
     await updateProfile({
       ...rest,
@@ -134,6 +135,7 @@ export default function Ajustes() {
         : '',
       cause: isOrganizacion ? form.cause : '',
       causeLabel: isOrganizacion ? labelFor(CAUSE_OPTIONS, form.cause, causeOtra) : '',
+      subtype: profile.profileType === 'estudiante' ? form.subtype : '',
       profileType: profile.profileType,
     })
     setSaved(true)
@@ -233,7 +235,23 @@ export default function Ajustes() {
             </select>
           </label>
 
-          {profile.profileType === 'emprendedor' && (
+          {profile.profileType === 'estudiante' && (
+            <label className="form-field">
+              <span>Subcategoría (opcional)</span>
+              <select name="subtype" value={form.subtype} onChange={handleChange}>
+                {STUDENT_SUBTYPES.map((s) => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
+                ))}
+              </select>
+              {form.subtype === 'emprendedor' && (
+                <span className="settings-card-desc" style={{ marginTop: 6 }}>
+                  Si además de estudiar ya tienes un emprendimiento propio, esto hace que lo registres como emprendimiento (con industria) en vez de como iniciativa, y que el resto del sitio te recomiende como a cualquier otro emprendedor/a.
+                </span>
+              )}
+            </label>
+          )}
+
+          {(profile.profileType === 'emprendedor' || isStudentEntrepreneur(profile.profileType, form.subtype)) && (
             <>
               <div className="form-row">
                 <label className="form-field">

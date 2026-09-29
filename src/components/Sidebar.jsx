@@ -5,6 +5,7 @@ import logo from '../assets/iconotipo-azul.png'
 import { initials } from '../data/currentUser.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
 const BASE_NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
@@ -16,14 +17,6 @@ const BASE_NAV = [
   { to: '/app/eventos', label: 'Eventos', icon: 'calendar' },
 ]
 
-// Mentores y voluntarios no registran un emprendimiento/iniciativa propio
-// — ese nav item ni aparece para ellos.
-const MY_ITEM_LABEL = {
-  emprendedor: 'Mi emprendimiento',
-  estudiante: 'Mi iniciativa',
-  organizacion: 'Mi institución',
-}
-
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -31,7 +24,13 @@ export default function Sidebar() {
   const { signOutUser, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
 
-  const myItemLabel = MY_ITEM_LABEL[profile.profileType]
+  // Mentores y voluntarios no registran un emprendimiento/iniciativa propio
+  // — ese nav item ni aparece para ellos. El texto (plural, porque ahora
+  // una cuenta puede tener varios) sale de kindFor, que ya reclasifica a
+  // estudiante-emprendedor como si fuera "emprendedor".
+  const myItemLabel = PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)
+    ? null
+    : kindFor(profile.profileType, profile.subtype).myPlural
   const nav = myItemLabel
     ? [...BASE_NAV.slice(0, 2), { to: '/app/mi-iniciativa', label: myItemLabel, icon: 'flag' }, ...BASE_NAV.slice(2)]
     : BASE_NAV

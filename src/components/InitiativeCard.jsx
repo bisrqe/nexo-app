@@ -11,10 +11,11 @@ const TAG_LABEL_KEY_BY_PROJECT_TYPE = {
 }
 
 export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true }) {
-  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, causeLabel, need, ownerProfileType } = initiative
-  const tagKey = TAG_LABEL_KEY_BY_PROJECT_TYPE[projectTypeFor(ownerProfileType)]
+  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, causeLabel, need, ownerProfileType, ownerProfileSubtype } = initiative
+  const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
+  const tagKey = TAG_LABEL_KEY_BY_PROJECT_TYPE[projectType]
   const tagLabel = { odsLabel, industryLabel, causeLabel }[tagKey] || odsLabel || industryLabel || causeLabel
-  const kind = kindFor(ownerProfileType)
+  const kind = kindFor(ownerProfileType, ownerProfileSubtype)
   const { isInitiativeSaved, toggleInitiative } = useSaved()
   const isPreview = slug === 'vista-previa'
   const saved = !isPreview && isInitiativeSaved(slug)
@@ -24,7 +25,7 @@ export default function InitiativeCard({ initiative, basePath = '/iniciativas', 
       <div className="cat-top-row">
         <div className="cat-id">
           N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
-          {(ownerProfileType === 'estudiante' || ownerProfileType === 'organizacion') && ` · ${kind.Noun.toUpperCase()}`}
+          {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
         </div>
         {!isPreview && allowSave && (
           <button

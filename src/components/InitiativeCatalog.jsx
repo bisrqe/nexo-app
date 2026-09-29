@@ -40,7 +40,7 @@ export default function InitiativeCatalog({
 
   const filtered = useMemo(() => {
     return initiatives.filter((i) => {
-      const matchesType = activeType === 'todos' || projectTypeFor(i.ownerProfileType) === activeType
+      const matchesType = activeType === 'todos' || projectTypeFor(i.ownerProfileType, i.ownerProfileSubtype) === activeType
       if (!matchesType) return false
       if (!category || activeCategory === 'todos') return true
       return category.key === 'ods' ? (i.ods || []).includes(activeCategory) : i[category.key] === activeCategory

@@ -17,6 +17,7 @@ export const DEFAULT_PROFILE = {
   location: '',
   city: '',
   profileType: 'emprendedor',
+  subtype: '',
   industry: '',
   industryLabel: '',
   industrySecondary: '',

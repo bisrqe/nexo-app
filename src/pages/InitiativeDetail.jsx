@@ -8,18 +8,90 @@ import MembersContacts from '../components/MembersContacts.jsx'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { kindFor } from '../lib/initiativeKind.js'
+import { useUserContent } from '../context/UserContentContext.jsx'
+import { useProfilesByUids } from '../lib/useProfilesByUids.js'
+import { initials } from '../data/currentUser.js'
+import { kindFor, projectTypeFor } from '../lib/initiativeKind.js'
+
+function InterestedPeople({ uids }) {
+  const people = useProfilesByUids(uids)
+  if (!uids || uids.length === 0) return null
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <span className="kicker">Personas interesadas</span>
+      <div className="tile-grid" style={{ margin: '16px 0 0' }}>
+        {people.map((p) => (
+          <div className="tile" key={p.uid}>
+            <span className="app-profile-avatar" style={{ marginBottom: 8 }}>
+              {p.photo ? <img src={p.photo} alt="" /> : initials(p.name)}
+            </span>
+            <span className="tile-title">{p.name || 'Sin nombre'}</span>
+            <p className="tile-text">{p.occupation}{p.city ? ` — ${getCityName(p.city)}` : ''}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AddMemberForm({ onAdd, noun }) {
+  const [username, setUsername] = useState('')
+  const [status, setStatus] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!username.trim() || busy) return
+    setBusy(true)
+    setStatus(null)
+    const result = await onAdd(username)
+    setBusy(false)
+    if (result?.error) {
+      setStatus({ type: 'error', text: result.error })
+    } else {
+      setStatus({ type: 'ok', text: 'Cuenta ligada correctamente.' })
+      setUsername('')
+    }
+  }
+
+  return (
+    <form onSubmit={submit} style={{ marginTop: 16 }}>
+      <label className="form-field">
+        <span>Ligar otra cuenta a {noun === 'institución/organización' ? 'esta' : 'este'} {noun} (ej. un cofundador)</span>
+        <div className="resource-add-row">
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="@usuario"
+            disabled={busy}
+          />
+          <button type="submit" className="btn btn-ghost" disabled={busy}>{busy ? 'Ligando…' : 'Ligar cuenta'}</button>
+        </div>
+      </label>
+      {status && (
+        <p style={{ color: status.type === 'error' ? '#c0392b' : 'inherit', fontSize: 13.5, marginTop: 6 }}>
+          {status.text}
+        </p>
+      )}
+    </form>
+  )
+}
 
 // Vive en dos rutas distintas según de dónde vengas:
 //  - /iniciativas/:slug        (variant="public") — parte de la landing, con Header/Footer.
 //  - /app/iniciativas/:slug    (variant="app")    — parte del dashboard, nunca te saca a la landing.
 // El contenido del dossier es el mismo en ambos casos; solo cambia el
-// "chrome" alrededor y a dónde regresa el link de "volver".
+// "chrome" alrededor, a dónde regresa el link de "volver", y si se ven los
+// controles de dueño/cofundador (agregar/quitar gente, editar) — esos solo
+// aparecen dentro del dashboard y solo para quien sea miembro de verdad.
 export default function InitiativeDetail({ variant = 'public' }) {
   const { slug } = useParams()
   const isApp = variant === 'app'
   const backTo = isApp ? '/app/iniciativas' : '/iniciativas'
   const { user } = useAuth()
+  const { addInitiativeMember, removeInitiativeMember } = useUserContent()
 
   const [remote, setRemote] = useState(undefined)
 
@@ -36,6 +108,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const initiative = remote
   const loading = remote === undefined
   const isMember = Boolean(user && initiative?.memberUids?.includes(user.uid))
+  const isOwner = Boolean(user && initiative?.ownerUid === user.uid)
   const interested = Boolean(user && initiative?.interestedBy?.includes(user.uid))
 
   const toggleInterest = async () => {
@@ -48,6 +121,20 @@ export default function InitiativeDetail({ variant = 'public' }) {
       await updateDoc(ref, { interestedBy: arrayUnion(user.uid) })
       setRemote((r) => ({ ...r, interestedBy: [...(r.interestedBy || []), user.uid] }))
     }
+  }
+
+  const handleAddMember = async (username) => {
+    const result = await addInitiativeMember(initiative, username)
+    if (result?.ok) {
+      const snap = await getDocs(query(collection(db, 'initiatives'), where('slug', '==', slug)))
+      if (!snap.empty) setRemote({ ...snap.docs[0].data(), docId: snap.docs[0].id })
+    }
+    return result
+  }
+
+  const handleRemoveMember = async (uid) => {
+    await removeInitiativeMember(initiative, uid)
+    setRemote((r) => ({ ...r, memberUids: (r.memberUids || []).filter((id) => id !== uid) }))
   }
 
   if (loading) {
@@ -90,10 +177,11 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   const {
     id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
-    industryLabel, industrySecondaryLabel, need, desc, longDesc, collaborators, impact,
-    ownerUid, ownerProfileType, memberUids, resources,
+    industryLabel, industrySecondaryLabel, causeLabel, need, desc, longDesc, collaborators, impact,
+    ownerUid, ownerProfileType, ownerProfileSubtype, memberUids, resources,
   } = initiative
-  const kind = kindFor(ownerProfileType)
+  const kind = kindFor(ownerProfileType, ownerProfileSubtype)
+  const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
 
   const body = (
     <div className="in">
@@ -102,7 +190,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
       <div className="detail-head">
         <div className="cat-id">
           N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
-          {(ownerProfileType === 'estudiante' || ownerProfileType === 'organizacion') && ` · ${kind.Noun.toUpperCase()}`}
+          {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
         </div>
         <h1 className="detail-title">{title}</h1>
         <p className="cat-org">{org} — {getCityName(city) || location}</p>
@@ -111,6 +199,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
           {odsSecondaryLabel && <span>{odsSecondaryLabel}</span>}
           {industryLabel && <span>{industryLabel}</span>}
           {industrySecondaryLabel && <span>{industrySecondaryLabel}</span>}
+          {causeLabel && <span>{causeLabel}</span>}
         </div>
       </div>
 
@@ -142,7 +231,13 @@ export default function InitiativeDetail({ variant = 'public' }) {
           <p className="need-big">{need}</p>
         </div>
 
-        <MembersContacts ownerUid={ownerUid} memberUids={memberUids} linkToProfiles={isApp} />
+        <MembersContacts
+          ownerUid={ownerUid}
+          memberUids={memberUids}
+          onRemove={isOwner ? handleRemoveMember : undefined}
+          canManage={isApp && isOwner}
+          linkToProfiles={isApp}
+        />
 
         {isApp && user && !isMember && initiative.docId && (
           <button type="button" className={`btn ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest} style={{ marginTop: 16 }}>
@@ -150,6 +245,16 @@ export default function InitiativeDetail({ variant = 'public' }) {
           </button>
         )}
       </div>
+
+      {isApp && isOwner && <AddMemberForm onAdd={handleAddMember} noun={kind.noun} />}
+
+      {isApp && isMember && <InterestedPeople uids={initiative.interestedBy} />}
+
+      {isApp && isMember && (
+        <div className="form-actions" style={{ marginTop: 32 }}>
+          <Link to={`/app/iniciativas/${slug}/editar`} className="btn btn-ghost">Editar {kind.noun}</Link>
+        </div>
+      )}
     </div>
   )
 

@@ -82,7 +82,7 @@ export default function Dashboard() {
             <div className="empty-state">
               <p>Todavía no hay emprendimientos en tu zona — sé quien abra el primero.</p>
               {!PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType) && (
-                <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar {kindFor(profile.profileType).noun} →</Link>
+                <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar {kindFor(profile.profileType, profile.subtype).noun} →</Link>
               )}
             </div>
           ) : (
