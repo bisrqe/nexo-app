@@ -903,6 +903,13 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .app-shell[data-theme="dark"] .app-main .btn-ghost:hover,
 .app-shell[data-theme="dark"] .app-main .save-btn:hover{color:#8FB8E8; border-color:#8FB8E8;}
 
+/* .msg-bubble (not .self) uses --paper-alt same as .messages-shell's own
+   dark-mode background above — without this, incoming message bubbles are
+   invisible in dark mode (same color as the panel behind them). */
+.app-shell[data-theme="dark"] .app-main .msg-bubble:not(.self){
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.08);
+}
+
 /* ── Panel de KPIs (admin) ───────────────────────────── */
 .kpi-toolbar{display:flex; justify-content:flex-end; margin-bottom:24px;}
 
