@@ -147,6 +147,36 @@ exports.onInitiativeInterest = onDocumentUpdated(
   }
 )
 
+// Alguien sin permiso de admin sugiere un recurso desde el panel de
+// Recursos — queda guardado como "pending" (ver firestore.rules) y aquí se
+// le avisa al equipo por correo para que entre a aprobarlo o borrarlo.
+exports.onResourceSuggested = onDocumentCreated(
+  { document: 'resources/{id}', secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const resource = event.data.data()
+    if (resource.status !== 'pending') return
+
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `Nuevo recurso sugerido: "${resource.title}"`,
+      html: renderEmail({
+        preheader: `${resource.submittedByName || 'Alguien'} sugirió un recurso nuevo en Nexo`,
+        heading: 'Recurso pendiente de aprobación',
+        bodyHtml: `
+          <p style="margin:0 0 4px;"><b>Sugerido por:</b> ${escapeHtml(resource.submittedByName || 'Alguien')}${resource.submittedByEmail ? ` (${escapeHtml(resource.submittedByEmail)})` : ''}</p>
+          <p style="margin:0 0 4px;"><b>Nombre:</b> ${escapeHtml(resource.title)}</p>
+          <p style="margin:0 0 4px;"><b>Categoría:</b> ${escapeHtml(resource.category || '—')}</p>
+          <p style="margin:0 0 4px;"><b>Zona:</b> ${escapeHtml(resource.region || '—')}</p>
+          <p style="margin:0 0 16px;"><b>Liga:</b> ${escapeHtml(resource.link || '—')}</p>
+          <blockquote style="margin:0; padding-left:12px; border-left:3px solid rgba(16,27,38,.14); color:#5E6672;">${escapeHtml(resource.desc)}</blockquote>
+        `,
+        cta: { href: `${APP_URL}/app/recursos`, label: 'Revisar en Nexo →' },
+        footerNote: 'Este correo es interno — se manda solo al equipo de Nexo cuando alguien sugiere un recurso nuevo.',
+      }),
+    })
+  }
+)
+
 // Retroalimentación mandada desde el chatbot (landing o dashboard) — nadie
 // la puede leer desde el cliente (ver firestore.rules), así que hasta ahora
 // solo se veía entrando a la consola de Firebase. Esto la manda por correo

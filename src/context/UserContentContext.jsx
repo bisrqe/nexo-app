@@ -84,15 +84,20 @@ export function UserContentProvider({ children }) {
   // tener varios. ownerProfileType/Subtype quedan fijos al momento de
   // crear (ver isStudentEntrepreneur en initiativeKind.js — de ahí sale la
   // reclasificación para quien tenga subcategoría estudiante-emprendedor).
-  const createInitiative = async (initiative) => {
+  // kindOverride es opcional — lo usa el formulario cuando quien registra
+  // es estudiante y elige registrar un emprendimiento YA constituido en
+  // vez de una iniciativa/proyecto escolar (ver NewInitiative.jsx): así
+  // una misma cuenta estudiante puede tener de los dos, sin que elegir uno
+  // cambie su subtipo de perfil real.
+  const createInitiative = async (initiative, kindOverride) => {
     if (!user) return null
     const ref = doc(collection(db, 'initiatives'))
     await setDoc(ref, {
       ...initiative,
       ownerUid: user.uid,
       memberUids: [user.uid],
-      ownerProfileType: profile.profileType,
-      ownerProfileSubtype: profile.subtype || '',
+      ownerProfileType: kindOverride?.ownerProfileType || profile.profileType,
+      ownerProfileSubtype: kindOverride ? (kindOverride.ownerProfileSubtype || '') : (profile.subtype || ''),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })

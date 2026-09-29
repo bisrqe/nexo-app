@@ -29,7 +29,7 @@ function CopyEmailButton({ email }) {
 // un correo suelto, se ve y se contacta a la persona real. Se usa tanto en
 // el dossier público/app (solo lectura) como en el propio, donde el dueño
 // también puede quitar a alguien.
-export default function MembersContacts({ ownerUid, memberUids, onRemove, canManage = false, linkToProfiles = false }) {
+export default function MembersContacts({ ownerUid, memberUids, onRemove, canManage = false, linkToProfiles = false, ownerLabel = 'Dueño', memberLabel = 'Cofundador/a' }) {
   const people = useProfilesByUids(memberUids)
   if (people.length === 0) return null
 
@@ -48,7 +48,7 @@ export default function MembersContacts({ ownerUid, memberUids, onRemove, canMan
                 <div className="dossier-contact-name">{p.name || 'Sin nombre'}</div>
               )}
               <div className="dossier-contact-role">
-                {p.uid === ownerUid ? 'Dueño' : 'Cofundador/a'}{p.username ? ` · @${p.username}` : ''}
+                {p.uid === ownerUid ? ownerLabel : memberLabel}{p.username ? ` · @${p.username}` : ''}
               </div>
             </div>
           </div>

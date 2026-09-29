@@ -53,8 +53,7 @@ export default function NewInitiative({ variant = 'public' }) {
   const { myInitiatives, createInitiative, updateInitiative } = useUserContent()
   const { profile } = useProfile()
   const editingInitiative = isApp && editSlug ? myInitiatives.find((i) => i.slug === editSlug) : null
-  const kind = kindFor(profile.profileType, profile.subtype)
-  const isOrg = profile.profileType === 'organizacion'
+  const isStudent = profile.profileType === 'estudiante'
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [preview, setPreview] = useState(null)
@@ -62,6 +61,16 @@ export default function NewInitiative({ variant = 'public' }) {
   const [resourceDraft, setResourceDraft] = useState({ label: '', url: '' })
   const [uploadingFile, setUploadingFile] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  // Solo importa al CREAR (no se puede cambiar después de editar, igual
+  // que el resto de ownerProfileType/Subtype) — deja que una cuenta
+  // estudiante registre tanto emprendimientos ya constituidos como
+  // iniciativas/proyectos escolares, sin tocar su subtipo de perfil real.
+  const [studentKind, setStudentKind] = useState('iniciativa')
+  const effectiveSubtypeForKind = isStudent && !editingInitiative
+    ? (studentKind === 'emprendimiento' ? 'emprendedor' : '')
+    : profile.subtype
+  const kind = kindFor(profile.profileType, effectiveSubtypeForKind)
+  const isOrg = profile.profileType === 'organizacion'
 
   useEffect(() => {
     if (isApp && editingInitiative && !prefilled) {
@@ -204,7 +213,7 @@ export default function NewInitiative({ variant = 'public' }) {
     // decide si actualiza uno existente o crea otro nuevo.
     if (isApp) {
       if (editingInitiative) updateInitiative(editingInitiative.docId, built)
-      else createInitiative(built)
+      else createInitiative(built, isStudent ? { ownerProfileType: 'estudiante', ownerProfileSubtype: effectiveSubtypeForKind } : undefined)
     }
   }
 
@@ -262,7 +271,7 @@ export default function NewInitiative({ variant = 'public' }) {
         <div className="preview-block">
           <p className="preview-label">Así se vería en el catálogo:</p>
           <div className="catalog-grid catalog-grid-single">
-            <InitiativeCard initiative={{ ...preview, ownerProfileType: profile.profileType, ownerProfileSubtype: profile.subtype }} />
+            <InitiativeCard initiative={{ ...preview, ownerProfileType: profile.profileType, ownerProfileSubtype: effectiveSubtypeForKind }} />
           </div>
           <div className="auth-note">
             <p>
@@ -279,6 +288,15 @@ export default function NewInitiative({ variant = 'public' }) {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="auth-form">
+          {isStudent && !editingInitiative && (
+            <label className="form-field">
+              <span>¿Qué estás registrando?</span>
+              <select value={studentKind} onChange={(e) => setStudentKind(e.target.value)}>
+                <option value="iniciativa">Iniciativa — proyecto escolar, todavía no está constituido</option>
+                <option value="emprendimiento">Emprendimiento — ya está constituido como negocio</option>
+              </select>
+            </label>
+          )}
           {isApp && (
             <div className="avatar-upload">
               {form.logoUrl ? (

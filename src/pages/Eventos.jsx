@@ -34,7 +34,7 @@ export default function Eventos() {
   const [realEvents] = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
-  const [onlyMyCity, setOnlyMyCity] = useState(Boolean(profile.city))
+  const [cityFilter, setCityFilter] = useState(profile.city || '')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
   const [editingEventId, setEditingEventId] = useState(null)
@@ -127,10 +127,10 @@ export default function Eventos() {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
       const isRemote = e.city === 'remoto'
-      const matchCity = !onlyMyCity || !profile.city || isRemote || e.city === profile.city
+      const matchCity = !cityFilter || isRemote || e.city === cityFilter
       return matchQ && matchCat && matchCity
     })
-  }, [allEvents, query, category, onlyMyCity, profile.city])
+  }, [allEvents, query, category, cityFilter])
 
   return (
     <DashboardLayout
@@ -138,16 +138,16 @@ export default function Eventos() {
       title="Eventos"
       subtitle="Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real."
     >
-      {profile.city && (
-        <div className="filters" style={{ marginBottom: 12 }}>
-          <button className={`chip ${onlyMyCity ? 'active' : ''}`} onClick={() => setOnlyMyCity(true)}>
-            {getCityName(profile.city)}
+      <div className="filters">
+        <button className={`chip ${!cityFilter ? 'active' : ''}`} onClick={() => setCityFilter('')}>
+          Todas las zonas
+        </button>
+        {CITIES.map((c) => (
+          <button key={c.id} className={`chip ${cityFilter === c.id ? 'active' : ''}`} onClick={() => setCityFilter(c.id)}>
+            {c.name}
           </button>
-          <button className={`chip ${!onlyMyCity ? 'active' : ''}`} onClick={() => setOnlyMyCity(false)}>
-            Ver todas las zonas
-          </button>
-        </div>
-      )}
+        ))}
+      </div>
       <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <input
           className="search-input"
@@ -156,22 +156,22 @@ export default function Eventos() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="filters" style={{ marginBottom: 0 }}>
-            {['Todos', ...EVENT_CATEGORIES].map((cat) => (
-              <button
-                key={cat}
-                className={`chip ${category === cat ? 'active' : ''}`}
-                onClick={() => setCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="btn btn-primary" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
-            {showForm ? 'Cancelar' : 'Crear evento +'}
-          </button>
+        <div className="filters" style={{ marginBottom: 0 }}>
+          {['Todos', ...EVENT_CATEGORIES].map((cat) => (
+            <button
+              key={cat}
+              className={`chip ${category === cat ? 'active' : ''}`}
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+        <button type="button" className="btn btn-primary" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
+          {showForm ? 'Cancelar' : 'Crear evento +'}
+        </button>
       </div>
 
       {showForm && (

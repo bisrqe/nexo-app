@@ -57,36 +57,57 @@ service cloud.firestore {
     }
 
     // Recursos capturados a mano (convocatorias, financiamiento, etc.) —
-    // se suman a los que ya vienen fijos en src/data/resources.js.
-    // Lectura pública igual que iniciativas/eventos; solo la cuenta admin
-    // (mismo correo que ADMIN_EMAILS en src/data/admins.js) puede
-    // agregarlos, editarlos o borrarlos desde el panel de Recursos.
+    // se suman a los que ya vienen fijos en src/data/resources.js. Lectura
+    // pública igual que iniciativas/eventos (el cliente filtra los que
+    // están "pending" para que solo los vea quien aprueba). La cuenta
+    // admin/aprobadora (mismo correo que ADMIN_EMAILS/RESOURCE_APPROVER_EMAILS
+    // en src/data/admins.js — hoy es la misma) los agrega ya aprobados,
+    // los edita, aprueba o borra sin restricción. Cualquier otra cuenta con
+    // sesión puede sugerir uno nuevo, pero siempre queda "pending" y a su
+    // propio nombre — no puede autoaprobarse ni tocar los de alguien más.
     match /resources/{id} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null &&
+      allow create: if request.auth != null && (
+        request.auth.token.email == 'bismarck@bisrqe.com' ||
+        (
+          request.resource.data.status == 'pending' &&
+          request.resource.data.submittedByUid == request.auth.uid
+        )
+      );
+      allow update, delete: if request.auth != null &&
         request.auth.token.email == 'bismarck@bisrqe.com';
     }
 
     // Mesas de trabajo — cualquier cuenta con sesión las puede ver y
     // unirse (el "unirse" en sí vive en profiles/{uid}.joinedGroups, no
-    // aquí); solo el dueño edita/borra la mesa. El chat de cada mesa
-    // (subcolección messages) solo lo puede leer/escribir quien tenga
-    // ese groupId en su propio perfil — mismo nivel de privacidad que
-    // el chat directo, nadie fuera del grupo ve los mensajes.
+    // aquí). adminUids son las cuentas con permiso de administrar la mesa
+    // (el dueño empieza ahí, y puede agregar colaboradores con los mismos
+    // permisos) — cualquiera en adminUids puede editar cualquier campo,
+    // borrar la mesa, y agregar/quitar admins, salvo que a ownerUid no se
+    // le puede quitar de adminUids (eso protege que la mesa se quede sin
+    // dueño). Cualquier otro miembro (no admin) solo puede tocar los
+    // campos de "último mensaje" que actualiza el chat al mandar un
+    // mensaje. El chat de cada mesa (subcolección messages) solo lo puede
+    // leer/escribir quien tenga ese groupId en su propio perfil — mismo
+    // nivel de privacidad que el chat directo, nadie fuera del grupo ve
+    // los mensajes.
     match /groups/{groupId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
-      // El dueño puede editar cualquier campo (nombre, descripción, etc.);
-      // cualquier otro miembro solo puede tocar los campos de "último
-      // mensaje" que actualiza el chat al mandar un mensaje.
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.adminUids == [request.auth.uid];
       allow update: if request.auth != null && (
-        resource.data.ownerUid == request.auth.uid ||
+        (
+          request.auth.uid in resource.data.get('adminUids', [resource.data.ownerUid]) &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          resource.data.ownerUid in request.resource.data.get('adminUids', [])
+        ) ||
         (
           groupId in get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('joinedGroups', []) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastSenderUid', 'updatedAt', 'messageCount'])
         )
       );
-      allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow delete: if request.auth != null &&
+        request.auth.uid in resource.data.get('adminUids', [resource.data.ownerUid]);
 
       match /messages/{msgId} {
         allow read: if request.auth != null &&

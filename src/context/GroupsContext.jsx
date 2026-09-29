@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import {
-  collection, doc, onSnapshot, updateDoc, writeBatch,
-  arrayUnion, increment, serverTimestamp,
+  collection, doc, onSnapshot, updateDoc, deleteDoc, writeBatch,
+  getDocs, query, where, arrayUnion, arrayRemove, increment, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from './AuthContext.jsx'
@@ -37,7 +37,10 @@ export function GroupsProvider({ children }) {
   }, [user])
 
   // Crea la mesa y en el mismo batch se auto-une el dueño a su propia
-  // mesa (si no, no podría escribir en su propio chat de grupo).
+  // mesa (si no, no podría escribir en su propio chat de grupo). adminUids
+  // arranca con solo el dueño — desde ahí se pueden agregar colaboradores
+  // con los mismos permisos de administración (editar, borrar, agregar/
+  // quitar a otros), igual que memberUids en emprendimientos/iniciativas.
   const createGroup = async (data) => {
     if (!user) return null
     const ref = doc(collection(db, 'groups'))
@@ -46,6 +49,7 @@ export function GroupsProvider({ children }) {
       ...data,
       slug: `${slugify(data.name)}-${ref.id.slice(0, 6)}`,
       ownerUid: user.uid,
+      adminUids: [user.uid],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessage: '',
@@ -60,6 +64,40 @@ export function GroupsProvider({ children }) {
   const updateGroup = async (groupId, patch) => {
     if (!user) return
     await updateDoc(doc(db, 'groups', groupId), { ...patch, updatedAt: serverTimestamp() })
+  }
+
+  // Solo quien ya es admin de la mesa puede borrarla (ver firestore.rules).
+  const deleteGroup = async (groupId) => {
+    if (!user || !groupId) return
+    await deleteDoc(doc(db, 'groups', groupId))
+  }
+
+  // Agregar a otra cuenta como admin de la mesa (mismos permisos que el
+  // dueño: editar, borrar, agregar/quitar gente) — cualquier admin actual
+  // puede hacerlo, no solo el dueño. También la une a la mesa (joinedGroups)
+  // para que pueda ver y escribir en su chat.
+  const addGroupAdmin = async (group, username) => {
+    if (!user || !group?.docId) return { error: 'No se pudo identificar la mesa de trabajo.' }
+    if (!(group.adminUids || [group.ownerUid]).includes(user.uid)) {
+      return { error: 'Solo quien administra esta mesa puede agregar colaboradores.' }
+    }
+    const clean = (username || '').trim().replace(/^@/, '')
+    if (!clean) return { error: 'Escribe un nombre de usuario.' }
+    const snap = await getDocs(query(collection(db, 'profiles'), where('username', '==', clean)))
+    if (snap.empty) return { error: 'No encontramos ninguna cuenta con ese usuario.' }
+    const uid = snap.docs[0].id
+    if ((group.adminUids || []).includes(uid)) return { error: 'Esa cuenta ya administra esta mesa.' }
+    const batch = writeBatch(db)
+    batch.update(doc(db, 'groups', group.docId), { adminUids: arrayUnion(uid) })
+    batch.update(doc(db, 'profiles', uid), { joinedGroups: arrayUnion(group.docId) })
+    await batch.commit()
+    return { ok: true }
+  }
+
+  const removeGroupAdmin = async (group, uid) => {
+    if (!user || !group?.docId || uid === group.ownerUid) return
+    if (!(group.adminUids || [group.ownerUid]).includes(user.uid)) return
+    await updateDoc(doc(db, 'groups', group.docId), { adminUids: arrayRemove(uid) })
   }
 
   // file, si viene, es { url, name, type } (ver src/lib/uploads.js).
@@ -85,7 +123,7 @@ export function GroupsProvider({ children }) {
     await batch.commit()
   }
 
-  const value = { groups, createGroup, updateGroup, sendGroupMessage }
+  const value = { groups, createGroup, updateGroup, deleteGroup, addGroupAdmin, removeGroupAdmin, sendGroupMessage }
 
   return <GroupsContext.Provider value={value}>{children}</GroupsContext.Provider>
 }
