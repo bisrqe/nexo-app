@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import EventDetailModal from '../components/EventDetailModal.jsx'
@@ -34,7 +34,12 @@ export default function Eventos() {
   const [realEvents] = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Todos')
-  const [cityFilter, setCityFilter] = useState(profile.city || '')
+  // Mismo patrón que Recursos: mi ciudad + "Remoto" (equivalente de
+  // "Alcance nacional" — no depende de dónde estés) siempre visibles, y el
+  // resto de las ciudades vive bajo "Otras ciudades" con su propio filtro.
+  const myCity = profile.city && profile.city !== 'remoto' ? profile.city : ''
+  const [topTab, setTopTab] = useState(myCity ? 'mine' : 'remoto')
+  const [otherCity, setOtherCity] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
   const [editingEventId, setEditingEventId] = useState(null)
@@ -45,6 +50,12 @@ export default function Eventos() {
     [realEvents]
   )
   const activeEvent = activeEventId ? allEvents.find((e) => e.docId === activeEventId) : null
+
+  useEffect(() => {
+    if (myCity) setTopTab('mine')
+  }, [myCity])
+
+  const cityFilter = topTab === 'mine' ? myCity : topTab === 'remoto' ? 'remoto' : otherCity
 
   const handleToggle = async (event) => {
     if (!user) return
@@ -126,8 +137,7 @@ export default function Eventos() {
     return allEvents.filter((e) => {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
-      const isRemote = e.city === 'remoto'
-      const matchCity = !cityFilter || isRemote || e.city === cityFilter
+      const matchCity = !cityFilter || e.city === cityFilter
       return matchQ && matchCat && matchCity
     })
   }, [allEvents, query, category, cityFilter])
@@ -139,15 +149,27 @@ export default function Eventos() {
       subtitle="Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real."
     >
       <div className="filters">
-        <button className={`chip ${!cityFilter ? 'active' : ''}`} onClick={() => setCityFilter('')}>
-          Todas las zonas
-        </button>
-        {CITIES.map((c) => (
-          <button key={c.id} className={`chip ${cityFilter === c.id ? 'active' : ''}`} onClick={() => setCityFilter(c.id)}>
-            {c.name}
+        {myCity && (
+          <button className={`chip ${topTab === 'mine' ? 'active' : ''}`} onClick={() => setTopTab('mine')}>
+            {getCityName(myCity)}
           </button>
-        ))}
+        )}
+        <button className={`chip ${topTab === 'remoto' ? 'active' : ''}`} onClick={() => setTopTab('remoto')}>
+          Remoto
+        </button>
+        <button className={`chip ${topTab === 'otras' ? 'active' : ''}`} onClick={() => setTopTab('otras')}>
+          Otras ciudades
+        </button>
       </div>
+      {topTab === 'otras' && (
+        <div className="filters" style={{ marginTop: -8 }}>
+          {CITIES.filter((c) => c.id !== 'remoto' && c.id !== myCity).map((c) => (
+            <button key={c.id} className={`chip ${otherCity === c.id ? 'active' : ''}`} onClick={() => setOtherCity(c.id)}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <input
           className="search-input"
