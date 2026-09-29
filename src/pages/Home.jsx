@@ -75,7 +75,7 @@ export default function Home() {
               <span className="stat-num">{s.num}</span>
               <span className="stat-label">
                 {s.label === 'ODS con actividad' ? (
-                  <><abbr title="Objetivos de Desarrollo Sostenible (ONU)">ODS</abbr> con actividad</>
+                  <>ODS con actividad</>
                 ) : s.label}
               </span>
             </div>
