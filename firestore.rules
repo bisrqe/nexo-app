@@ -56,6 +56,17 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
     }
 
+    // Recursos capturados a mano (convocatorias, financiamiento, etc.) —
+    // se suman a los que ya vienen fijos en src/data/resources.js.
+    // Lectura pública igual que iniciativas/eventos; solo la cuenta admin
+    // (mismo correo que ADMIN_EMAILS en src/data/admins.js) puede
+    // agregarlos, editarlos o borrarlos desde el panel de Recursos.
+    match /resources/{id} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null &&
+        request.auth.token.email == 'bismarck@bisrqe.com';
+    }
+
     // Mesas de trabajo — cualquier cuenta con sesión las puede ver y
     // unirse (el "unirse" en sí vive en profiles/{uid}.joinedGroups, no
     // aquí); solo el dueño edita/borra la mesa. El chat de cada mesa
