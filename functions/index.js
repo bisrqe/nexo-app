@@ -16,6 +16,7 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY')
 const APP_URL = 'https://nexo-app-mauve.vercel.app'
 const FROM = 'Nexo <onboarding@resend.dev>'
+const SUPPORT_EMAIL = 'support@nexohub.mx'
 
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, (c) => (
@@ -124,5 +125,22 @@ exports.onInitiativeInterest = onDocumentUpdated(
         html: `<p><b>${escapeHtml(interestedName)}</b> marcó "Me interesa" en tu emprendimiento <b>${escapeHtml(after.title)}</b>.</p><p><a href="${APP_URL}/app/mi-iniciativa">Ver quién más →</a></p>`,
       })
     }
+  }
+)
+
+// Retroalimentación mandada desde el chatbot (landing o dashboard) — nadie
+// la puede leer desde el cliente (ver firestore.rules), así que hasta ahora
+// solo se veía entrando a la consola de Firebase. Esto la manda por correo
+// al equipo en cuanto se guarda.
+exports.onFeedbackCreate = onDocumentCreated(
+  { document: 'feedback/{id}', secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const feedback = event.data.data()
+    const from = feedback.email ? escapeHtml(feedback.email) : 'Alguien sin cuenta iniciada'
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: `Nueva retroalimentación en Nexo (${feedback.page || 'página desconocida'})`,
+      html: `<p><b>De:</b> ${from}</p><p><b>Página:</b> ${escapeHtml(feedback.page || '—')}</p><blockquote>${escapeHtml(feedback.message)}</blockquote>`,
+    })
   }
 )
