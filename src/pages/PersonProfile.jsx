@@ -95,17 +95,32 @@ export default function PersonProfile() {
           </div>
           <h1 className="detail-title">{name}</h1>
           <p className="cat-org">{role} — {location}</p>
-          <div className="cat-tags">
-            {profileTypeLabel && <span>{profileTypeLabel}</span>}
-            {odsLabel && <span>{odsLabel}</span>}
+          <div className="detail-tags">
+            {profileTypeLabel && <span className="tag-pill">{profileTypeLabel}</span>}
+            {odsLabel && <span className="tag-pill">{odsLabel}</span>}
           </div>
         </div>
 
         <div className="detail-body">
           <p className="detail-lede">{bio}</p>
-          {advisoryOffer && <p><b>En qué puede asesorar: </b>{advisoryOffer}</p>}
-          {orgActivity && <p><b>Qué hace: </b>{orgActivity}</p>}
-          {orgAudience && <p><b>A quién atiende: </b>{orgAudience}</p>}
+          {advisoryOffer && (
+            <div className="detail-field">
+              <span className="kicker">En qué puede asesorar</span>
+              <p>{advisoryOffer}</p>
+            </div>
+          )}
+          {orgActivity && (
+            <div className="detail-field">
+              <span className="kicker">Qué hace</span>
+              <p>{orgActivity}</p>
+            </div>
+          )}
+          {orgAudience && (
+            <div className="detail-field">
+              <span className="kicker">A quién atiende</span>
+              <p>{orgAudience}</p>
+            </div>
+          )}
         </div>
 
         <div className="detail-side">

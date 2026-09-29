@@ -13,6 +13,16 @@ import { useProfilesByUids } from '../lib/useProfilesByUids.js'
 import { initials } from '../data/currentUser.js'
 import { kindFor, projectTypeFor } from '../lib/initiativeKind.js'
 
+// Los recursos subidos no traen guardado si son imagen (uploadFile sí
+// regresa el mime type, pero se descarta al guardarse en el arreglo de
+// resources — ver handleFileUpload en NewInitiative.jsx) — se detecta por
+// extensión en vez de eso, para que también funcione con ligas externas
+// (ej. una imagen pegada desde otro sitio, no solo lo subido aquí).
+const IMAGE_URL_RE = /\.(png|jpe?g|gif|webp|svg)(\?|$)/i
+function isImageResource(r) {
+  return IMAGE_URL_RE.test(r.url || '') || IMAGE_URL_RE.test(r.label || '')
+}
+
 function InterestedPeople({ uids }) {
   const people = useProfilesByUids(uids)
   if (!uids || uids.length === 0) return null
@@ -182,45 +192,74 @@ export default function InitiativeDetail({ variant = 'public' }) {
   } = initiative
   const kind = kindFor(ownerProfileType, ownerProfileSubtype)
   const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
+  const imageResources = (resources || []).filter(isImageResource)
+  const otherResources = (resources || []).filter((r) => !isImageResource(r))
+  const logoUrl = imageResources[0]?.url
 
   const body = (
     <div className="in">
       <Link to={backTo} className="link-arrow back-link">← Volver al catálogo</Link>
 
       <div className="detail-head">
-        <div className="cat-id">
-          N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
-          {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
+        <div className="detail-head-row">
+          {logoUrl && <img src={logoUrl} alt="" className="detail-logo" />}
+          <div className="detail-head-main">
+            <div className="cat-id">
+              N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
+              {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
+            </div>
+            <h1 className="detail-title">{title}</h1>
+            <p className="cat-org">{org} — {getCityName(city) || location}</p>
+          </div>
         </div>
-        <h1 className="detail-title">{title}</h1>
-        <p className="cat-org">{org} — {getCityName(city) || location}</p>
-        <div className="cat-tags">
-          <span>{odsLabel}</span>
-          {odsSecondaryLabel && <span>{odsSecondaryLabel}</span>}
-          {industryLabel && <span>{industryLabel}</span>}
-          {industrySecondaryLabel && <span>{industrySecondaryLabel}</span>}
-          {causeLabel && <span>{causeLabel}</span>}
+        <div className="detail-tags">
+          {odsLabel && <span className="chip">{odsLabel}</span>}
+          {odsSecondaryLabel && <span className="chip">{odsSecondaryLabel}</span>}
+          {industryLabel && <span className="chip">{industryLabel}</span>}
+          {industrySecondaryLabel && <span className="chip">{industrySecondaryLabel}</span>}
+          {causeLabel && <span className="chip">{causeLabel}</span>}
         </div>
       </div>
 
       <div className="detail-body">
         <p className="detail-lede">{desc}</p>
         {longDesc && longDesc !== desc && <p>{longDesc}</p>}
-        {impact && <p><b>Impacto: </b>{impact}</p>}
-        {collaborators?.length > 0 && <p><b>Colaboradores: </b>{collaborators.join(', ')}</p>}
+        {impact && (
+          <div className="detail-field">
+            <span className="kicker">Impacto</span>
+            <p>{impact}</p>
+          </div>
+        )}
+        {collaborators?.length > 0 && (
+          <div className="detail-field">
+            <span className="kicker">Colaboradores</span>
+            <p>{collaborators.join(', ')}</p>
+          </div>
+        )}
         {link && <p><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>}
         {resources?.length > 0 && (
-          <div className="resource-group" style={{ marginTop: 20 }}>
+          <div className="resource-group" style={{ marginTop: 4 }}>
             <span className="kicker">Documentos y ligas</span>
-            <ul className="resource-link-list" style={{ marginTop: 10 }}>
-              {resources.map((r, i) => (
-                <li key={`${r.url}-${i}`}>
-                  <a href={r.url} target="_blank" rel="noreferrer">
-                    {r.type === 'video' ? '▶' : r.type === 'file' ? '📎' : '🔗'} {r.label}
+            {imageResources.length > 0 && (
+              <div className="detail-gallery">
+                {imageResources.map((r, i) => (
+                  <a href={r.url} target="_blank" rel="noreferrer" key={`${r.url}-${i}`} className="detail-gallery-item">
+                    <img src={r.url} alt={r.label} />
                   </a>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            )}
+            {otherResources.length > 0 && (
+              <ul className="resource-link-list" style={{ marginTop: imageResources.length > 0 ? 14 : 10 }}>
+                {otherResources.map((r, i) => (
+                  <li key={`${r.url}-${i}`}>
+                    <a href={r.url} target="_blank" rel="noreferrer">
+                      {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>
