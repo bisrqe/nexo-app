@@ -31,6 +31,7 @@ export const DEFAULT_PROFILE = {
   orgAudience: '',
   linkedin: '',
   bio: '',
+  lookingFor: '',
   photo: null,
   joinedGroups: [],
   notificationPrefs: {

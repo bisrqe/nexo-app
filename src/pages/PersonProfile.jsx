@@ -36,11 +36,8 @@ function profileToPerson(p, uid) {
     advisoryOffer: p.advisoryOffer,
     orgActivity: p.orgActivity,
     orgAudience: p.orgAudience,
-    // El esquema solo tiene un campo libre ("bio") que a la vez sirve como
-    // presentación y como "qué busca" (ver el label del textarea en
-    // Register.jsx: "Cuéntanos brevemente qué buscas") — se muestra en
-    // ambos lugares del dossier a propósito, no es un error de copiado.
     bio: p.bio,
+    lookingFor: p.lookingFor,
     contact: p.email,
     linkedin: p.linkedin,
     photo: p.photo,
@@ -119,7 +116,7 @@ export default function PersonProfile() {
 
   const {
     uid, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
-    bio, contact, linkedin, photo,
+    bio, lookingFor, contact, linkedin, photo,
   } = person
   const canMessage = Boolean(uid && user && uid !== user.uid)
 
@@ -214,7 +211,7 @@ export default function PersonProfile() {
           <div className="dossier-sidebar">
             <div className="dossier-card">
               <span className="kicker">Busca ahora</span>
-              <p className="dossier-need-value">{bio || 'Por definir'}</p>
+              <p className="dossier-need-value">{lookingFor || 'Por definir'}</p>
             </div>
 
             <div className="dossier-card">

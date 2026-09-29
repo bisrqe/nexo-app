@@ -77,7 +77,7 @@ export function scoreForProfile(item, profile) {
 export function scoreMentorForProfile(mentor, profile) {
   let score = 0
   const mentorText = `${mentor.expertise || ''} ${mentor.advisoryOffer || ''}`.toLowerCase()
-  const profileText = `${profile.industryLabel || ''} ${profile.bio || ''} ${profile.occupation || ''}`.toLowerCase()
+  const profileText = `${profile.industryLabel || ''} ${profile.bio || ''} ${profile.lookingFor || ''} ${profile.occupation || ''}`.toLowerCase()
   const words = mentorText.split(/\W+/).filter((w) => w.length > 3)
   words.forEach((w) => { if (profileText.includes(w)) score += 1 })
   if (mentor.city && profile.city && mentor.city === profile.city) score += 2

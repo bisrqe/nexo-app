@@ -45,6 +45,7 @@ const EMPTY = {
   orgAudience: '',
   linkedin: '',
   bio: '',
+  lookingFor: '',
 }
 
 function firebaseErrorMessage(err) {
@@ -106,6 +107,7 @@ export default function Register() {
         orgAudience: isOrganizacion ? form.orgAudience : '',
         linkedin: form.linkedin,
         bio: form.bio,
+        lookingFor: form.lookingFor,
         photo: null,
       })
       sendEmailVerification(cred.user).catch(() => {})
@@ -332,8 +334,13 @@ export default function Register() {
             </label>
 
             <label className="form-field">
-              <span>Cuéntanos brevemente qué buscas</span>
-              <textarea name="bio" rows={3} value={form.bio} onChange={handleChange} placeholder="Ej. Busco mentoría legal para constituir mi asociación civil" />
+              <span>Cuéntanos brevemente sobre ti</span>
+              <textarea name="bio" rows={3} value={form.bio} onChange={handleChange} placeholder="Ej. Estudio Economía y lidero un colectivo de reciclaje en mi universidad." />
+            </label>
+
+            <label className="form-field">
+              <span>¿Qué buscas en Nexo?</span>
+              <input type="text" name="lookingFor" value={form.lookingFor} onChange={handleChange} placeholder="Ej. Mentoría legal para constituir mi asociación civil" />
             </label>
 
             {error && <p style={{ color: '#c0392b', fontSize: 13.5 }}>{error}</p>}

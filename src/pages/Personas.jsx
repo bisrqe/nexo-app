@@ -27,7 +27,7 @@ function profileToPerson(p) {
     city: p.city,
     odsLabel,
     offers,
-    looking: p.bio,
+    looking: p.lookingFor,
     bio: p.bio,
     contact: p.email,
     linkedin: p.linkedin,

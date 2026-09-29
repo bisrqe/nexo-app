@@ -352,6 +352,11 @@ export default function Ajustes() {
             <textarea name="bio" rows={3} value={form.bio} onChange={handleChange} />
           </label>
 
+          <label className="form-field">
+            <span>¿Qué buscas en Nexo?</span>
+            <input type="text" name="lookingFor" value={form.lookingFor} onChange={handleChange} placeholder="Ej. Mentoría legal para constituir mi asociación civil" />
+          </label>
+
           <div className="form-actions" style={{ marginTop: 4 }}>
             <button type="submit" className="btn btn-primary">Guardar cambios</button>
             {saved && <span className="settings-saved-note">✓ Guardado</span>}
