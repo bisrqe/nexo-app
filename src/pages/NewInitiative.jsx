@@ -10,6 +10,7 @@ import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { uploadFile } from '../lib/uploads.js'
+import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
 import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
@@ -96,8 +97,14 @@ export default function NewInitiative({ variant = 'public' }) {
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
+  const handleUrlBlur = (e) => {
+    const { name, value } = e.target
+    const normalized = normalizeUrl(value)
+    if (normalized !== value) setForm((f) => ({ ...f, [name]: normalized }))
+  }
+
   const addResource = () => {
-    const url = resourceDraft.url.trim()
+    const url = normalizeUrl(resourceDraft.url)
     if (!url) return
     setForm((f) => ({
       ...f,
@@ -172,7 +179,7 @@ export default function NewInitiative({ variant = 'public' }) {
       org: form.org || 'Tu organización',
       city: form.city,
       location: CITIES.find((c) => c.id === form.city)?.name || 'Por definir',
-      link: form.link,
+      link: normalizeUrl(form.link),
       logoUrl: form.logoUrl,
       ods: [form.ods, form.odsSecondary].filter(Boolean),
       odsLabel,
@@ -316,7 +323,7 @@ export default function NewInitiative({ variant = 'public' }) {
             </label>
             <label className="form-field">
               <span>Sitio web / liga</span>
-              <input type="url" name="link" value={form.link} onChange={handleChange} placeholder="https://..." />
+              <input type="text" name="link" value={form.link} onChange={handleChange} onBlur={handleUrlBlur} placeholder="www.ejemplo.com" />
             </label>
           </div>
 
@@ -455,10 +462,10 @@ export default function NewInitiative({ variant = 'public' }) {
                 placeholder="Nombre (ej. Video de presentación)"
               />
               <input
-                type="url"
+                type="text"
                 value={resourceDraft.url}
                 onChange={(e) => setResourceDraft((d) => ({ ...d, url: e.target.value }))}
-                placeholder="https://..."
+                placeholder="www.ejemplo.com"
               />
               <button type="button" className="btn btn-ghost" onClick={addResource}>Agregar +</button>
             </div>
@@ -485,7 +492,14 @@ export default function NewInitiative({ variant = 'public' }) {
             )}
           </label>
 
-          <button type="submit" className="btn btn-gold btn-lg" style={{ justifyContent: 'center' }}>Ver vista previa →</button>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-gold btn-lg" style={{ justifyContent: 'center' }}>Ver vista previa →</button>
+            {isApp && (
+              <button type="button" className="btn btn-ghost" onClick={() => navigate('/app/mi-iniciativa')}>
+                Cancelar
+              </button>
+            )}
+          </div>
         </form>
       )}
     </div>

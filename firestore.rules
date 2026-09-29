@@ -137,5 +137,19 @@ service cloud.firestore {
         request.resource.data.message.size() <= 2000;
       allow read, update, delete: if false;
     }
+
+    // Denuncias de eventos ("Denunciar evento" en el detalle) — solo
+    // cuentas con sesión, y solo a nombre de sí mismas (reporterUid).
+    // Mismo patrón que "feedback": nadie las puede leer de vuelta desde
+    // el cliente, solo se revisan desde la consola de Firebase.
+    match /eventReports/{id} {
+      allow create: if request.auth != null &&
+        request.resource.data.reporterUid == request.auth.uid &&
+        request.resource.data.eventId is string &&
+        request.resource.data.reason is string &&
+        request.resource.data.reason.size() > 0 &&
+        request.resource.data.get('details', '').size() <= 2000;
+      allow read, update, delete: if false;
+    }
   }
 }

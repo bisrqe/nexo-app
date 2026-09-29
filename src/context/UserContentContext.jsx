@@ -61,6 +61,14 @@ export function UserContentProvider({ children }) {
     await addDoc(collection(db, 'events'), { ...event, ownerUid: user.uid, createdAt: serverTimestamp() })
   }
 
+  // Solo la cuenta dueña del evento puede editarlo (ver firestore.rules) —
+  // nunca manda ownerUid/attendees para no pisar inscripciones ya hechas.
+  const updateEvent = async (docId, event) => {
+    if (!user || !docId) return
+    const { ownerUid, attendees, ...rest } = event
+    await updateDoc(doc(db, 'events', docId), rest)
+  }
+
   const addGroup = (group) => setGroups((g) => [...g, group])
 
   // Crea SIEMPRE un emprendimiento/iniciativa nuevo — a diferencia de
@@ -116,6 +124,7 @@ export function UserContentProvider({ children }) {
 
   const value = {
     addEvent,
+    updateEvent,
     myGroups: groups,
     addGroup,
     myInitiatives,

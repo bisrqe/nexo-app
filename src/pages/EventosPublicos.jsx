@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
+import { EVENT_CATEGORIES } from '../data/eventCategories.js'
+import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -11,7 +13,12 @@ function formatDate(dateStr) {
 
 export default function EventosPublicos() {
   const [realEvents] = useFirestoreCollection('events')
-  const events = useMemo(() => [...realEvents].sort((a, b) => a.date.localeCompare(b.date)), [realEvents])
+  const [category, setCategory] = useState('Todos')
+  const allEvents = useMemo(() => [...realEvents].sort((a, b) => a.date.localeCompare(b.date)), [realEvents])
+  const events = useMemo(
+    () => allEvents.filter((e) => category === 'Todos' || e.category === category),
+    [allEvents, category]
+  )
 
   return (
     <>
@@ -27,6 +34,17 @@ export default function EventosPublicos() {
         </div>
 
         <div className="in">
+          <div className="filters">
+            {['Todos', ...EVENT_CATEGORIES].map((cat) => (
+              <button
+                key={cat}
+                className={`chip ${category === cat ? 'active' : ''}`}
+                onClick={() => setCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
           {events.length === 0 ? (
             <div className="empty-state"><p>Todavía no hay eventos programados.</p></div>
           ) : (
@@ -35,6 +53,8 @@ export default function EventosPublicos() {
                 const count = event.attendees?.length || 0
                 const pct = Math.min(100, Math.round((count / event.maxAttendees) * 100))
                 const barClass = pct >= 90 ? 'high' : pct >= 70 ? 'mid' : ''
+                const virtual = isVirtualEvent(event)
+                const callLink = callLinkFor(event)
                 return (
                   <div className="event-card" key={event.docId}>
                     <div className="event-stripe" />
@@ -46,7 +66,15 @@ export default function EventosPublicos() {
                       <div className="event-title">{event.title}</div>
                       <p className="event-desc">{event.description}</p>
                       <div className="event-meta">
-                        <span>{event.time} hrs — {event.location}</span>
+                        <span>
+                          {event.time} hrs —{' '}
+                          {virtual
+                            ? (callLink ? <a href={callLink} target="_blank" rel="noreferrer">Unirse a la llamada →</a> : 'Liga por confirmar')
+                            : event.location}
+                        </span>
+                        {!virtual && event.mapsUrl && (
+                          <span><a href={event.mapsUrl} target="_blank" rel="noreferrer">Ver en el mapa →</a></span>
+                        )}
                       </div>
                       {event.ods?.length > 0 && (
                         <div className="event-ods">

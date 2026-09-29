@@ -148,7 +148,7 @@ export default function PersonProfile() {
 
         <div className="dossier-grid">
           <div className="dossier-main">
-            <p className="detail-lede">{bio}</p>
+            <p className="detail-copy">{bio}</p>
 
             <hr className="dossier-rule" />
 

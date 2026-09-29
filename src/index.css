@@ -440,6 +440,7 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .detail-body{max-width:640px; display:flex; flex-direction:column; gap:24px; margin-bottom:40px;}
 .detail-lede{font-family:var(--serif); font-style:italic; font-size:19px; color:var(--ink);}
 .detail-body p{font-size:15.5px; color:var(--text-soft); line-height:1.65;}
+.detail-copy{font-family:var(--sans); font-style:normal; font-size:15.5px; color:var(--text-soft); line-height:1.65;}
 
 /* ── Dossier: InitiativeDetail + PersonProfile share this system — a
    two-column "profile document" (big logo/avatar + title block up top,
@@ -747,6 +748,25 @@ a.resource-tag:hover{background:var(--gold);}
 .capacity-fill{height:100%; background:var(--navy);}
 .capacity-fill.mid{background:var(--gold-ink);}
 .capacity-fill.high{background:#c0392b;}
+.event-title:hover{text-decoration:underline;}
+
+/* ── event detail modal ── */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(20,22,28,.55); z-index:100;
+  display:flex; align-items:flex-start; justify-content:center;
+  padding:40px 16px; overflow-y:auto;
+}
+.modal-card{
+  background:var(--paper); border-radius:10px; max-width:640px; width:100%;
+  padding:32px; position:relative; display:flex; flex-direction:column; gap:16px;
+}
+.modal-close{
+  position:absolute; top:16px; right:16px; background:transparent; border:none;
+  font-size:16px; color:var(--text-soft); cursor:pointer; line-height:1;
+}
+.modal-close:hover{color:var(--ink);}
+.modal-title{font-family:var(--serif); font-weight:600; font-size:26px; color:var(--ink); margin:0;}
+.modal-desc{font-size:14px; color:var(--text-soft); line-height:1.6; white-space:pre-wrap;}
 
 .save-btn{
   border:1.5px solid var(--line-strong); background:transparent; border-radius:4px;
@@ -943,6 +963,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .app-shell[data-theme="dark"] .app-main .resource-card,
 .app-shell[data-theme="dark"] .app-main .group-card,
 .app-shell[data-theme="dark"] .app-main .event-card,
+.app-shell[data-theme="dark"] .app-main .modal-card,
 .app-shell[data-theme="dark"] .app-main .dash-widget,
 .app-shell[data-theme="dark"] .app-main .settings-card,
 .app-shell[data-theme="dark"] .app-main .messages-shell,

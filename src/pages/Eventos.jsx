@@ -1,25 +1,35 @@
 import React, { useMemo, useState } from 'react'
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
+import EventDetailModal from '../components/EventDetailModal.jsx'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { CITIES, getCityName } from '../data/cities.js'
+import { EVENT_CATEGORIES } from '../data/eventCategories.js'
+import { normalizeUrl } from '../lib/url.js'
+import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+function excerpt(text, max = 140) {
+  if (!text || text.length <= max) return text
+  return `${text.slice(0, max).trimEnd()}…`
+}
+
 const EMPTY_EVENT = {
-  title: '', date: '', time: '', location: '', city: '', category: '', ods: '', description: '', maxAttendees: 30,
+  title: '', date: '', time: '', locationType: 'fisico', location: '', mapsUrl: '', callUrl: '',
+  city: '', category: EVENT_CATEGORIES[0], ods: '', description: '', maxAttendees: 30,
 }
 
 export default function Eventos() {
   const { user } = useAuth()
-  const { addEvent } = useUserContent()
+  const { addEvent, updateEvent } = useUserContent()
   const { profile } = useProfile()
   const [realEvents] = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
@@ -27,13 +37,14 @@ export default function Eventos() {
   const [onlyMyCity, setOnlyMyCity] = useState(Boolean(profile.city))
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
+  const [editingEventId, setEditingEventId] = useState(null)
+  const [activeEventId, setActiveEventId] = useState(null)
 
   const allEvents = useMemo(
     () => [...realEvents].sort((a, b) => new Date(a.date) - new Date(b.date)),
     [realEvents]
   )
-
-  const categories = ['Todos', ...new Set(allEvents.map((e) => e.category).filter(Boolean))]
+  const activeEvent = activeEventId ? allEvents.find((e) => e.docId === activeEventId) : null
 
   const handleToggle = async (event) => {
     if (!user) return
@@ -45,23 +56,62 @@ export default function Eventos() {
 
   const handleFormChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
-  const handleCreateEvent = async (e) => {
+  const handleUrlBlur = (e) => {
+    const { name, value } = e.target
+    const normalized = normalizeUrl(value)
+    if (normalized !== value) setForm((f) => ({ ...f, [name]: normalized }))
+  }
+
+  const resetForm = () => {
+    setForm(EMPTY_EVENT)
+    setEditingEventId(null)
+    setShowForm(false)
+  }
+
+  const openEditForm = (event) => {
+    setActiveEventId(null)
+    setForm({
+      title: event.title || '',
+      date: event.date || '',
+      time: event.time || '',
+      locationType: event.locationType || (isVirtualEvent(event) ? 'virtual' : 'fisico'),
+      location: event.location || '',
+      mapsUrl: event.mapsUrl || '',
+      callUrl: event.callUrl || callLinkFor(event),
+      city: event.city || '',
+      category: event.category || EVENT_CATEGORIES[0],
+      ods: (event.ods || []).join(', '),
+      description: event.description || '',
+      maxAttendees: event.maxAttendees || 30,
+    })
+    setEditingEventId(event.docId)
+    setShowForm(true)
+  }
+
+  const handleSubmitEvent = async (e) => {
     e.preventDefault()
     if (!form.title || !form.date) return
-    await addEvent({
+    const isVirtual = form.locationType === 'virtual'
+    const payload = {
       title: form.title,
       date: form.date,
       time: form.time || '00:00',
-      location: form.location || 'Por definir',
+      locationType: form.locationType,
+      location: isVirtual ? '' : (form.location || 'Por definir'),
+      mapsUrl: isVirtual ? '' : normalizeUrl(form.mapsUrl),
+      callUrl: isVirtual ? normalizeUrl(form.callUrl) : '',
       city: form.city,
       category: form.category || 'Otro',
       ods: form.ods ? form.ods.split(',').map((s) => s.trim()).filter(Boolean) : [],
       description: form.description || 'Sin descripción.',
-      attendees: [],
       maxAttendees: Number(form.maxAttendees) || 30,
-    })
-    setForm(EMPTY_EVENT)
-    setShowForm(false)
+    }
+    if (editingEventId) {
+      await updateEvent(editingEventId, payload)
+    } else {
+      await addEvent({ ...payload, attendees: [] })
+    }
+    resetForm()
   }
 
   const filtered = useMemo(() => {
@@ -69,7 +119,8 @@ export default function Eventos() {
     return allEvents.filter((e) => {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
-      const matchCity = !onlyMyCity || !profile.city || e.city === profile.city
+      const isRemote = e.city === 'remoto'
+      const matchCity = !onlyMyCity || !profile.city || isRemote || e.city === profile.city
       return matchQ && matchCat && matchCity
     })
   }, [allEvents, query, category, onlyMyCity, profile.city])
@@ -100,7 +151,7 @@ export default function Eventos() {
         />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="filters" style={{ marginBottom: 0 }}>
-            {categories.map((cat) => (
+            {['Todos', ...EVENT_CATEGORIES].map((cat) => (
               <button
                 key={cat}
                 className={`chip ${category === cat ? 'active' : ''}`}
@@ -110,7 +161,7 @@ export default function Eventos() {
               </button>
             ))}
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
+          <button type="button" className="btn btn-primary" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? 'Cancelar' : 'Crear evento +'}
           </button>
         </div>
@@ -118,9 +169,9 @@ export default function Eventos() {
 
       {showForm && (
         <div className="settings-card" style={{ marginBottom: 32 }}>
-          <h2>Nuevo evento</h2>
+          <h2>{editingEventId ? 'Editar evento' : 'Nuevo evento'}</h2>
           <p className="settings-card-desc">Queda visible para todo el mapa en cuanto lo publicas.</p>
-          <form onSubmit={handleCreateEvent} className="auth-form">
+          <form onSubmit={handleSubmitEvent} className="auth-form">
             <div className="form-row">
               <label className="form-field">
                 <span>Título</span>
@@ -128,7 +179,11 @@ export default function Eventos() {
               </label>
               <label className="form-field">
                 <span>Categoría</span>
-                <input type="text" name="category" value={form.category} onChange={handleFormChange} placeholder="Ej. Taller" />
+                <select name="category" value={form.category} onChange={handleFormChange}>
+                  {EVENT_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </label>
             </div>
             <div className="form-row">
@@ -143,8 +198,11 @@ export default function Eventos() {
             </div>
             <div className="form-row">
               <label className="form-field">
-                <span>Ubicación</span>
-                <input type="text" name="location" value={form.location} onChange={handleFormChange} placeholder="Lugar o liga de videollamada" />
+                <span>Modalidad</span>
+                <select name="locationType" value={form.locationType} onChange={handleFormChange}>
+                  <option value="fisico">Presencial</option>
+                  <option value="virtual">Videollamada</option>
+                </select>
               </label>
               <label className="form-field">
                 <span>Ciudad / región</span>
@@ -156,6 +214,23 @@ export default function Eventos() {
                 </select>
               </label>
             </div>
+            {form.locationType === 'virtual' ? (
+              <label className="form-field">
+                <span>Liga de la videollamada</span>
+                <input type="text" name="callUrl" value={form.callUrl} onChange={handleFormChange} onBlur={handleUrlBlur} placeholder="zoom.us/mi-sala" />
+              </label>
+            ) : (
+              <div className="form-row">
+                <label className="form-field">
+                  <span>Ubicación</span>
+                  <input type="text" name="location" value={form.location} onChange={handleFormChange} placeholder="Ej. Venture Café Monterrey" />
+                </label>
+                <label className="form-field">
+                  <span>Liga de mapa (opcional)</span>
+                  <input type="text" name="mapsUrl" value={form.mapsUrl} onChange={handleFormChange} onBlur={handleUrlBlur} placeholder="maps.google.com/..." />
+                </label>
+              </div>
+            )}
             <label className="form-field">
               <span>Cupo máximo</span>
               <input type="number" name="maxAttendees" min="1" value={form.maxAttendees} onChange={handleFormChange} />
@@ -168,7 +243,12 @@ export default function Eventos() {
               <span>Descripción</span>
               <textarea name="description" rows={3} value={form.description} onChange={handleFormChange} placeholder="¿De qué trata el evento?" />
             </label>
-            <button type="submit" className="btn btn-gold btn-lg" style={{ justifyContent: 'center' }}>Publicar evento →</button>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-gold btn-lg" style={{ justifyContent: 'center' }}>
+                {editingEventId ? 'Guardar cambios →' : 'Publicar evento →'}
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={resetForm}>Cancelar</button>
+            </div>
           </form>
         </div>
       )}
@@ -183,6 +263,9 @@ export default function Eventos() {
             const pct = Math.min(100, Math.round((count / event.maxAttendees) * 100))
             const full = count >= event.maxAttendees && !registered
             const barClass = pct >= 90 ? 'high' : pct >= 70 ? 'mid' : ''
+            const virtual = isVirtualEvent(event)
+            const callLink = callLinkFor(event)
+            const isOwner = Boolean(user && event.ownerUid === user.uid)
 
             return (
               <div className="event-card" key={event.docId}>
@@ -192,13 +275,25 @@ export default function Eventos() {
                     <span className="event-cat">{event.category}</span>
                     <span className="event-date">{formatDate(event.date)}</span>
                   </div>
-                  <div className="event-title">{event.title}</div>
-                  <p className="event-desc">{event.description}</p>
+                  <button type="button" className="event-title" style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => setActiveEventId(event.docId)}>
+                    {event.title}
+                  </button>
+                  <p className="event-desc">{excerpt(event.description)}</p>
                   <div className="event-meta">
-                    <span>{event.time} hrs — {event.location}</span>
+                    <span>
+                      {event.time} hrs —{' '}
+                      {virtual
+                        ? (callLink
+                          ? <a href={callLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Unirse a la llamada →</a>
+                          : 'Liga por confirmar')
+                        : event.location}
+                    </span>
+                    {!virtual && event.mapsUrl && (
+                      <span><a href={event.mapsUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Ver en el mapa →</a></span>
+                    )}
                     {event.city && <span>{getCityName(event.city)}</span>}
                   </div>
-                  {event.ods.length > 0 && (
+                  {event.ods?.length > 0 && (
                     <div className="event-ods">
                       {event.ods.map((o) => (
                         <span className="tag-pill" key={o}>{o}</span>
@@ -214,19 +309,38 @@ export default function Eventos() {
                       <div className={`capacity-fill ${barClass}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
-                  <button
-                    className={registered ? 'btn btn-ghost' : full ? 'btn btn-ghost' : 'btn btn-primary'}
-                    disabled={full}
-                    onClick={() => handleToggle(event)}
-                    style={{ justifyContent: 'center', opacity: full ? 0.5 : 1, cursor: full ? 'not-allowed' : 'pointer' }}
-                  >
-                    {registered ? '✓ Inscrito — click para cancelar' : full ? 'Cupo lleno' : 'Inscribirme →'}
-                  </button>
+                  <div className="form-actions" style={{ marginTop: 0 }}>
+                    {isOwner ? (
+                      <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => openEditForm(event)}>
+                        Editar evento
+                      </button>
+                    ) : (
+                      <button
+                        className={registered ? 'btn btn-ghost' : full ? 'btn btn-ghost' : 'btn btn-primary'}
+                        disabled={full}
+                        onClick={() => handleToggle(event)}
+                        style={{ flex: 1, justifyContent: 'center', opacity: full ? 0.5 : 1, cursor: full ? 'not-allowed' : 'pointer' }}
+                      >
+                        {registered ? '✓ Inscrito — click para cancelar' : full ? 'Cupo lleno' : 'Inscribirme →'}
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-ghost" onClick={() => setActiveEventId(event.docId)}>Ver más</button>
+                  </div>
                 </div>
               </div>
             )
           })}
         </div>
+      )}
+
+      {activeEvent && (
+        <EventDetailModal
+          event={activeEvent}
+          currentUser={user}
+          onClose={() => setActiveEventId(null)}
+          onToggleAttend={handleToggle}
+          onEdit={openEditForm}
+        />
       )}
     </DashboardLayout>
   )
