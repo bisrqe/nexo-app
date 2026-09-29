@@ -28,6 +28,9 @@ export default function Dashboard() {
   )
 
   const inMyCity = (item) => showAllCities || !profile.city || !item.city || item.city === profile.city
+  // Un evento remoto no compite por zona — no importa tu ciudad, siempre
+  // debería poder recomendarse.
+  const eventInMyCity = (item) => item.city === 'remoto' || inMyCity(item)
 
   const rankedInitiatives = useMemo(() => {
     const pool = allInitiatives.filter(inMyCity)
@@ -36,7 +39,7 @@ export default function Dashboard() {
   }, [allInitiatives, profile, showAllCities])
 
   const rankedEvents = useMemo(() => {
-    const pool = allEvents.filter(inMyCity)
+    const pool = allEvents.filter(eventInMyCity)
     const ranked = rankForProfile(pool, profile)
     return (ranked.length > 0 ? ranked : pool).slice(0, 3)
   }, [allEvents, profile, showAllCities])

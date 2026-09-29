@@ -41,50 +41,83 @@ export default function AdminKPIs() {
         </button>
       </div>
 
-      <div className="kpi-stat-grid">
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.profiles}</span>
-          <span className="kpi-stat-label">Miembros registrados</span>
+      <div className="kpi-stat-section">
+        <h4 className="kpi-stat-section-label">Comunidad</h4>
+        <div className="kpi-stat-grid">
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.profiles}</span>
+            <span className="kpi-stat-label">Miembros registrados</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.cities}</span>
+            <span className="kpi-stat-label">Ciudades con actividad</span>
+          </div>
         </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.initiatives}</span>
-          <span className="kpi-stat-label">Emprendimientos activos</span>
+      </div>
+
+      <div className="kpi-stat-section">
+        <h4 className="kpi-stat-section-label">Emprendimientos</h4>
+        <div className="kpi-stat-grid">
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.initiatives}</span>
+            <span className="kpi-stat-label">Emprendimientos activos</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.initiativesWithOds}</span>
+            <span className="kpi-stat-label">Con ODS asignado</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.initiativesWithIndustry}</span>
+            <span className="kpi-stat-label">Con industria asignada</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.initiativesWithBoth}</span>
+            <span className="kpi-stat-label">Con ODS e industria</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.interest}</span>
+            <span className="kpi-stat-label">Total de "Me interesa"</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.connections}</span>
+            <span className="kpi-stat-label">Conexiones realizadas</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.connectedPeople}</span>
+            <span className="kpi-stat-label">Personas que interactuaron entre sí</span>
+          </div>
         </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.events}</span>
-          <span className="kpi-stat-label">Eventos creados</span>
+      </div>
+
+      <div className="kpi-stat-section">
+        <h4 className="kpi-stat-section-label">Eventos</h4>
+        <div className="kpi-stat-grid">
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.events}</span>
+            <span className="kpi-stat-label">Eventos creados</span>
+          </div>
         </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.interest}</span>
-          <span className="kpi-stat-label">Total de "Me interesa"</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.connections}</span>
-          <span className="kpi-stat-label">Conexiones realizadas</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.connectedPeople}</span>
-          <span className="kpi-stat-label">Personas que interactuaron entre sí</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.cities}</span>
-          <span className="kpi-stat-label">Ciudades con actividad</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.directConversations}</span>
-          <span className="kpi-stat-label">Chats directos iniciados</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.directMessages}</span>
-          <span className="kpi-stat-label">Mensajes directos enviados</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.groups}</span>
-          <span className="kpi-stat-label">Mesas de trabajo creadas</span>
-        </div>
-        <div className="kpi-stat-card">
-          <span className="kpi-stat-num">{totals.groupMessages}</span>
-          <span className="kpi-stat-label">Mensajes en mesas de trabajo</span>
+      </div>
+
+      <div className="kpi-stat-section">
+        <h4 className="kpi-stat-section-label">Comunicación</h4>
+        <div className="kpi-stat-grid">
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.directConversations}</span>
+            <span className="kpi-stat-label">Chats directos iniciados</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.directMessages}</span>
+            <span className="kpi-stat-label">Mensajes directos enviados</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.groups}</span>
+            <span className="kpi-stat-label">Mesas de trabajo creadas</span>
+          </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.groupMessages}</span>
+            <span className="kpi-stat-label">Mensajes en mesas de trabajo</span>
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
@@ -56,7 +56,7 @@ async function buildInsideContext(profile, groups) {
 // orienta sobre qué es Nexo, sin datos de nadie.
 export default function Chatbot() {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, signOutUser } = useAuth()
   const { profile } = useProfile()
   const { groups } = useGroups()
   const isInside = user && location.pathname.startsWith('/app')
@@ -66,11 +66,24 @@ export default function Chatbot() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [showMenu, setShowMenu] = useState(true)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const bottomRef = useRef(null)
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open, loading])
+
+  // El chatbot vive montado una sola vez (ver abajo), así que isInside
+  // puede cambiar por navegación sin que el componente se remonte — sin
+  // esto, el saludo se quedaba congelado en lo que fuera cierto cuando se
+  // montó por primera vez. Solo resetea si todavía no hay conversación
+  // real, para no borrar algo que la persona ya está escribiendo.
+  useEffect(() => {
+    setMessages((m) => (m.length <= 1 ? [isInside ? INSIDE_GREETING : OUTSIDE_GREETING] : m))
+  }, [isInside])
 
   // Fuera del dashboard, el bot responde con FAQ locales — sin red, sin
   // costo por token, y 100% predecible. Dentro del dashboard sigue usando
@@ -88,7 +101,50 @@ export default function Chatbot() {
   // depender de matchFaq (que reconoce texto libre) cuando ya sabemos
   // exactamente qué entrada de la FAQ corresponde.
   const askSuggested = (entry) => {
+    setShowMenu(false)
     setMessages((m) => [...m, { role: 'user', content: entry.prompt }, { role: 'assistant', content: entry.answer, link: entry.link }])
+  }
+
+  const handleLogoutFromChat = async () => {
+    setShowMenu(false)
+    await signOutUser()
+    setMessages((m) => [...m, { role: 'assistant', content: 'Cerraste sesión correctamente. ¡Hasta pronto!' }])
+  }
+
+  const handleTalkToHuman = () => {
+    setShowMenu(false)
+    setMessages((m) => [
+      ...m,
+      { role: 'user', content: 'Quiero hablar con una persona' },
+      { role: 'assistant', content: 'Claro — escríbenos directamente y alguien del equipo te responde:', link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL } },
+    ])
+  }
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault()
+    const text = feedbackText.trim()
+    if (!text || feedbackSubmitting) return
+    setFeedbackSubmitting(true)
+    try {
+      await addDoc(collection(db, 'feedback'), {
+        message: text,
+        uid: user?.uid || null,
+        email: user?.email || null,
+        page: location.pathname,
+        createdAt: serverTimestamp(),
+      })
+      setMessages((m) => [...m, { role: 'assistant', content: '¡Gracias por tu retroalimentación! La leemos con atención.' }])
+    } catch (err) {
+      setMessages((m) => [...m, {
+        role: 'assistant',
+        content: 'No pudimos enviar tu retroalimentación — intenta de nuevo o escríbenos directamente:',
+        link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL },
+      }])
+    } finally {
+      setFeedbackSubmitting(false)
+      setFeedbackOpen(false)
+      setFeedbackText('')
+    }
   }
 
   const sendInside = async (text, history) => {
@@ -116,6 +172,7 @@ export default function Chatbot() {
     const text = input.trim()
     if (!text || loading) return
     setError(false)
+    setShowMenu(false)
     const history = messages.slice(1).map((m) => ({ role: m.role, content: m.content }))
     setMessages((m) => [...m, { role: 'user', content: text }])
     setInput('')
@@ -132,7 +189,16 @@ export default function Chatbot() {
         <div className="nexo-chatbot-panel">
           <div className="nexo-chatbot-header">
             <span>Asistente Nexo</span>
-            <button type="button" className="nexo-chatbot-close" onClick={() => setOpen(false)} aria-label="Cerrar asistente">✕</button>
+            <div className="nexo-chatbot-header-actions">
+              <button
+                type="button"
+                className="nexo-chatbot-menu-btn"
+                onClick={() => { setFeedbackOpen(false); setShowMenu((v) => !v) }}
+              >
+                Menú
+              </button>
+              <button type="button" className="nexo-chatbot-close" onClick={() => setOpen(false)} aria-label="Cerrar asistente">✕</button>
+            </div>
           </div>
           <div className="nexo-chatbot-body">
             {messages.map((m, i) => (
@@ -147,18 +213,46 @@ export default function Chatbot() {
                 )}
               </div>
             ))}
-            {!isInside && messages.length === 1 && (
+            {feedbackOpen ? (
+              <form className="nexo-chatbot-feedback" onSubmit={handleFeedbackSubmit}>
+                <label>
+                  <span>Cuéntanos qué podemos mejorar</span>
+                  <textarea
+                    rows={3}
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    placeholder="Tu retroalimentación…"
+                    autoFocus
+                  />
+                </label>
+                <div className="nexo-chatbot-feedback-actions">
+                  <button type="submit" disabled={feedbackSubmitting || !feedbackText.trim()}>
+                    {feedbackSubmitting ? 'Enviando…' : 'Enviar'}
+                  </button>
+                  <button type="button" onClick={() => { setFeedbackOpen(false); setFeedbackText('') }}>Cancelar</button>
+                </div>
+              </form>
+            ) : showMenu ? (
               <div className="nexo-chatbot-suggestions">
-                <p className="nexo-chatbot-suggestions-label">Puedes preguntarme cosas como:</p>
+                <p className="nexo-chatbot-suggestions-label">
+                  {isInside ? 'También puedes:' : 'Puedes preguntarme cosas como:'}
+                </p>
                 <ul>
-                  {CHATBOT_FAQ.map((entry) => (
+                  {!isInside && CHATBOT_FAQ.map((entry) => (
                     <li key={entry.id}>
                       <button type="button" onClick={() => askSuggested(entry)}>{entry.prompt}</button>
                     </li>
                   ))}
+                  {isInside && (
+                    <li><button type="button" onClick={handleTalkToHuman}>Hablar con una persona</button></li>
+                  )}
+                  <li><button type="button" onClick={() => setFeedbackOpen(true)}>Enviar retroalimentación</button></li>
+                  {!isInside && user && (
+                    <li><button type="button" onClick={handleLogoutFromChat}>Cerrar sesión</button></li>
+                  )}
                 </ul>
               </div>
-            )}
+            ) : null}
             {loading && <div className="nexo-chatbot-msg nexo-chatbot-msg-assistant nexo-chatbot-typing">Escribiendo…</div>}
             <div ref={bottomRef} />
           </div>

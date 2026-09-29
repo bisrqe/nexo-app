@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
@@ -38,9 +40,21 @@ function resizePhoto(file) {
   })
 }
 
+const DELETE_ERROR_MESSAGES = {
+  'auth/wrong-password': 'Contraseña incorrecta.',
+  'auth/invalid-credential': 'Contraseña incorrecta.',
+  'auth/too-many-requests': 'Demasiados intentos — espera un momento e intenta de nuevo.',
+}
+
 export default function Ajustes() {
+  const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
+  const { deleteAccount } = useAuth()
   const { profile, updateProfile } = useProfile()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
     ...profile,
     industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
@@ -88,6 +102,20 @@ export default function Ajustes() {
     }))
   }
 
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault()
+    setDeleteError('')
+    setDeleting(true)
+    try {
+      await deleteAccount(deletePassword)
+      navigate('/')
+    } catch (err) {
+      setDeleteError(DELETE_ERROR_MESSAGES[err.code] || 'No se pudo eliminar la cuenta — intenta de nuevo.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const { industryOtra, industrySecondaryOtra, ...rest } = form
@@ -114,6 +142,7 @@ export default function Ajustes() {
       title="Perfil y ajustes"
       subtitle="Tu perfil real — se guarda en tu cuenta y lo ve el resto del mapa."
     >
+      <div className="settings-grid">
       <form onSubmit={handleSubmit} className="settings-grid">
         <div className="settings-card">
           <h2>Perfil</h2>
@@ -393,6 +422,48 @@ export default function Ajustes() {
           <p><b>Sobre esta cuenta.</b> Tu perfil vive en tu cuenta de Nexo — entra desde cualquier dispositivo con tu correo y contraseña y lo vas a encontrar igual.</p>
         </div>
       </form>
+
+      <div className="settings-card settings-card-danger">
+        <h2>Zona de peligro</h2>
+        <p className="settings-card-desc">
+          Elimina tu cuenta y tu perfil de Nexo de forma permanente. Esto no borra emprendimientos, eventos o mesas
+          de trabajo que hayas creado — siguen en el mapa, solo que ligados a una cuenta ya eliminada. Esta acción no
+          se puede deshacer.
+        </p>
+
+        {!deleteOpen ? (
+          <button type="button" className="btn btn-ghost-danger" onClick={() => setDeleteOpen(true)}>
+            Eliminar mi cuenta
+          </button>
+        ) : (
+          <form onSubmit={handleDeleteAccount} className="delete-account-form">
+            <label className="form-field">
+              <span>Confirma tu contraseña para continuar</span>
+              <input
+                type="password"
+                required
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
+                autoFocus
+              />
+            </label>
+            {deleteError && <p className="delete-account-error">{deleteError}</p>}
+            <div className="form-actions">
+              <button type="submit" className="btn btn-danger" disabled={deleting || !deletePassword}>
+                {deleting ? 'Eliminando…' : 'Eliminar cuenta definitivamente'}
+              </button>
+              <button
+                type="button"
+                className="link-arrow"
+                onClick={() => { setDeleteOpen(false); setDeletePassword(''); setDeleteError('') }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+      </div>
     </DashboardLayout>
   )
 }

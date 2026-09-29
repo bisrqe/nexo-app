@@ -55,6 +55,12 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
     ...events.map((e) => e.city).filter(Boolean),
   ])
 
+  const initiativesWithOds = initiatives.filter((i) => (i.ods?.length > 0) || i.odsLabel).length
+  const initiativesWithIndustry = initiatives.filter((i) => i.industry || i.industryLabel).length
+  const initiativesWithBoth = initiatives.filter(
+    (i) => ((i.ods?.length > 0) || i.odsLabel) && (i.industry || i.industryLabel)
+  ).length
+
   const initiativesByIndustry = sortedEntries(
     countBy(initiatives, (i) => i.industryLabel || (i.industry ? labelFor(INDUSTRY_FILTERS, i.industry) : null))
   )
@@ -129,6 +135,9 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
       directMessages: totalDirectMessages,
       groups: groups.length,
       groupMessages: totalGroupMessages,
+      initiativesWithOds,
+      initiativesWithIndustry,
+      initiativesWithBoth,
     },
     initiativesByIndustry,
     initiativesByOds,

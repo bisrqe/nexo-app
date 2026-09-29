@@ -115,5 +115,16 @@ service cloud.firestore {
           request.resource.data.senderUid == request.auth.uid;
       }
     }
+
+    // Retroalimentación mandada desde el chatbot (landing o dashboard) —
+    // cualquiera puede mandar una, con o sin cuenta; nadie la puede leer
+    // de vuelta desde el cliente, solo se revisa desde la consola de
+    // Firebase. Valida forma y tamaño para frenar spam obvio.
+    match /feedback/{id} {
+      allow create: if request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 &&
+        request.resource.data.message.size() <= 2000;
+      allow read, update, delete: if false;
+    }
   }
 }
