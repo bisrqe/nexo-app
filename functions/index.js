@@ -7,6 +7,7 @@ const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/
 const { defineSecret } = require('firebase-functions/params')
 const logger = require('firebase-functions/logger')
 const admin = require('firebase-admin')
+const { renderEmail, APP_URL } = require('./emailTemplate')
 
 admin.initializeApp()
 const db = admin.firestore()
@@ -14,8 +15,11 @@ const db = admin.firestore()
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
 
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY')
-const APP_URL = 'https://nexo-app-mauve.vercel.app'
-const FROM = 'Nexo <onboarding@resend.dev>'
+// Requiere que nexohub.mx esté verificado como dominio en Resend (Resend
+// dashboard → Domains → Add Domain → agregar los registros DNS que dé ahí).
+// Mientras no esté verificado, sendEmail falla en silencio (solo queda el
+// error en los logs de la función) y no se manda ningún correo.
+const FROM = 'Nexo <notificaciones@nexohub.mx>'
 const SUPPORT_EMAIL = 'support@nexohub.mx'
 
 function escapeHtml(str) {
@@ -59,13 +63,18 @@ exports.onDirectMessage = onDocumentCreated(
 
     const senderName = conv.participantNames?.[msg.senderUid] || 'Alguien'
     const body = msg.text
-      ? `<blockquote>${escapeHtml(msg.text)}</blockquote>`
-      : `<p>Te mandó un archivo${msg.fileName ? `: <b>${escapeHtml(msg.fileName)}</b>` : ''}.</p>`
+      ? `<blockquote style="margin:0; padding-left:12px; border-left:3px solid rgba(16,27,38,.14); color:#5E6672;">${escapeHtml(msg.text)}</blockquote>`
+      : `<p style="margin:0;">Te mandó un archivo${msg.fileName ? `: <b>${escapeHtml(msg.fileName)}</b>` : ''}.</p>`
 
     await sendEmail({
       to: profile.email,
       subject: `${senderName} te escribió en Nexo`,
-      html: `<p><b>${escapeHtml(senderName)}</b> te mandó un mensaje directo en Nexo:</p>${body}<p><a href="${APP_URL}/app/mensajes">Responder →</a></p>`,
+      html: renderEmail({
+        preheader: `${senderName} te mandó un mensaje directo en Nexo`,
+        heading: `${escapeHtml(senderName)} te escribió`,
+        bodyHtml: body,
+        cta: { href: `${APP_URL}/app/mensajes`, label: 'Responder →' },
+      }),
     })
   }
 )
@@ -95,7 +104,12 @@ exports.onGroupJoin = onDocumentUpdated(
       await sendEmail({
         to: owner.email,
         subject: `${joinerName} se unió a tu mesa "${group.name}"`,
-        html: `<p><b>${escapeHtml(joinerName)}</b> se unió a tu mesa de trabajo <b>${escapeHtml(group.name)}</b> en Nexo.</p><p><a href="${APP_URL}/app/comunidad/${group.slug}">Ver mesa →</a></p>`,
+        html: renderEmail({
+          preheader: `${joinerName} se unió a tu mesa de trabajo en Nexo`,
+          heading: 'Nueva persona en tu mesa de trabajo',
+          bodyHtml: `<p style="margin:0;"><b>${escapeHtml(joinerName)}</b> se unió a tu mesa de trabajo <b>${escapeHtml(group.name)}</b> en Nexo.</p>`,
+          cta: { href: `${APP_URL}/app/comunidad/${group.slug}`, label: 'Ver mesa →' },
+        }),
       })
     }
   }
@@ -122,7 +136,12 @@ exports.onInitiativeInterest = onDocumentUpdated(
       await sendEmail({
         to: owner.email,
         subject: `${interestedName} está interesado en "${after.title}"`,
-        html: `<p><b>${escapeHtml(interestedName)}</b> marcó "Me interesa" en tu emprendimiento <b>${escapeHtml(after.title)}</b>.</p><p><a href="${APP_URL}/app/mi-iniciativa">Ver quién más →</a></p>`,
+        html: renderEmail({
+          preheader: `${interestedName} marcó "Me interesa" en ${after.title}`,
+          heading: 'Nuevo interés en tu emprendimiento',
+          bodyHtml: `<p style="margin:0;"><b>${escapeHtml(interestedName)}</b> marcó "Me interesa" en tu emprendimiento <b>${escapeHtml(after.title)}</b>.</p>`,
+          cta: { href: `${APP_URL}/app/mi-iniciativa`, label: 'Ver quién más →' },
+        }),
       })
     }
   }
@@ -140,7 +159,16 @@ exports.onFeedbackCreate = onDocumentCreated(
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: `Nueva retroalimentación en Nexo (${feedback.page || 'página desconocida'})`,
-      html: `<p><b>De:</b> ${from}</p><p><b>Página:</b> ${escapeHtml(feedback.page || '—')}</p><blockquote>${escapeHtml(feedback.message)}</blockquote>`,
+      html: renderEmail({
+        preheader: `Retroalimentación de ${from}`,
+        heading: 'Nueva retroalimentación',
+        bodyHtml: `
+          <p style="margin:0 0 4px;"><b>De:</b> ${from}</p>
+          <p style="margin:0 0 16px;"><b>Página:</b> ${escapeHtml(feedback.page || '—')}</p>
+          <blockquote style="margin:0; padding-left:12px; border-left:3px solid rgba(16,27,38,.14); color:#5E6672;">${escapeHtml(feedback.message)}</blockquote>
+        `,
+        footerNote: 'Este correo es interno — se manda solo al equipo de Nexo cuando alguien usa "Enviar retroalimentación" en el chatbot.',
+      }),
     })
   }
 )
