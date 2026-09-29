@@ -732,6 +732,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .msg-author{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-faint); margin-bottom:4px;}
 .msg-bubble.self .msg-author{color:#BFD3EE;}
 .msg-text{font-size:13.5px; line-height:1.5; color:var(--text);}
+.msg-bubble.self .msg-text{color:#fff;}
 .msg-time{font-family:var(--mono); font-size:10px; color:var(--text-faint); margin-top:4px;}
 .msg-bubble.self .msg-time{color:#AEBBD0;}
 .chat-input-row{display:flex; gap:10px; padding:14px 22px; border-top:1px solid var(--line);}
