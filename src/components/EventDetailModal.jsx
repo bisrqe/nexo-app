@@ -19,7 +19,7 @@ function formatDate(dateStr) {
 // Vista expandida de un evento: lugar (con liga de mapa o de llamada),
 // fecha, resumen completo, quién lo organiza, contacto y denuncia — la
 // tarjeta de la lista solo muestra un resumen corto de esto mismo.
-export default function EventDetailModal({ event, currentUser, onClose, onToggleAttend, onEdit }) {
+export default function EventDetailModal({ event, currentUser, onClose, onToggleAttend, onEdit, onDelete }) {
   const navigate = useNavigate()
   const [showAttendees, setShowAttendees] = useState(false)
   const [reporting, setReporting] = useState(false)
@@ -122,6 +122,11 @@ export default function EventDetailModal({ event, currentUser, onClose, onToggle
               {isOwner && (
                 <button type="button" className="btn btn-ghost" onClick={() => onEdit(event)}>
                   Editar evento
+                </button>
+              )}
+              {isOwner && (
+                <button type="button" className="btn btn-ghost-danger" onClick={() => onDelete(event)}>
+                  Cancelar evento
                 </button>
               )}
             </div>

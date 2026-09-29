@@ -29,7 +29,7 @@ const EMPTY_EVENT = {
 
 export default function Eventos() {
   const { user } = useAuth()
-  const { addEvent, updateEvent } = useUserContent()
+  const { addEvent, updateEvent, deleteEvent } = useUserContent()
   const { profile } = useProfile()
   const [realEvents] = useFirestoreCollection('events')
   const [query, setQuery] = useState('')
@@ -86,6 +86,13 @@ export default function Eventos() {
     })
     setEditingEventId(event.docId)
     setShowForm(true)
+  }
+
+  const handleDeleteEvent = async (event) => {
+    if (!window.confirm(`¿Seguro que quieres cancelar "${event.title}"? Esto lo borra para siempre y ya no se les avisa a los inscritos.`)) return
+    await deleteEvent(event.docId)
+    if (activeEventId === event.docId) setActiveEventId(null)
+    if (editingEventId === event.docId) resetForm()
   }
 
   const handleSubmitEvent = async (e) => {
@@ -311,9 +318,14 @@ export default function Eventos() {
                   </div>
                   <div className="form-actions" style={{ marginTop: 0 }}>
                     {isOwner ? (
-                      <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => openEditForm(event)}>
-                        Editar evento
-                      </button>
+                      <>
+                        <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => openEditForm(event)}>
+                          Editar evento
+                        </button>
+                        <button className="btn btn-ghost-danger" onClick={() => handleDeleteEvent(event)}>
+                          Cancelar
+                        </button>
+                      </>
                     ) : (
                       <button
                         className={registered ? 'btn btn-ghost' : full ? 'btn btn-ghost' : 'btn btn-primary'}
@@ -340,6 +352,7 @@ export default function Eventos() {
           onClose={() => setActiveEventId(null)}
           onToggleAttend={handleToggle}
           onEdit={openEditForm}
+          onDelete={handleDeleteEvent}
         />
       )}
     </DashboardLayout>

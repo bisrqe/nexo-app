@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import {
-  collection, doc, onSnapshot, query, where, addDoc, setDoc, updateDoc,
+  collection, doc, onSnapshot, query, where, addDoc, setDoc, updateDoc, deleteDoc,
   getDocs, arrayUnion, arrayRemove, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
@@ -69,6 +69,14 @@ export function UserContentProvider({ children }) {
     await updateDoc(doc(db, 'events', docId), rest)
   }
 
+  // Cancelar/borrar un evento — solo lo puede hacer su dueño (ver
+  // firestore.rules); no valida aquí quién es dueño porque las reglas ya
+  // lo rechazan del lado del servidor si alguien más lo intenta.
+  const deleteEvent = async (docId) => {
+    if (!user || !docId) return
+    await deleteDoc(doc(db, 'events', docId))
+  }
+
   const addGroup = (group) => setGroups((g) => [...g, group])
 
   // Crea SIEMPRE un emprendimiento/iniciativa nuevo — a diferencia de
@@ -125,6 +133,7 @@ export function UserContentProvider({ children }) {
   const value = {
     addEvent,
     updateEvent,
+    deleteEvent,
     myGroups: groups,
     addGroup,
     myInitiatives,
