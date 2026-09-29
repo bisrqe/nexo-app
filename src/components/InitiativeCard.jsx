@@ -11,7 +11,7 @@ const TAG_LABEL_KEY_BY_PROJECT_TYPE = {
 }
 
 export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true }) {
-  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, causeLabel, need, ownerProfileType, ownerProfileSubtype } = initiative
+  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, causeLabel, need, ownerProfileType, ownerProfileSubtype, logoUrl } = initiative
   const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
   const tagKey = TAG_LABEL_KEY_BY_PROJECT_TYPE[projectType]
   const tagLabel = { odsLabel, industryLabel, causeLabel }[tagKey] || odsLabel || industryLabel || causeLabel
@@ -38,8 +38,13 @@ export default function InitiativeCard({ initiative, basePath = '/iniciativas', 
           </button>
         )}
       </div>
-      <div className="cat-title">{title}</div>
-      <div className="cat-org">{org}</div>
+      <div className="cat-title-row">
+        {logoUrl && <img src={logoUrl} alt="" className="cat-logo" />}
+        <div>
+          <div className="cat-title">{title}</div>
+          <div className="cat-org">{org}</div>
+        </div>
+      </div>
       <p className="cat-desc">{desc}</p>
       <div className="cat-tags"><span>{tagLabel}</span></div>
       <div className="cat-foot">

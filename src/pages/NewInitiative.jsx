@@ -4,6 +4,7 @@ import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
+import NavIcon from '../components/NavIcon.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
@@ -18,7 +19,7 @@ const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
 const CAUSE_OPTIONS = CAUSE_FILTERS.filter((f) => f.id !== 'todos')
 
 const EMPTY = {
-  title: '', org: '', city: '', link: '',
+  title: '', org: '', city: '', link: '', logoUrl: '',
   ods: 'ods4', odsOtra: '', odsSecondary: '', odsSecondaryOtra: '',
   industry: '', industryOtra: '', industrySecondary: '', industrySecondaryOtra: '',
   cause: '', causeOtra: '',
@@ -59,6 +60,7 @@ export default function NewInitiative({ variant = 'public' }) {
   const [prefilled, setPrefilled] = useState(false)
   const [resourceDraft, setResourceDraft] = useState({ label: '', url: '' })
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   useEffect(() => {
     if (isApp && editingInitiative && !prefilled) {
@@ -69,6 +71,7 @@ export default function NewInitiative({ variant = 'public' }) {
         org: editingInitiative.org || '',
         city: editingInitiative.city || '',
         link: editingInitiative.link || '',
+        logoUrl: editingInitiative.logoUrl || '',
         ods,
         odsOtra: ods === 'otra' ? editingInitiative.odsLabel || '' : '',
         odsSecondary,
@@ -110,6 +113,28 @@ export default function NewInitiative({ variant = 'public' }) {
     setForm((f) => ({ ...f, resources: f.resources.filter((_, i) => i !== index) }))
   }
 
+  // A diferencia de handleFileUpload (documentos), el logo se puede subir
+  // ANTES de guardar por primera vez — usa una carpeta "pending" temporal
+  // cuando todavía no hay docId, así no hay que guardar dos veces solo
+  // para poder ponerle logo.
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const folder = editingInitiative?.docId ? `initiatives/${editingInitiative.docId}` : `initiatives/pending-${Date.now()}`
+      const uploaded = await uploadFile(folder, file)
+      setForm((f) => ({ ...f, logoUrl: uploaded.url }))
+    } catch (err) {
+      alert(err.message || 'No se pudo subir el logo.')
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  const removeLogo = () => setForm((f) => ({ ...f, logoUrl: '' }))
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -148,6 +173,7 @@ export default function NewInitiative({ variant = 'public' }) {
       city: form.city,
       location: CITIES.find((c) => c.id === form.city)?.name || 'Por definir',
       link: form.link,
+      logoUrl: form.logoUrl,
       ods: [form.ods, form.odsSecondary].filter(Boolean),
       odsLabel,
       odsSecondaryLabel,
@@ -246,6 +272,27 @@ export default function NewInitiative({ variant = 'public' }) {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="auth-form">
+          {isApp && (
+            <div className="avatar-upload">
+              {form.logoUrl ? (
+                <img src={form.logoUrl} alt="" className="dossier-logo" style={{ width: 72, height: 72 }} />
+              ) : (
+                <div className="dossier-logo-placeholder" style={{ width: 72, height: 72 }}>
+                  <NavIcon name="box" size={28} />
+                </div>
+              )}
+              <div className="avatar-upload-actions">
+                <label className="btn btn-ghost">
+                  {uploadingLogo ? 'Subiendo…' : `Subir logo de${kind.el === 'la' ? ' la' : 'l'} ${kind.noun}`}
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} hidden disabled={uploadingLogo} />
+                </label>
+                {form.logoUrl && (
+                  <button type="button" className="link-arrow" onClick={removeLogo}>Quitar logo</button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="form-row">
             <label className="form-field">
               <span>Nombre de{kind.el === 'la' ? ' la' : 'l'} {kind.noun}</span>

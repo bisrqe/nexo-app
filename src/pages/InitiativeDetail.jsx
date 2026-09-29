@@ -5,6 +5,7 @@ import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import MembersContacts from '../components/MembersContacts.jsx'
+import NavIcon from '../components/NavIcon.jsx'
 import { getCityName } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -66,9 +67,9 @@ function AddMemberForm({ onAdd, noun }) {
   }
 
   return (
-    <form onSubmit={submit} style={{ marginTop: 16 }}>
+    <form onSubmit={submit} className="dossier-card">
       <label className="form-field">
-        <span>Ligar otra cuenta a {noun === 'institución/organización' ? 'esta' : 'este'} {noun} (ej. un cofundador)</span>
+        <span>+ Ligar otra cuenta a {noun === 'institución/organización' ? 'esta' : 'este'} {noun} (ej. un cofundador)</span>
         <div className="resource-add-row">
           <input
             type="text"
@@ -77,7 +78,7 @@ function AddMemberForm({ onAdd, noun }) {
             placeholder="@usuario"
             disabled={busy}
           />
-          <button type="submit" className="btn btn-ghost" disabled={busy}>{busy ? 'Ligando…' : 'Ligar cuenta'}</button>
+          <button type="submit" className="btn btn-ghost" disabled={busy}>{busy ? 'Ligando…' : 'Ligar'}</button>
         </div>
       </label>
       {status && (
@@ -188,31 +189,38 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const {
     id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
     industryLabel, industrySecondaryLabel, causeLabel, need, desc, longDesc, collaborators, impact,
-    ownerUid, ownerProfileType, ownerProfileSubtype, memberUids, resources,
+    ownerUid, ownerProfileType, ownerProfileSubtype, memberUids, resources, logoUrl,
   } = initiative
   const kind = kindFor(ownerProfileType, ownerProfileSubtype)
   const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
   const imageResources = (resources || []).filter(isImageResource)
   const otherResources = (resources || []).filter((r) => !isImageResource(r))
-  const logoUrl = imageResources[0]?.url
+  const isRemote = city === 'remoto'
 
   const body = (
     <div className="in">
-      <Link to={backTo} className="link-arrow back-link">← Volver al catálogo</Link>
+      <div className="dossier-topbar">
+        <Link to={backTo} className="link-arrow">← Volver al catálogo</Link>
+        <span className="dossier-topbar-label">DOSSIER</span>
+      </div>
 
-      <div className="detail-head">
-        <div className="detail-head-row">
-          {logoUrl && <img src={logoUrl} alt="" className="detail-logo" />}
-          <div className="detail-head-main">
-            <div className="cat-id">
-              N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
+      <div className="dossier-header">
+        <div className="dossier-header-row">
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="dossier-logo" />
+          ) : (
+            <div className="dossier-logo-placeholder"><NavIcon name="box" size={34} /></div>
+          )}
+          <div className="dossier-head-main">
+            <div className="dossier-status-line">
+              N° {String(id).padStart(3, '0')} · {stage.toUpperCase()}
               {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
             </div>
             <h1 className="detail-title">{title}</h1>
-            <p className="cat-org">{org} — {getCityName(city) || location}</p>
+            <p className="dossier-subtitle">{org} — {getCityName(city) || location}</p>
           </div>
         </div>
-        <div className="detail-tags">
+        <div className="dossier-tags">
           {odsLabel && <span className="chip">{odsLabel}</span>}
           {odsSecondaryLabel && <span className="chip">{odsSecondaryLabel}</span>}
           {industryLabel && <span className="chip">{industryLabel}</span>}
@@ -221,79 +229,103 @@ export default function InitiativeDetail({ variant = 'public' }) {
         </div>
       </div>
 
-      <div className="detail-body">
-        <p className="detail-lede">{desc}</p>
-        {longDesc && longDesc !== desc && <p>{longDesc}</p>}
-        {impact && (
-          <div className="detail-field">
-            <span className="kicker">Impacto</span>
-            <p>{impact}</p>
-          </div>
-        )}
-        {collaborators?.length > 0 && (
-          <div className="detail-field">
-            <span className="kicker">Colaboradores</span>
-            <p>{collaborators.join(', ')}</p>
-          </div>
-        )}
-        {link && <p><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>}
-        {resources?.length > 0 && (
-          <div className="resource-group" style={{ marginTop: 4 }}>
-            <span className="kicker">Documentos y ligas</span>
-            {imageResources.length > 0 && (
-              <div className="detail-gallery">
-                {imageResources.map((r, i) => (
-                  <a href={r.url} target="_blank" rel="noreferrer" key={`${r.url}-${i}`} className="detail-gallery-item">
-                    <img src={r.url} alt={r.label} />
-                  </a>
-                ))}
+      <div className="dossier-grid">
+        <div className="dossier-main">
+          <p className="detail-lede">{desc}</p>
+          {longDesc && longDesc !== desc && <p style={{ color: 'var(--text-soft)', fontSize: 15.5, lineHeight: 1.65 }}>{longDesc}</p>}
+
+          <hr className="dossier-rule" />
+
+          <div className="dossier-meta-row">
+            {impact && (
+              <div className="dossier-section">
+                <span className="kicker">Impacto</span>
+                <p className="dossier-meta-value">{impact}</p>
               </div>
             )}
-            {otherResources.length > 0 && (
-              <ul className="resource-link-list" style={{ marginTop: imageResources.length > 0 ? 14 : 10 }}>
-                {otherResources.map((r, i) => (
-                  <li key={`${r.url}-${i}`}>
-                    <a href={r.url} target="_blank" rel="noreferrer">
-                      {r.type === 'video' ? '▶' : '🔗'} {r.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            {collaborators?.length > 0 && (
+              <div className="dossier-section">
+                <span className="kicker">Colaboradores</span>
+                <p className="dossier-meta-value">{collaborators.join(', ')}</p>
+              </div>
+            )}
+            {!impact && isRemote && (
+              <div className="dossier-section">
+                <span className="kicker">Modalidad</span>
+                <p className="dossier-meta-value">Remoto</p>
+              </div>
+            )}
+            {link && (
+              <div className="dossier-section">
+                <span className="kicker">Sitio</span>
+                <p className="dossier-meta-value"><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>
+              </div>
             )}
           </div>
-        )}
-      </div>
 
-      <div className="detail-side">
-        <div className="need-block">
-          <span className="kicker">Busca ahora</span>
-          <p className="need-big">{need}</p>
+          <div className="dossier-section">
+            <span className="kicker">Documentos y ligas</span>
+            {resources?.length > 0 ? (
+              <>
+                {imageResources.length > 0 && (
+                  <div className="dossier-gallery">
+                    {imageResources.map((r, i) => (
+                      <a href={r.url} target="_blank" rel="noreferrer" key={`${r.url}-${i}`} className="dossier-gallery-item">
+                        <img src={r.url} alt={r.label} />
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {otherResources.length > 0 && (
+                  <ul className="resource-link-list" style={{ marginTop: imageResources.length > 0 ? 14 : 10 }}>
+                    {otherResources.map((r, i) => (
+                      <li key={`${r.url}-${i}`}>
+                        <a href={r.url} target="_blank" rel="noreferrer">
+                          {r.type === 'video' ? '▶' : '🔗'} {r.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <div className="dossier-empty-box">Aún no hay documentos</div>
+            )}
+          </div>
         </div>
 
-        <MembersContacts
-          ownerUid={ownerUid}
-          memberUids={memberUids}
-          onRemove={isOwner ? handleRemoveMember : undefined}
-          canManage={isApp && isOwner}
-          linkToProfiles={isApp}
-        />
+        <div className="dossier-sidebar">
+          <div className="dossier-card">
+            <span className="kicker">Busca ahora</span>
+            <p className="dossier-need-value">{need || 'Por definir'}</p>
+          </div>
 
-        {isApp && user && !isMember && initiative.docId && (
-          <button type="button" className={`btn ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest} style={{ marginTop: 16 }}>
-            {interested ? '✓ Ya no me interesa' : 'Me interesa →'}
-          </button>
-        )}
+          <div className="dossier-card">
+            <span className="kicker">Contacto</span>
+            <MembersContacts
+              ownerUid={ownerUid}
+              memberUids={memberUids}
+              onRemove={isOwner ? handleRemoveMember : undefined}
+              canManage={isApp && isOwner}
+              linkToProfiles={isApp}
+            />
+          </div>
+
+          {isApp && isOwner && <AddMemberForm onAdd={handleAddMember} noun={kind.noun} />}
+
+          {isApp && isMember && (
+            <Link to={`/app/iniciativas/${slug}/editar`} className="btn btn-ghost dossier-action">Editar {kind.noun}</Link>
+          )}
+
+          {isApp && user && !isMember && initiative.docId && (
+            <button type="button" className={`btn dossier-action ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest}>
+              {interested ? '✓ Ya no me interesa' : 'Me interesa →'}
+            </button>
+          )}
+        </div>
       </div>
-
-      {isApp && isOwner && <AddMemberForm onAdd={handleAddMember} noun={kind.noun} />}
 
       {isApp && isMember && <InterestedPeople uids={initiative.interestedBy} />}
-
-      {isApp && isMember && (
-        <div className="form-actions" style={{ marginTop: 32 }}>
-          <Link to={`/app/iniciativas/${slug}/editar`} className="btn btn-ghost">Editar {kind.noun}</Link>
-        </div>
-      )}
     </div>
   )
 
