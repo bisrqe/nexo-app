@@ -17,7 +17,7 @@ function profileToPerson(p, uid) {
   const offers = p.profileType === 'mentor'
     ? [p.expertise].filter(Boolean)
     : p.profileType === 'organizacion'
-      ? [p.cause].filter(Boolean)
+      ? [p.causeLabel].filter(Boolean)
       : [p.industryLabel, p.industrySecondaryLabel].filter(Boolean)
   return {
     uid,

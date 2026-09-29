@@ -36,3 +36,24 @@ export const INDUSTRY_FILTERS = [
   { id: 'gobierno', label: 'Gobierno y política pública' },
   { id: 'otra', label: 'Otra' },
 ]
+
+// Causas comunes que atienden instituciones públicas y organizaciones —
+// equivalente a INDUSTRY_FILTERS pero para perfiles "organizacion", cuyo
+// dossier no encaja en una industria sino en una causa social.
+export const CAUSE_FILTERS = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'educacion', label: 'Educación' },
+  { id: 'salud', label: 'Salud' },
+  { id: 'medio-ambiente', label: 'Medio ambiente y sustentabilidad' },
+  { id: 'igualdad-genero', label: 'Igualdad de género' },
+  { id: 'pobreza-desarrollo-social', label: 'Pobreza y desarrollo social' },
+  { id: 'seguridad-alimentaria', label: 'Seguridad alimentaria' },
+  { id: 'ninez-juventud', label: 'Niñez y juventud' },
+  { id: 'adultos-mayores', label: 'Adultos mayores' },
+  { id: 'inclusion-discapacidad', label: 'Inclusión y discapacidad' },
+  { id: 'derechos-humanos', label: 'Derechos humanos' },
+  { id: 'cultura-arte', label: 'Cultura y arte' },
+  { id: 'deporte-recreacion', label: 'Deporte y recreación' },
+  { id: 'emprendimiento-innovacion', label: 'Emprendimiento e innovación' },
+  { id: 'otra', label: 'Otra' },
+]

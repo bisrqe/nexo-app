@@ -5,13 +5,14 @@ import { useTheme } from '../context/ThemeContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
-import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
 import { labelFor } from '../lib/catalogLabel.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
+const CAUSE_OPTIONS = CAUSE_FILTERS.filter((f) => f.id !== 'todos')
 const PHOTO_SIZE = 200
 
 // Redimensiona/recorta la foto a un cuadrado antes de guardarla — así una
@@ -59,6 +60,7 @@ export default function Ajustes() {
     ...profile,
     industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
     industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
+    causeOtra: profile.cause === 'otra' ? profile.causeLabel : '',
   })
   const [saved, setSaved] = useState(false)
 
@@ -68,6 +70,7 @@ export default function Ajustes() {
     ...profile,
     industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
     industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
+    causeOtra: profile.cause === 'otra' ? profile.causeLabel : '',
   }), [profile])
 
   const handleChange = (e) => {
@@ -118,8 +121,9 @@ export default function Ajustes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const { industryOtra, industrySecondaryOtra, ...rest } = form
+    const { industryOtra, industrySecondaryOtra, causeOtra, ...rest } = form
     const isEmprendedor = profile.profileType === 'emprendedor'
+    const isOrganizacion = profile.profileType === 'organizacion'
     await updateProfile({
       ...rest,
       industry: isEmprendedor ? form.industry : '',
@@ -128,6 +132,8 @@ export default function Ajustes() {
       industrySecondaryLabel: isEmprendedor && form.industrySecondary
         ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, industrySecondaryOtra)
         : '',
+      cause: isOrganizacion ? form.cause : '',
+      causeLabel: isOrganizacion ? labelFor(CAUSE_OPTIONS, form.cause, causeOtra) : '',
       profileType: profile.profileType,
     })
     setSaved(true)
@@ -294,8 +300,19 @@ export default function Ajustes() {
             <>
               <label className="form-field">
                 <span>Causa que atiende tu institución/organización</span>
-                <input type="text" name="cause" value={form.cause} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                <select name="cause" value={form.cause} onChange={handleChange}>
+                  <option value="">Selecciona una causa</option>
+                  {CAUSE_OPTIONS.map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
               </label>
+              {form.cause === 'otra' && (
+                <label className="form-field">
+                  <span>Especifica la causa</span>
+                  <input type="text" name="causeOtra" value={form.causeOtra} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                </label>
+              )}
               <label className="form-field">
                 <span>¿Qué hace tu institución/organización?</span>
                 <textarea name="orgActivity" rows={3} value={form.orgActivity} onChange={handleChange} />

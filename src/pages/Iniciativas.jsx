@@ -4,22 +4,23 @@ import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { getCityName } from '../data/cities.js'
+import { sortByOwnProjectType } from '../lib/initiativeKind.js'
 
 export default function Iniciativas() {
   const { profile } = useProfile()
   const [allInitiatives] = useFirestoreCollection('initiatives')
   const [showAllCities, setShowAllCities] = useState(false)
 
-  const visible = useMemo(
-    () => allInitiatives.filter((i) => showAllCities || !profile.city || !i.city || i.city === profile.city),
-    [allInitiatives, profile.city, showAllCities]
-  )
+  const visible = useMemo(() => {
+    const inCity = allInitiatives.filter((i) => showAllCities || !profile.city || !i.city || i.city === profile.city)
+    return sortByOwnProjectType(inCity, profile.profileType)
+  }, [allInitiatives, profile.city, profile.profileType, showAllCities])
 
   return (
     <DashboardLayout
       eyebrow="Explorar"
-      title="Todos los emprendimientos"
-      subtitle="El catálogo completo — filtra por industria o por lo que cada uno necesita ahora mismo."
+      title="Explorar"
+      subtitle="El catálogo completo — filtra por tipo de proyecto y por industria, ODS o causa según cuál elijas."
     >
       {profile.city && (
         <div className="filters">
@@ -31,7 +32,7 @@ export default function Iniciativas() {
           </button>
         </div>
       )}
-      <InitiativeCatalog initiatives={visible} basePath="/app/iniciativas" filterBy="industry" />
+      <InitiativeCatalog initiatives={visible} basePath="/app/iniciativas" />
     </DashboardLayout>
   )
 }

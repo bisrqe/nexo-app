@@ -6,13 +6,14 @@ import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES, GENDERS } from '../data/profileOptions.js'
 import { CITIES } from '../data/cities.js'
 import { labelFor } from '../lib/catalogLabel.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
+const CAUSE_OPTIONS = CAUSE_FILTERS.filter((f) => f.id !== 'todos')
 
 // Tope del selector de fecha de nacimiento: hoy mismo, calculado en vez
 // de quedar fijo en el código.
@@ -37,6 +38,7 @@ const EMPTY = {
   expertise: '',
   advisoryOffer: '',
   cause: '',
+  causeOtra: '',
   orgActivity: '',
   orgAudience: '',
   linkedin: '',
@@ -76,6 +78,8 @@ export default function Register() {
       const industrySecondaryLabel = isEmprendedor && form.industrySecondary
         ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
         : ''
+      const isOrganizacion = form.profileType === 'organizacion'
+      const causeLabel = isOrganizacion ? labelFor(CAUSE_OPTIONS, form.cause, form.causeOtra) : ''
       await setDoc(doc(db, 'profiles', cred.user.uid), {
         name: form.name,
         username: form.username,
@@ -93,9 +97,10 @@ export default function Register() {
         interests: form.odsInterest ? [form.odsInterest] : [],
         expertise: form.profileType === 'mentor' ? form.expertise : '',
         advisoryOffer: form.profileType === 'mentor' ? form.advisoryOffer : '',
-        cause: form.profileType === 'organizacion' ? form.cause : '',
-        orgActivity: form.profileType === 'organizacion' ? form.orgActivity : '',
-        orgAudience: form.profileType === 'organizacion' ? form.orgAudience : '',
+        cause: isOrganizacion ? form.cause : '',
+        causeLabel,
+        orgActivity: isOrganizacion ? form.orgActivity : '',
+        orgAudience: isOrganizacion ? form.orgAudience : '',
         linkedin: form.linkedin,
         bio: form.bio,
         photo: null,
@@ -278,8 +283,19 @@ export default function Register() {
               <>
                 <label className="form-field">
                   <span>Causa que atiende tu institución/organización</span>
-                  <input type="text" name="cause" value={form.cause} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                  <select name="cause" value={form.cause} onChange={handleChange}>
+                    <option value="">Selecciona una causa</option>
+                    {CAUSE_OPTIONS.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
                 </label>
+                {form.cause === 'otra' && (
+                  <label className="form-field">
+                    <span>Especifica la causa</span>
+                    <input type="text" name="causeOtra" value={form.causeOtra} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                  </label>
+                )}
                 <label className="form-field">
                   <span>¿Qué hace tu institución/organización?</span>
                   <textarea name="orgActivity" rows={3} value={form.orgActivity} onChange={handleChange} placeholder="Describe brevemente a qué se dedica" />

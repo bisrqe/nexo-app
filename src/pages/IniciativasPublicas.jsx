@@ -16,11 +16,11 @@ export default function IniciativasPublicas() {
           <div className="head-title">
             <span className="kicker">Explorar</span>
             <h2>Emprendimientos, no publicaciones</h2>
-            <p className="head-desc-below">Filtra por industria o por lo que el emprendimiento necesita ahora mismo.</p>
+            <p className="head-desc-below">Filtra por tipo de proyecto y por industria, ODS o causa según cuál elijas.</p>
           </div>
         </div>
 
-        <InitiativeCatalog initiatives={allInitiatives} filterBy="industry" allowSave={false} />
+        <InitiativeCatalog initiatives={allInitiatives} allowSave={false} />
       </section>
 
       <Footer />

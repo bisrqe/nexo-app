@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 
 const BASE_NAV = [
   { to: '/app/dashboard', label: 'Inicio', icon: 'home' },
-  { to: '/app/iniciativas', label: 'Emprendimientos', icon: 'compass' },
+  { to: '/app/iniciativas', label: 'Explorar', icon: 'compass' },
   { to: '/app/personas', label: 'Personas', icon: 'users' },
   { to: '/app/recursos', label: 'Recursos', icon: 'box' },
   { to: '/app/comunidad', label: 'Comunidad', icon: 'chat' },

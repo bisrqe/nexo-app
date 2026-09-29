@@ -2,11 +2,18 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useSaved } from '../context/SavedContext.jsx'
 import NavIcon from './NavIcon.jsx'
-import { kindFor } from '../lib/initiativeKind.js'
+import { kindFor, projectTypeFor } from '../lib/initiativeKind.js'
 
-export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true, tagMode = 'ods' }) {
-  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, need, ownerProfileType } = initiative
-  const tagLabel = tagMode === 'industry' ? (industryLabel || odsLabel) : odsLabel
+const TAG_LABEL_KEY_BY_PROJECT_TYPE = {
+  iniciativas: 'odsLabel',
+  instituciones: 'causeLabel',
+  emprendimientos: 'industryLabel',
+}
+
+export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true }) {
+  const { id, slug, stage, title, org, desc, odsLabel, industryLabel, causeLabel, need, ownerProfileType } = initiative
+  const tagKey = TAG_LABEL_KEY_BY_PROJECT_TYPE[projectTypeFor(ownerProfileType)]
+  const tagLabel = { odsLabel, industryLabel, causeLabel }[tagKey] || odsLabel || industryLabel || causeLabel
   const kind = kindFor(ownerProfileType)
   const { isInitiativeSaved, toggleInitiative } = useSaved()
   const isPreview = slug === 'vista-previa'

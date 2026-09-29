@@ -107,7 +107,7 @@ export default function Home() {
         {featuredInitiatives.length > 0 ? (
           <div className="catalog-grid">
             {featuredInitiatives.map((i) => (
-              <InitiativeCard key={i.docId} initiative={i} allowSave={false} tagMode="industry" />
+              <InitiativeCard key={i.docId} initiative={i} allowSave={false} />
             ))}
           </div>
         ) : (

@@ -4,7 +4,7 @@ import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
-import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { CITIES } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
@@ -15,11 +15,13 @@ import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiative
 const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
+const CAUSE_OPTIONS = CAUSE_FILTERS.filter((f) => f.id !== 'todos')
 
 const EMPTY = {
   title: '', org: '', city: '', link: '',
   ods: 'ods4', odsOtra: '', odsSecondary: '', odsSecondaryOtra: '',
   industry: '', industryOtra: '', industrySecondary: '', industrySecondaryOtra: '',
+  cause: '', causeOtra: '',
   stage: 'Idea', desc: '', need: '',
   collaboratorsText: '', impact: '', foundedDate: '',
   resources: [],
@@ -47,6 +49,7 @@ export default function NewInitiative({ variant = 'public' }) {
   const { myInitiative, setMyInitiative } = useUserContent()
   const { profile } = useProfile()
   const kind = kindFor(profile.profileType)
+  const isOrg = profile.profileType === 'organizacion'
   const navigate = useNavigate()
   const [form, setForm] = useState(EMPTY)
   const [preview, setPreview] = useState(null)
@@ -71,6 +74,8 @@ export default function NewInitiative({ variant = 'public' }) {
         industryOtra: myInitiative.industry === 'otra' ? myInitiative.industryLabel || '' : '',
         industrySecondary: myInitiative.industrySecondary || '',
         industrySecondaryOtra: myInitiative.industrySecondary === 'otra' ? myInitiative.industrySecondaryLabel || '' : '',
+        cause: myInitiative.cause || '',
+        causeOtra: myInitiative.cause === 'otra' ? myInitiative.causeLabel || '' : '',
         stage: myInitiative.stage || 'Idea',
         desc: myInitiative.desc || '',
         need: myInitiative.need || '',
@@ -124,10 +129,11 @@ export default function NewInitiative({ variant = 'public' }) {
     e.preventDefault()
     const odsLabel = labelFor(ODS_OPTIONS, form.ods, form.odsOtra)
     const odsSecondaryLabel = form.odsSecondary ? labelFor(ODS_OPTIONS, form.odsSecondary, form.odsSecondaryOtra) : ''
-    const industryLabel = labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra)
-    const industrySecondaryLabel = form.industrySecondary
+    const industryLabel = isOrg ? '' : labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra)
+    const industrySecondaryLabel = !isOrg && form.industrySecondary
       ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
       : ''
+    const causeLabel = isOrg ? labelFor(CAUSE_OPTIONS, form.cause, form.causeOtra) : ''
     const collaborators = form.collaboratorsText.split(',').map((s) => s.trim()).filter(Boolean)
 
     const built = {
@@ -142,10 +148,12 @@ export default function NewInitiative({ variant = 'public' }) {
       ods: [form.ods, form.odsSecondary].filter(Boolean),
       odsLabel,
       odsSecondaryLabel,
-      industry: form.industry,
+      industry: isOrg ? '' : form.industry,
       industryLabel,
-      industrySecondary: form.industrySecondary,
+      industrySecondary: isOrg ? '' : form.industrySecondary,
       industrySecondaryLabel,
+      cause: isOrg ? form.cause : '',
+      causeLabel,
       desc: form.desc || 'Aquí aparecerá la descripción que escribas.',
       longDesc: form.desc || 'Aquí aparecerá la descripción que escribas.',
       need: form.need || 'Por definir',
@@ -190,7 +198,7 @@ export default function NewInitiative({ variant = 'public' }) {
         <div className="preview-block">
           <p className="preview-label">Así se vería en el catálogo:</p>
           <div className="catalog-grid catalog-grid-single">
-            <InitiativeCard initiative={preview} />
+            <InitiativeCard initiative={{ ...preview, ownerProfileType: myInitiative?.ownerProfileType || profile.profileType }} />
           </div>
           <div className="auth-note">
             <p>
@@ -282,38 +290,60 @@ export default function NewInitiative({ variant = 'public' }) {
             </label>
           )}
 
-          <div className="form-row">
-            <label className="form-field">
-              <span>Industria principal</span>
-              <select name="industry" required value={form.industry} onChange={handleChange}>
-                <option value="">Selecciona una industria</option>
-                {INDUSTRY_OPTIONS.map((f) => (
-                  <option key={f.id} value={f.id}>{f.label}</option>
-                ))}
-              </select>
-            </label>
-            {form.industry === 'otra' ? (
+          {isOrg ? (
+            <div className="form-row">
               <label className="form-field">
-                <span>Especifica la industria</span>
-                <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
-              </label>
-            ) : (
-              <label className="form-field">
-                <span>Industria secundaria (opcional)</span>
-                <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
-                  <option value="">Ninguna</option>
-                  {INDUSTRY_OPTIONS.filter((f) => f.id !== form.industry).map((f) => (
+                <span>Causa que atiende</span>
+                <select name="cause" required value={form.cause} onChange={handleChange}>
+                  <option value="">Selecciona una causa</option>
+                  {CAUSE_OPTIONS.map((f) => (
                     <option key={f.id} value={f.id}>{f.label}</option>
                   ))}
                 </select>
               </label>
-            )}
-          </div>
-          {form.industrySecondary === 'otra' && (
-            <label className="form-field">
-              <span>Especifica la industria secundaria</span>
-              <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
-            </label>
+              {form.cause === 'otra' && (
+                <label className="form-field">
+                  <span>Especifica la causa</span>
+                  <input type="text" name="causeOtra" value={form.causeOtra} onChange={handleChange} placeholder="Ej. Educación financiera para jóvenes" />
+                </label>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="form-row">
+                <label className="form-field">
+                  <span>Industria principal</span>
+                  <select name="industry" required value={form.industry} onChange={handleChange}>
+                    <option value="">Selecciona una industria</option>
+                    {INDUSTRY_OPTIONS.map((f) => (
+                      <option key={f.id} value={f.id}>{f.label}</option>
+                    ))}
+                  </select>
+                </label>
+                {form.industry === 'otra' ? (
+                  <label className="form-field">
+                    <span>Especifica la industria</span>
+                    <input type="text" name="industryOtra" value={form.industryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                  </label>
+                ) : (
+                  <label className="form-field">
+                    <span>Industria secundaria (opcional)</span>
+                    <select name="industrySecondary" value={form.industrySecondary} onChange={handleChange}>
+                      <option value="">Ninguna</option>
+                      {INDUSTRY_OPTIONS.filter((f) => f.id !== form.industry).map((f) => (
+                        <option key={f.id} value={f.id}>{f.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+              {form.industrySecondary === 'otra' && (
+                <label className="form-field">
+                  <span>Especifica la industria secundaria</span>
+                  <input type="text" name="industrySecondaryOtra" value={form.industrySecondaryOtra} onChange={handleChange} placeholder="Ej. Turismo comunitario" />
+                </label>
+              )}
+            </>
           )}
 
           <label className="form-field">

@@ -25,3 +25,39 @@ export const PROFILE_TYPES_WITHOUT_OWN_INITIATIVE = ['mentor', 'voluntario']
 export function kindFor(profileType) {
   return KIND_LABELS[profileType] || DEFAULT_KIND
 }
+
+// "Tipo de proyecto" para el filtro de Explorar — mismo criterio que
+// KIND_LABELS de arriba, pero como id de catálogo en vez de texto para
+// mostrar. Cualquier ownerProfileType que no sea estudiante/organizacion
+// (emprendedor, o vacío en registros viejos) cae en "emprendimientos".
+const PROJECT_TYPE_BY_PROFILE = {
+  estudiante: 'iniciativas',
+  organizacion: 'instituciones',
+}
+
+export function projectTypeFor(profileType) {
+  return PROJECT_TYPE_BY_PROFILE[profileType] || 'emprendimientos'
+}
+
+export const PROJECT_TYPE_FILTERS = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'emprendimientos', label: 'Emprendimientos' },
+  { id: 'iniciativas', label: 'Iniciativas' },
+  { id: 'instituciones', label: 'Instituciones' },
+]
+
+// Ordena dejando arriba lo del mismo tipo de proyecto que quien mira el
+// catálogo (estudiante ve iniciativas de otros estudiantes primero,
+// emprendedor ve otros emprendimientos primero, etc.) sin ocultar el
+// resto — solo reordena. Array.sort es estable, así que dentro de cada
+// grupo se conserva el orden original. Mentores/voluntarios no tienen un
+// tipo propio, así que no se reordena para ellos.
+export function sortByOwnProjectType(list, viewerProfileType) {
+  if (PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(viewerProfileType)) return list
+  const viewerType = projectTypeFor(viewerProfileType)
+  return [...list].sort((a, b) => {
+    const aMatch = projectTypeFor(a.ownerProfileType) === viewerType ? 0 : 1
+    const bMatch = projectTypeFor(b.ownerProfileType) === viewerType ? 0 : 1
+    return aMatch - bMatch
+  })
+}

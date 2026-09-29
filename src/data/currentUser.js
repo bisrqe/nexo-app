@@ -25,6 +25,7 @@ export const DEFAULT_PROFILE = {
   expertise: '',
   advisoryOffer: '',
   cause: '',
+  causeLabel: '',
   orgActivity: '',
   orgAudience: '',
   linkedin: '',
