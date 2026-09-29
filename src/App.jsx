@@ -16,6 +16,7 @@ import VerifyEmail from './pages/auth-action/VerifyEmail.jsx'
 import ResetPassword from './pages/auth-action/ResetPassword.jsx'
 import RecoverEmail from './pages/auth-action/RecoverEmail.jsx'
 import RevertMfaEnrollment from './pages/auth-action/RevertMfaEnrollment.jsx'
+import ActionDispatcher from './pages/auth-action/ActionDispatcher.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 // Zona post-login — todo vive bajo /app/*, con el shell de Sidebar.
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="/auth/restablecer-contrasena" element={<ResetPassword />} />
         <Route path="/auth/recuperar-correo" element={<RecoverEmail />} />
         <Route path="/auth/verificacion-dos-pasos" element={<RevertMfaEnrollment />} />
+        <Route path="/auth/accion" element={<ActionDispatcher />} />
 
         {/* ── Zona post-login — separada de la landing, requiere sesión ── */}
         <Route path="/app/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />

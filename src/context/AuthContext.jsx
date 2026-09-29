@@ -37,11 +37,20 @@ export function AuthProvider({ children }) {
   const signUp = (email, password) => createUserWithEmailAndPassword(auth, email, password)
   const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const signOutUser = () => signOut(auth)
+  // handleCodeInApp:true es lo que realmente manda el enlace a nuestra
+  // página en vez de a la plantilla genérica que Firebase hostea por su
+  // cuenta — sin esto, "url" no hace nada (solo sería un link de
+  // "continuar" dentro de esa plantilla genérica, y ni eso en algunos
+  // templates). Con handleCodeInApp, Firebase manda directo a "url" con
+  // ?mode=...&oobCode=... en la query, que es lo que leen las páginas en
+  // src/pages/auth-action/.
   const resendVerificationEmail = () => auth.currentUser && sendEmailVerification(auth.currentUser, {
     url: `${AUTH_ACTION_URL}/auth/verificar-correo`,
+    handleCodeInApp: true,
   })
   const sendPasswordReset = (email) => sendPasswordResetEmail(auth, email, {
     url: `${AUTH_ACTION_URL}/auth/restablecer-contrasena`,
+    handleCodeInApp: true,
   })
   const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
 
