@@ -20,6 +20,7 @@ function profileToPerson(p, uid) {
     : p.profileType === 'organizacion'
       ? [p.causeLabel].filter(Boolean)
       : [p.industryLabel, p.industrySecondaryLabel].filter(Boolean)
+  const offersLabel = p.profileType === 'mentor' ? 'Ofrece' : p.profileType === 'organizacion' ? 'Causa' : 'Industria'
   const baseTypeLabel = PROFILE_TYPES.find((t) => t.id === p.profileType)?.label
   const subtypeLabel = p.profileType === 'estudiante' ? STUDENT_SUBTYPES.find((s) => s.id === p.subtype)?.label : ''
   return {
@@ -31,6 +32,7 @@ function profileToPerson(p, uid) {
     odsLabel,
     profileTypeLabel: subtypeLabel ? `${baseTypeLabel} · ${subtypeLabel}` : baseTypeLabel,
     offers,
+    offersLabel,
     advisoryOffer: p.advisoryOffer,
     orgActivity: p.orgActivity,
     orgAudience: p.orgAudience,
@@ -116,7 +118,7 @@ export default function PersonProfile() {
   }
 
   const {
-    uid, name, username, role, location, odsLabel, profileTypeLabel, offers, advisoryOffer, orgActivity, orgAudience,
+    uid, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
     bio, contact, linkedin, photo,
   } = person
   const canMessage = Boolean(uid && user && uid !== user.uid)
@@ -156,10 +158,8 @@ export default function PersonProfile() {
             <div className="dossier-meta-row">
               {offers?.length > 0 && (
                 <div className="dossier-section">
-                  <span className="kicker">Ofrece</span>
-                  <div className="person-offers" style={{ marginTop: 8 }}>
-                    {offers.map((o) => <span className="tag-pill" key={o}>{o}</span>)}
-                  </div>
+                  <span className="kicker">{offersLabel}</span>
+                  <p className="dossier-meta-value">{offers.join(', ')}</p>
                 </div>
               )}
               {role && (
