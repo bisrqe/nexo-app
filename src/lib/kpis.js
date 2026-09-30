@@ -28,6 +28,10 @@ function sortedEntries(map) {
 
 export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [], groups = [] }) {
   const today = new Date().toISOString().slice(0, 10)
+  // Borrar una cuenta borra su perfil, pero no limpia el uid de arreglos
+  // sueltos en otros documentos (interestedBy, ownerUid…) — se descartan
+  // esas referencias huérfanas en vez de contarlas como actividad real.
+  const profileUids = new Set(profiles.map((p) => p.docId))
   const totalProfiles = profiles.length
   const totalInitiatives = initiatives.length
   const totalEvents = events.length
@@ -40,10 +44,10 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
   const connectionPairs = new Set()
   const connectedPeople = new Set()
   for (const init of initiatives) {
-    const interested = init.interestedBy || []
+    const interested = (init.interestedBy || []).filter((uid) => profileUids.has(uid))
     totalInterest += interested.length
     for (const uid of interested) {
-      if (init.ownerUid && uid !== init.ownerUid) {
+      if (init.ownerUid && uid !== init.ownerUid && profileUids.has(init.ownerUid)) {
         connectionPairs.add(`${uid}::${init.ownerUid}`)
         connectedPeople.add(uid)
         connectedPeople.add(init.ownerUid)
@@ -85,7 +89,7 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
       org: i.org || '—',
       industryLabel: i.industryLabel || '—',
       odsLabel: i.odsLabel || '—',
-      interest: (i.interestedBy || []).length,
+      interest: (i.interestedBy || []).filter((uid) => profileUids.has(uid)).length,
     }))
     .sort((a, b) => b.interest - a.interest)
     .slice(0, 10)
@@ -109,13 +113,18 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
     if (p.joinedGroups?.length) bump(p.docId, 'groupsJoined', p.joinedGroups.length)
   }
 
+  // Un uid puede seguir apareciendo en interestedBy/ownerUid de otros
+  // documentos después de que la cuenta se borra (borrar el perfil no
+  // limpia esas referencias sueltas) — se descarta aquí en vez de
+  // mostrarlo como "Cuenta eliminada", que no aporta nada al reporte.
   const activityRanking = [...activity.values()]
+    .filter((a) => profileByUid.has(a.uid))
     .map((a) => {
       const owner = profileByUid.get(a.uid)
       return {
         ...a,
-        name: owner?.name || 'Cuenta eliminada',
-        city: getCityName(owner?.city),
+        name: owner.name || 'Sin nombre',
+        city: getCityName(owner.city),
         score: a.initiatives * 3 + a.interestShown * 2 + a.events * 2 + a.groupsJoined,
       }
     })
