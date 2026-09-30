@@ -40,16 +40,16 @@ export default function Home() {
   }, [initiatives, events, today])
 
   const featuredInitiatives = useMemo(
-    () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 10),
+    () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 3),
     [initiatives]
   )
 
   const upcomingEvents = useMemo(
-    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 10),
+    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3),
     [events, today]
   )
 
-  const featuredResources = useMemo(() => (RESOURCES.nacional || []).slice(0, 10), [])
+  const featuredResources = useMemo(() => (RESOURCES.nacional || []).slice(0, 3), [])
 
   return (
     <>
@@ -141,6 +141,9 @@ export default function Home() {
             {featuredInitiatives.map((i) => (
               <InitiativeCard key={i.docId} initiative={i} allowSave={false} />
             ))}
+            <div className="explore-more-cell">
+              <Link to="/iniciativas" className="btn btn-ghost">Explorar los demás →</Link>
+            </div>
           </div>
         ) : (
           <div className="empty-state">
@@ -154,7 +157,7 @@ export default function Home() {
       </section>
 
       {/* ── FEATURED RESOURCES ───────────────────── */}
-      <section className="bg-alt">
+      <section>
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Aprovechar lo que ya existe</span>
@@ -174,6 +177,9 @@ export default function Home() {
                 </a>
               </div>
             ))}
+            <div className="explore-more-card">
+              <Link to="/recursos" className="btn btn-ghost">Explorar los demás →</Link>
+            </div>
           </div>
         ) : (
           <div className="empty-state in">
@@ -187,7 +193,7 @@ export default function Home() {
       </section>
 
       {/* ── UPCOMING EVENTS ──────────────────────── */}
-      <section>
+      <section className="bg-alt">
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Comunidad</span>
@@ -210,6 +216,9 @@ export default function Home() {
                 </div>
               </div>
             ))}
+            <div className="explore-more-card">
+              <Link to="/eventos" className="btn btn-ghost">Explorar los demás →</Link>
+            </div>
           </div>
         ) : (
           <div className="empty-state in">

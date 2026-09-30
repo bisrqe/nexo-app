@@ -42,7 +42,7 @@ export default function IniciativasPublicas() {
       <section className="full">
         <div className="cta-band">
           <div>
-            <h2>¿Quieres ver el dossier completo?</h2>
+            <h2>¿Quieres ver el <span className="mark">dossier completo</span>?</h2>
             <p>Ingresa o regístrate para conocer a fondo cada emprendimiento y conectar con quien lo lidera.</p>
           </div>
           <div className="hero-actions">

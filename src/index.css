@@ -762,6 +762,8 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .resource-group:last-child{margin-bottom:0;}
 .resource-group h3{font-family:var(--serif); font-weight:500; font-size:1.3rem; margin-bottom:16px; color:var(--ink);}
 .resource-card{background:#fff; border:1px solid var(--line); border-radius:8px; padding:20px 22px; display:flex; flex-direction:column; gap:8px;}
+.explore-more-card{display:flex; align-items:center; justify-content:center; min-height:140px; background:#fff; border:1px dashed var(--line); border-radius:8px; padding:20px 22px; text-align:center;}
+.explore-more-cell{display:flex; align-items:center; justify-content:center; min-height:220px; background:var(--paper); padding:20px 22px; text-align:center;}
 .resource-title{font-weight:700; font-size:15px; color:var(--ink);}
 .resource-org{font-family:var(--mono); font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.02em;}
 .resource-desc{font-size:13.5px; color:var(--text-soft);}

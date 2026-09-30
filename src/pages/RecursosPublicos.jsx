@@ -41,7 +41,7 @@ export default function RecursosPublicos() {
       <section className="full">
         <div className="cta-band">
           <div>
-            <h2>¿Buscas recursos de tu ciudad?</h2>
+            <h2>¿Buscas recursos de <span className="mark">tu ciudad</span>?</h2>
             <p>Ingresa o regístrate para ver también lo exclusivo de Monterrey, CDMX y Guadalajara.</p>
           </div>
           <div className="hero-actions">
