@@ -5,6 +5,7 @@ import Footer from '../components/Footer.jsx'
 import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
+import { RESOURCES } from '../data/resources.js'
 
 const WHY_STATS = [
   { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
@@ -47,6 +48,8 @@ export default function Home() {
     () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 10),
     [events, today]
   )
+
+  const featuredResources = useMemo(() => (RESOURCES.nacional || []).slice(0, 10), [])
 
   return (
     <>
@@ -147,6 +150,39 @@ export default function Home() {
 
         <div className="section-cta">
           <Link to="/iniciativas" className="link-arrow">Ver todos los emprendimientos →</Link>
+        </div>
+      </section>
+
+      {/* ── FEATURED RESOURCES ───────────────────── */}
+      <section className="bg-alt">
+        <div className="section-head">
+          <div className="head-title">
+            <span className="kicker">Aprovechar lo que ya existe</span>
+            <h2>Recursos destacados</h2>
+          </div>
+        </div>
+
+        {featuredResources.length > 0 ? (
+          <div className="page-grid in">
+            {featuredResources.map((item) => (
+              <div className="resource-card" key={item.id}>
+                <div className="resource-title">{item.title}</div>
+                <div className="resource-org">{item.category}</div>
+                <p className="resource-desc">{item.desc}</p>
+                <a href={`https://${item.link}`} target="_blank" rel="noreferrer" className="resource-tag">
+                  Visitar sitio →
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state in">
+            <p>Todavía no tenemos recursos capturados.</p>
+          </div>
+        )}
+
+        <div className="section-cta">
+          <Link to="/recursos" className="link-arrow">Ver todos los recursos →</Link>
         </div>
       </section>
 
