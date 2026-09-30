@@ -9,6 +9,7 @@ import { useDirectMessages } from '../context/DirectMessagesContext.jsx'
 import { useConversationMessages } from '../hooks/useConversationMessages.js'
 import { uploadFile } from '../lib/uploads.js'
 import { initials } from '../data/currentUser.js'
+import { useToast } from '../context/ToastContext.jsx'
 
 function formatTime(ts) {
   if (!ts?.toDate) return ''
@@ -37,6 +38,7 @@ export default function Mensajes() {
   const { groups, sendGroupMessage } = useGroups()
   const { conversations, getOrCreateConversation, sendDirectMessage } = useDirectMessages()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { showToast } = useToast()
 
   const myGroups = groups.filter((g) => profile.joinedGroups?.includes(g.docId))
   const [activeKey, setActiveKey] = useState(null)
@@ -105,8 +107,9 @@ export default function Mensajes() {
     } catch {
       // No mostramos err.message aquí a propósito — puede traer texto
       // crudo de Firebase/Storage que no significa nada para quien
-      // escribe el chat.
-      alert('No se pudo subir el archivo. Intenta de nuevo en un momento.')
+      // escribe el chat. Un toast en vez de alert() para no bloquear
+      // la conversación con un diálogo nativo.
+      showToast('No se pudo subir el archivo. Intenta de nuevo en un momento.')
     } finally {
       setUploading(false)
     }

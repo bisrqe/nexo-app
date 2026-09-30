@@ -777,6 +777,28 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .verify-banner .link-arrow{color:var(--ink); font-weight:600;}
 .verify-banner-close{background:none; border:none; color:var(--ink); font-size:14px; opacity:.6; padding:2px 4px;}
 .verify-banner-close:hover{opacity:1;}
+
+/* Avisos no bloqueantes (ver ToastContext) — reemplazan alert() nativo
+   para errores/confirmaciones que no deben interrumpir toda la página. */
+@keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.toast-stack{
+  position:fixed; bottom:24px; right:24px; z-index:200;
+  display:flex; flex-direction:column; gap:10px; max-width:min(360px, calc(100vw - 32px));
+}
+.toast{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:13px 16px; border-radius:8px; font-size:13.5px; line-height:1.4;
+  box-shadow:0 10px 30px rgba(16,27,38,.18);
+  animation:toast-in .18s ease-out;
+}
+.toast-error{background:var(--ink); color:#fff;}
+.toast-success{background:var(--navy); color:#fff;}
+.toast-close{background:none; border:none; color:inherit; opacity:.65; font-size:13px; flex-shrink:0; padding:2px;}
+.toast-close:hover{opacity:1;}
+@media (max-width:560px){
+  .toast-stack{left:16px; right:16px; bottom:16px; max-width:none;}
+}
+
 .app-topbar{padding:36px 32px 0; background:var(--paper);}
 .app-topbar h1{font-family:var(--serif); font-weight:500; font-size:clamp(1.7rem,2.6vw,2.2rem); color:var(--ink); letter-spacing:-.01em; margin:6px 0 4px;}
 .app-topbar p{color:var(--text-soft); font-size:14.5px; max-width:560px;}
