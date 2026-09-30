@@ -16,7 +16,12 @@ const NAMED_REGION_IDS = RESOURCE_REGIONS.map((r) => r.id)
 // Cualquier ciudad del catálogo que no tenga ya su propia pestaña (mty,
 // cdmx, gdl) cae dentro de "Otras ciudades" — con su propio filtro por
 // ciudad, en vez de llenar la barra de arriba con una pestaña por cada una.
-const OTHER_CITIES = CITIES.filter((c) => !NAMED_REGION_IDS.includes(c.id) && c.id !== 'otra')
+// "Remoto" se excluye a propósito: no tiene bucket propio en RESOURCES (no
+// hay convocatorias "de remoto"), así que tratarlo como región propia solo
+// manda a quien trabaja remoto a una pestaña "mi ciudad" vacía por defecto,
+// en vez de a Alcance nacional — que es justo lo que sí le recomienda el
+// dashboard para ese mismo perfil.
+const OTHER_CITIES = CITIES.filter((c) => !NAMED_REGION_IDS.includes(c.id) && c.id !== 'otra' && c.id !== 'remoto')
 
 // El link se guarda sin protocolo (mismo formato que src/data/resources.js,
 // que arma el href como `https://${item.link}`) para que ambas fuentes se
