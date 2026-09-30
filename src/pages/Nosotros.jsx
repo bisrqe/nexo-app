@@ -9,9 +9,8 @@ const MISSION_VISION = [
 
 const VALUES = [
   'Empatía',
-  'Compromiso',
+  'Confianza',
   'Colaboración',
-  'Transparencia',
   'Sostenibilidad',
   'Diversidad e inclusión',
   'Innovación con propósito',

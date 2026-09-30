@@ -103,13 +103,16 @@ export default function Home() {
           <span className="kicker on-dark">Por qué existe Nexo</span>
           <p className="pivot-quote">
             Casi todos los problemas que <b>algún emprendimiento</b> quiere resolver, <b>alguien ya los está resolviendo</b> en algún lugar
-            de México. El problema nunca fue la falta de ideas — fue que nadie las encontraba a tiempo para sumarse.
+            de México.
+          </p>
+          <p className="pivot-quote pivot-quote-muted">
+            El problema nunca fue la falta de ideas — fue que nadie las encontraba a tiempo para sumarse.
           </p>
           <p className="pivot-attr">Por eso dejamos de ser un feed y empezamos a ser un mapa</p>
 
-          <div className="impact-grid" style={{ marginTop: 48 }}>
+          <div className="why-stats-row">
             {WHY_STATS.map((s) => (
-              <div className="stat-item" key={s.label}>
+              <div className="why-stat" key={s.label}>
                 <span className="stat-num" style={{ color: 'var(--gold)' }}>{s.num}</span>
                 <span className="stat-label" style={{ color: '#AEBBD0' }}>{s.label}</span>
               </div>

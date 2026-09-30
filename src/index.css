@@ -189,7 +189,27 @@ nav{display:flex; align-items:center; justify-content:space-between; height:68px
   max-width:880px;
 }
 .pivot-quote b{font-style:normal; font-weight:700; color:var(--gold);}
+.pivot-quote + .pivot-quote{margin-top:20px;}
+.pivot-quote-muted{color:#8B96AC;}
 .pivot-attr{font-family:var(--mono); font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:#7E8FAE; margin-top:28px;}
+
+.why-stats-row{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-top:1px solid rgba(255,255,255,.14);
+  margin-top:44px; padding-top:32px;
+}
+.why-stat{padding:0 28px; border-left:1px solid rgba(255,255,255,.14); display:flex; flex-direction:column; gap:8px;}
+.why-stat:first-child{padding-left:0; border-left:none;}
+.why-stat .stat-label{line-height:1.4;}
+
+@media (max-width:900px){
+  .why-stats-row{grid-template-columns:repeat(2,1fr); row-gap:28px;}
+  .why-stat:nth-child(3){padding-left:0; border-left:none;}
+}
+@media (max-width:560px){
+  .why-stats-row{grid-template-columns:1fr; row-gap:24px;}
+  .why-stat{padding-left:0; border-left:none;}
+}
 
 /* ── Section shell ────────────────────────────── */
 section{padding:88px 0;}
