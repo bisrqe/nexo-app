@@ -40,15 +40,56 @@ function profileToPerson(p) {
   }
 }
 
+// Qué filtro de categoría tiene sentido mostrar según el rol elegido —
+// cada tipo de perfil captura una categoría distinta (industria, causa u
+// ODS), así que no tiene caso mostrar los tres desplegables si ya se sabe
+// cuál aplica. Estudiante es el único caso con dos a la vez (ver
+// isStudentEntrepreneur en lib/initiativeKind.js para el mismo criterio
+// en emprendimientos).
+const ROLE_CATEGORY_VISIBILITY = {
+  emprendedor: { industry: true },
+  organizacion: { cause: true },
+  voluntario: { ods: true },
+  estudiante: { industry: true, ods: true },
+}
+
+// Qué tanto empata una persona con el perfil de quien está buscando —
+// mismo criterio que scoreForProfile en lib/recommend.js pero para
+// personas en vez de emprendimientos: no filtra nada, solo ordena para
+// que las coincidencias más fuertes (ciudad, industria, causa, ODS
+// compartidos, mismo rol) aparezcan primero.
+function scorePersonForProfile(person, profile) {
+  let score = 0
+  if (person.city && profile.city && person.city === profile.city) score += 2
+  if (person.industry && profile.industry && person.industry === profile.industry) score += 3
+  if (person.cause && profile.cause && person.cause === profile.cause) score += 3
+  const sharedOds = (person.ods || []).filter((id) => (profile.interests || []).includes(id))
+  score += sharedOds.length * 2
+  if (person.profileType && profile.profileType && person.profileType === profile.profileType) score += 1
+  return score
+}
+
 export default function Personas() {
   const { profile } = useProfile()
   const { user } = useAuth()
   const [realProfiles] = useFirestoreCollection('profiles')
   const [query, setQuery] = useState('')
-  const [showAllCities, setShowAllCities] = useState(false)
+  const [showAllCities, setShowAllCities] = useState(true)
   const [specificCity, setSpecificCity] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
+  const [industryFilter, setIndustryFilter] = useState('')
+  const [causeFilter, setCauseFilter] = useState('')
+  const [odsFilter, setOdsFilter] = useState('')
+
+  const categoryVisibility = ROLE_CATEGORY_VISIBILITY[roleFilter] || {}
+
+  const handleRoleChange = (value) => {
+    setRoleFilter(value)
+    const visible = ROLE_CATEGORY_VISIBILITY[value] || {}
+    if (!visible.industry) setIndustryFilter('')
+    if (!visible.cause) setCauseFilter('')
+    if (!visible.ods) setOdsFilter('')
+  }
 
   const allPeople = useMemo(() => {
     return realProfiles
@@ -58,20 +99,23 @@ export default function Personas() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return allPeople.filter((p) => {
-      const matchesCity = specificCity
-        ? p.city === specificCity
-        : showAllCities || !profile.city || !p.city || p.city === profile.city
+    const list = allPeople.filter((p) => {
+      const matchesCity = !showAllCities
+        ? p.city === profile.city
+        : (!specificCity || p.city === specificCity)
       if (!matchesCity) return false
       if (roleFilter && p.profileType !== roleFilter) return false
-      if (categoryFilter) {
-        const matchesCategory = p.ods?.includes(categoryFilter) || p.industry === categoryFilter || p.cause === categoryFilter
-        if (!matchesCategory) return false
-      }
+      if (categoryVisibility.industry && industryFilter && p.industry !== industryFilter) return false
+      if (categoryVisibility.cause && causeFilter && p.cause !== causeFilter) return false
+      if (categoryVisibility.ods && odsFilter && !p.ods?.includes(odsFilter)) return false
       if (!q) return true
       return [p.name, p.role, p.odsLabel, ...(p.offers || []), p.looking].join(' ').toLowerCase().includes(q)
     })
-  }, [allPeople, query, profile.city, showAllCities, specificCity, roleFilter, categoryFilter])
+    // Sin ningún filtro activo, aparece todo el directorio — solo se
+    // reordena para que quien más empata con tu propio perfil quede
+    // hasta arriba, en vez de recortar la lista.
+    return [...list].sort((a, b) => scorePersonForProfile(b, profile) - scorePersonForProfile(a, profile))
+  }, [allPeople, query, profile, showAllCities, specificCity, roleFilter, industryFilter, causeFilter, odsFilter, categoryVisibility])
 
   return (
     <DashboardLayout
@@ -79,60 +123,71 @@ export default function Personas() {
       title="Personas"
       subtitle="Quién sabe hacer qué, y qué está buscando — sin currículums de relleno."
     >
-      <div className="filters">
-        {profile.city && (
-          <>
-            <button
-              className={`chip ${!showAllCities && !specificCity ? 'active' : ''}`}
-              onClick={() => { setShowAllCities(false); setSpecificCity('') }}
+      {profile.city && (
+        <div className="filters">
+          <button
+            className={`chip ${!showAllCities ? 'active' : ''}`}
+            onClick={() => { setShowAllCities(false); setSpecificCity('') }}
+          >
+            {getCityName(profile.city)}
+          </button>
+          <button
+            className={`chip ${showAllCities ? 'active' : ''}`}
+            onClick={() => setShowAllCities(true)}
+          >
+            Ver todas las zonas
+          </button>
+          {showAllCities && (
+            <select
+              className="chip-select"
+              value={specificCity}
+              onChange={(e) => setSpecificCity(e.target.value)}
             >
-              {getCityName(profile.city)}
-            </button>
-            <button
-              className={`chip ${showAllCities && !specificCity ? 'active' : ''}`}
-              onClick={() => { setShowAllCities(true); setSpecificCity('') }}
-            >
-              Ver todas las zonas
-            </button>
-          </>
-        )}
-        <select
-          className="chip-select"
-          value={specificCity}
-          onChange={(e) => setSpecificCity(e.target.value)}
-        >
-          <option value="">Otra ciudad…</option>
-          {CITIES.filter((c) => c.id !== profile.city).map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
+              <option value="">Otras ciudades…</option>
+              {CITIES.filter((c) => c.id !== profile.city).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
-        <select className="chip-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+      <div className="filters">
+        <select className="chip-select" value={roleFilter} onChange={(e) => handleRoleChange(e.target.value)}>
           <option value="">Todos los roles</option>
           {PROFILE_TYPES.map((t) => (
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>
 
-        <select className="chip-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-          <option value="">Industria / causa / ODS</option>
-          <optgroup label="Industria">
+        {categoryVisibility.industry && (
+          <select className="chip-select" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
+            <option value="">Industria</option>
             {INDUSTRY_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
-          </optgroup>
-          <optgroup label="Causa">
+          </select>
+        )}
+
+        {categoryVisibility.cause && (
+          <select className="chip-select" value={causeFilter} onChange={(e) => setCauseFilter(e.target.value)}>
+            <option value="">Causa</option>
             {CAUSE_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
-          </optgroup>
-          <optgroup label="ODS">
+          </select>
+        )}
+
+        {categoryVisibility.ods && (
+          <select className="chip-select" value={odsFilter} onChange={(e) => setOdsFilter(e.target.value)}>
+            <option value="">ODS</option>
             {ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
             ))}
-          </optgroup>
-        </select>
+          </select>
+        )}
       </div>
+
       <div className="filters">
         <input
           className="search-input"
