@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { RESOURCE_REGIONS, RESOURCES } from '../data/resources.js'
@@ -35,18 +36,34 @@ export default function Recursos() {
   const { user, isAdmin, isResourceApprover } = useAuth()
   const myRegion = CITY_TO_REGION[profile.city] || (OTHER_CITIES.some((c) => c.id === profile.city) ? profile.city : '')
 
-  const [topTab, setTopTab] = useState(myRegion ? 'mine' : 'nacional')
-  const [otherCity, setOtherCity] = useState('')
+  // Ciudad/región activa vive en la URL (?zona=, ?ciudad=) en vez de solo
+  // en estado local — así refrescar la página o compartir el link no
+  // borra el filtro que ya elegiste.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const topTab = searchParams.get('zona') || (myRegion ? 'mine' : 'nacional')
+  const otherCity = searchParams.get('ciudad') || ''
+  const setTopTab = (value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('zona', value)
+      next.delete('ciudad')
+      return next
+    })
+  }
+  const setOtherCity = (value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set('ciudad', value)
+      else next.delete('ciudad')
+      return next
+    })
+  }
   const [customResources] = useFirestoreCollection('resources')
   const [showAdminForm, setShowAdminForm] = useState(false)
   const [showSuggestForm, setShowSuggestForm] = useState(false)
   const [adminDraft, setAdminDraft] = useState(EMPTY_DRAFT)
   const [suggestDraft, setSuggestDraft] = useState(EMPTY_DRAFT)
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (myRegion) setTopTab('mine')
-  }, [myRegion])
 
   const region = topTab === 'mine' ? myRegion : topTab === 'nacional' ? 'nacional' : otherCity
 

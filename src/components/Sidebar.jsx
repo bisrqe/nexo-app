@@ -46,8 +46,13 @@ export default function Sidebar() {
 
   return (
     <>
-      <button className="app-topbar-toggle" onClick={() => setOpen((v) => !v)} aria-label="Abrir menú">
-        <NavIcon name="chat" />
+      <button
+        className="app-topbar-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
+        aria-expanded={open}
+      >
+        <NavIcon name={open ? 'close' : 'menu'} />
       </button>
 
       <aside className={`app-sidebar ${open ? 'open' : ''}`}>

@@ -102,8 +102,11 @@ export default function Mensajes() {
       const folder = activeGroup ? `groups/${activeGroup.docId}` : `conversations/${activeConv.docId}`
       const uploaded = await uploadFile(folder, file)
       await send(uploaded)
-    } catch (err) {
-      alert(err.message || 'No se pudo subir el archivo.')
+    } catch {
+      // No mostramos err.message aquí a propósito — puede traer texto
+      // crudo de Firebase/Storage que no significa nada para quien
+      // escribe el chat.
+      alert('No se pudo subir el archivo. Intenta de nuevo en un momento.')
     } finally {
       setUploading(false)
     }

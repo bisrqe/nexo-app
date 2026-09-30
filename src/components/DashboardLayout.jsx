@@ -3,13 +3,28 @@ import Sidebar from './Sidebar.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
+// DashboardLayout se vuelve a montar en cada cambio de ruta, así que el
+// dismiss del aviso de verificación no puede vivir solo en useState — se
+// guarda en sessionStorage por cuenta para que cerrarlo en una página
+// también lo cierre en las demás durante esta sesión.
+function bannerDismissedKey(uid) {
+  return `nexo:verify-banner-dismissed:${uid}`
+}
+
 export default function DashboardLayout({ eyebrow, title, subtitle, children }) {
   const { theme } = useTheme()
   const { user, resendVerificationEmail } = useAuth()
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(
+    () => Boolean(user && sessionStorage.getItem(bannerDismissedKey(user.uid)))
+  )
   const [sent, setSent] = useState(false)
 
   const showBanner = Boolean(user && !user.emailVerified && !dismissed)
+
+  const handleDismiss = () => {
+    if (user) sessionStorage.setItem(bannerDismissedKey(user.uid), '1')
+    setDismissed(true)
+  }
 
   const handleResend = async () => {
     await resendVerificationEmail()
@@ -31,7 +46,7 @@ export default function DashboardLayout({ eyebrow, title, subtitle, children }) 
               {!sent && (
                 <button type="button" className="link-arrow" onClick={handleResend}>Reenviar correo</button>
               )}
-              <button type="button" className="verify-banner-close" onClick={() => setDismissed(true)} aria-label="Cerrar aviso">✕</button>
+              <button type="button" className="verify-banner-close" onClick={handleDismiss} aria-label="Cerrar aviso">✕</button>
             </div>
           </div>
         )}

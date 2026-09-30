@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
@@ -73,22 +73,50 @@ export default function Personas() {
   const { profile } = useProfile()
   const { user } = useAuth()
   const [realProfiles] = useFirestoreCollection('profiles')
-  const [query, setQuery] = useState('')
-  const [showAllCities, setShowAllCities] = useState(true)
-  const [specificCity, setSpecificCity] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
-  const [industryFilter, setIndustryFilter] = useState('')
-  const [causeFilter, setCauseFilter] = useState('')
-  const [odsFilter, setOdsFilter] = useState('')
+  // Filtros de ciudad/rol/categoría viven en la URL — refrescar la
+  // página o mandarle el link a alguien no debe regresar todo a los
+  // valores por defecto.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') || ''
+  const showAllCities = searchParams.get('zonas') !== 'mia'
+  const specificCity = searchParams.get('ciudad') || ''
+  const roleFilter = searchParams.get('rol') || ''
+  const industryFilter = searchParams.get('industria') || ''
+  const causeFilter = searchParams.get('causa') || ''
+  const odsFilter = searchParams.get('ods') || ''
+
+  const setParam = (key, value) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev)
+    if (value) next.set(key, value)
+    else next.delete(key)
+    return next
+  })
+  const setQuery = (v) => setParam('q', v)
+  const setShowAllCities = (v) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev)
+    if (v) next.delete('zonas')
+    else next.set('zonas', 'mia')
+    next.delete('ciudad')
+    return next
+  })
+  const setSpecificCity = (v) => setParam('ciudad', v)
+  const setIndustryFilter = (v) => setParam('industria', v)
+  const setCauseFilter = (v) => setParam('causa', v)
+  const setOdsFilter = (v) => setParam('ods', v)
 
   const categoryVisibility = ROLE_CATEGORY_VISIBILITY[roleFilter] || {}
 
   const handleRoleChange = (value) => {
-    setRoleFilter(value)
-    const visible = ROLE_CATEGORY_VISIBILITY[value] || {}
-    if (!visible.industry) setIndustryFilter('')
-    if (!visible.cause) setCauseFilter('')
-    if (!visible.ods) setOdsFilter('')
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set('rol', value)
+      else next.delete('rol')
+      const visible = ROLE_CATEGORY_VISIBILITY[value] || {}
+      if (!visible.industry) next.delete('industria')
+      if (!visible.cause) next.delete('causa')
+      if (!visible.ods) next.delete('ods')
+      return next
+    })
   }
 
   const allPeople = useMemo(() => {

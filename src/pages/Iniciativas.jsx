@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCatalog from '../components/InitiativeCatalog.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
@@ -9,7 +10,16 @@ import { sortByOwnProjectType } from '../lib/initiativeKind.js'
 export default function Iniciativas() {
   const { profile } = useProfile()
   const [allInitiatives] = useFirestoreCollection('initiatives')
-  const [showAllCities, setShowAllCities] = useState(false)
+  // Vive en la URL (?zonas=todas) para que refrescar o compartir el link
+  // no regrese el filtro a "solo mi ciudad" sin avisar.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const showAllCities = searchParams.get('zonas') === 'todas'
+  const setShowAllCities = (value) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev)
+    if (value) next.set('zonas', 'todas')
+    else next.delete('zonas')
+    return next
+  })
 
   const visible = useMemo(() => {
     const inCity = allInitiatives.filter((i) => showAllCities || !profile.city || !i.city || i.city === profile.city)
@@ -19,7 +29,7 @@ export default function Iniciativas() {
   return (
     <DashboardLayout
       eyebrow="Explorar"
-      title="Explorar"
+      title="Catálogo completo"
       subtitle="El catálogo completo — filtra por tipo de proyecto y por industria, ODS o causa según cuál elijas."
     >
       {profile.city && (
