@@ -55,7 +55,19 @@ export default function Eventos() {
     if (myCity) setTopTab('mine')
   }, [myCity])
 
-  const cityFilter = topTab === 'mine' ? myCity : topTab === 'remoto' ? 'remoto' : otherCity
+  // Todas las ciudades que no son "mi ciudad" ni "remoto" — se muestran
+  // juntas cuando entras a "Otras ciudades" sin elegir todavía una
+  // específica en el desplegable, en vez de dejar la lista vacía.
+  const otherCityIds = useMemo(
+    () => CITIES.filter((c) => c.id !== 'remoto' && c.id !== myCity).map((c) => c.id),
+    [myCity]
+  )
+
+  const matchesCity = (eventCity) => {
+    if (topTab === 'mine') return eventCity === myCity
+    if (topTab === 'remoto') return eventCity === 'remoto'
+    return otherCity ? eventCity === otherCity : otherCityIds.includes(eventCity)
+  }
 
   const handleToggle = async (event) => {
     if (!user) return
@@ -137,10 +149,10 @@ export default function Eventos() {
     return allEvents.filter((e) => {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
-      const matchCity = !cityFilter || e.city === cityFilter
-      return matchQ && matchCat && matchCity
+      return matchQ && matchCat && matchesCity(e.city)
     })
-  }, [allEvents, query, category, cityFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allEvents, query, category, topTab, myCity, otherCity, otherCityIds])
 
   return (
     <DashboardLayout
@@ -160,16 +172,19 @@ export default function Eventos() {
         <button className={`chip ${topTab === 'otras' ? 'active' : ''}`} onClick={() => setTopTab('otras')}>
           Otras ciudades
         </button>
+        {topTab === 'otras' && (
+          <select
+            className="chip-select"
+            value={otherCity}
+            onChange={(e) => setOtherCity(e.target.value)}
+          >
+            <option value="">Todas las otras ciudades</option>
+            {otherCityIds.map((id) => (
+              <option key={id} value={id}>{getCityName(id)}</option>
+            ))}
+          </select>
+        )}
       </div>
-      {topTab === 'otras' && (
-        <div className="filters" style={{ marginTop: -8 }}>
-          {CITIES.filter((c) => c.id !== 'remoto' && c.id !== myCity).map((c) => (
-            <button key={c.id} className={`chip ${otherCity === c.id ? 'active' : ''}`} onClick={() => setOtherCity(c.id)}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <input
           className="search-input"

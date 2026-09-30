@@ -8,6 +8,10 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
 import { getCityName } from '../data/cities.js'
 import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
+import { RESOURCES } from '../data/resources.js'
+import { relevanceScore } from '../lib/resourceRelevance.js'
+
+const CITY_TO_REGION = { mty: 'mty', cdmx: 'cdmx', gdl: 'gdl' }
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -55,6 +59,16 @@ export default function Dashboard() {
     const pool = allProfiles.filter((p) => p.profileType === 'mentor').filter(inMyCity)
     return rankMentorsForProfile(pool, profile, 3)
   }, [allProfiles, profile, showAllCities])
+
+  const rankedResources = useMemo(() => {
+    const region = CITY_TO_REGION[profile.city] || ''
+    const pool = [...(RESOURCES[region] || []), ...(RESOURCES.nacional || [])]
+    const scored = pool
+      .map((r) => ({ item: r, score: relevanceScore(r, profile.profileType) }))
+      .sort((a, b) => b.score - a.score)
+    const matched = scored.filter((x) => x.score > 0)
+    return (matched.length > 0 ? matched : scored).map((x) => x.item).slice(0, 3)
+  }, [profile])
 
   return (
     <DashboardLayout
@@ -106,6 +120,23 @@ export default function Dashboard() {
                   </Link>
                 ))}
               </div>
+            </div>
+          )}
+
+          {rankedResources.length > 0 && (
+            <div className="dash-widget">
+              <h3>Recursos recomendados para ti</h3>
+              <div className="dash-list">
+                {rankedResources.map((r) => (
+                  <a href={`https://${r.link}`} target="_blank" rel="noreferrer" className="dash-list-item" key={r.id}>
+                    <span>{r.title}</span>
+                    <span>{r.category}</span>
+                  </a>
+                ))}
+              </div>
+              <p style={{ marginTop: '14px' }}>
+                <Link to="/app/recursos" className="link-arrow">Ver todos →</Link>
+              </p>
             </div>
           )}
 

@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { normalizeUrl } from '../lib/url.js'
 import { db } from '../lib/firebase.js'
+import { relevanceScore } from '../lib/resourceRelevance.js'
 
 const CITY_TO_REGION = { mty: 'mty', cdmx: 'cdmx', gdl: 'gdl' }
 const NAMED_REGION_IDS = RESOURCE_REGIONS.map((r) => r.id)
@@ -29,25 +30,6 @@ function regionLabel(id) {
 
 const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', region: '' }
 
-// Qué tan relevante es cada categoría de recurso según el tipo de perfil
-// de la cuenta — no filtra nada (todo sigue visible), solo reordena para
-// que lo más útil para esa cuenta aparezca primero. Coincide por
-// substring contra item.category, que es texto libre.
-const PROFILE_CATEGORY_WEIGHTS = {
-  emprendedor: ['financiamiento', 'incubaci', 'aceleraci', 'convocatoria', 'grant', 'premio', 'crédito', 'capital'],
-  estudiante: ['incubaci', 'competencia', 'beca', 'mentoría', 'formación', 'evento', 'networking'],
-  mentor: ['mentoría', 'red', 'comunidad', 'directorio', 'networking'],
-  voluntario: ['comunidad', 'red', 'directorio', 'evento', 'networking'],
-  organizacion: ['programas estatales', 'directorio', 'grant', 'alianza', 'financiamiento'],
-}
-
-function relevanceScore(item, profileType) {
-  const keywords = PROFILE_CATEGORY_WEIGHTS[profileType]
-  if (!keywords) return 0
-  const category = (item.category || '').toLowerCase()
-  return keywords.some((k) => category.includes(k)) ? 1 : 0
-}
-
 export default function Recursos() {
   const { profile } = useProfile()
   const { user, isAdmin, isResourceApprover } = useAuth()
@@ -68,17 +50,31 @@ export default function Recursos() {
 
   const region = topTab === 'mine' ? myRegion : topTab === 'nacional' ? 'nacional' : otherCity
 
+  // Todas las regiones que no son "mi ciudad" ni "alcance nacional" — es lo
+  // que se muestra junto cuando entras a "Otras ciudades" sin elegir
+  // todavía una específica en el desplegable, en vez de dejar la lista
+  // vacía hasta que escojas una.
+  const otherRegionIds = useMemo(
+    () => [...RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion), ...OTHER_CITIES.filter((c) => c.id !== myRegion)].map((r) => r.id),
+    [myRegion]
+  )
+
   const approvedCustom = customResources.filter((r) => !r.status || r.status === 'approved')
   const pendingCustom = customResources.filter((r) => r.status === 'pending')
 
   const items = useMemo(() => {
-    const all = [
-      ...(RESOURCES[region] || []),
-      ...approvedCustom.filter((r) => r.region === region),
-    ]
+    const regionIds = topTab === 'mine'
+      ? (myRegion ? [myRegion] : [])
+      : topTab === 'nacional'
+        ? ['nacional']
+        : (otherCity ? [otherCity] : otherRegionIds)
+
+    const all = regionIds.flatMap((r) => [
+      ...(RESOURCES[r] || []),
+      ...approvedCustom.filter((res) => res.region === r),
+    ])
     return [...all].sort((a, b) => relevanceScore(b, profile.profileType) - relevanceScore(a, profile.profileType))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [region, approvedCustom, profile.profileType])
+  }, [topTab, myRegion, otherCity, otherRegionIds, approvedCustom, profile.profileType])
 
   const handleAdminChange = (e) => setAdminDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
   const handleSuggestChange = (e) => setSuggestDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
@@ -177,7 +173,7 @@ export default function Recursos() {
               value={otherCity}
               onChange={(e) => setOtherCity(e.target.value)}
             >
-              <option value="">Selecciona una ciudad</option>
+              <option value="">Todas las otras ciudades</option>
               {(myRegion ? RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion) : RESOURCE_REGIONS.filter((r) => r.id !== 'nacional'))
                 .concat(OTHER_CITIES.filter((c) => c.id !== myRegion))
                 .map((c) => (

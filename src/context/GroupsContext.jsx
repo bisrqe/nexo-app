@@ -57,16 +57,6 @@ export function GroupsProvider({ children }) {
       messageCount: 0,
     })
     batch.update(doc(db, 'profiles', user.uid), { joinedGroups: arrayUnion(ref.id) })
-    const welcomeRef = doc(collection(db, 'groups', ref.id, 'messages'))
-    batch.set(welcomeRef, {
-      system: true,
-      // Las reglas de Firestore exigen senderUid == auth.uid en cualquier
-      // mensaje (ver firestore.rules) — sin esto, el batch entero (incluida
-      // la mesa) se rechazaba y no se podía crear ninguna mesa de trabajo.
-      senderUid: user.uid,
-      text: `Bienvenido a "${data.name}". Se trata de "${data.desc || data.about || 'esta mesa de trabajo'}".`,
-      createdAt: serverTimestamp(),
-    })
     await batch.commit()
     return ref.id
   }
