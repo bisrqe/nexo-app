@@ -156,7 +156,7 @@ export default function Home() {
           </div>
           <div className="hero-actions">
             <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar emprendimientos →</Link>
-            <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío, sin cuenta →</Link>
+            <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío al mapa →</Link>
           </div>
         </div>
       </section>
