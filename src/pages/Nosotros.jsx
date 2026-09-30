@@ -43,10 +43,6 @@ export default function Nosotros() {
         </div>
 
         <div className="in">
-          <div className="def-block">
-            <b>N.E.X.O.</b><span className="cls">sigla</span><br />
-            Núcleo de Emprendedores eXplorando Oportunidades.
-          </div>
           <p className="head-desc-below" style={{ maxWidth: 'none' }}>
             Somos una comunidad multidisciplinaria de jóvenes líderes, investigadores y emprendedores comprometidos con
             construir un México más conectado, sostenible e inclusivo. Creemos que la colaboración intersectorial es la

@@ -61,6 +61,9 @@ export default function Home() {
             <div className="def-block">
               <b>nexo</b><span className="cls">sust. m.</span><br />
               Punto donde convergen dos o más cosas; lo que las mantiene unidas.
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(16,27,38,.1)', margin: '18px 0' }} />
+              <b>N.E.X.O.</b><span className="cls">sigla</span><br />
+              Núcleo de Emprendedores eXplorando Oportunidades.
             </div>
 
             <h1>El punto donde tu proyecto<br />deja de estar <span className="mark">solo</span>.</h1>
