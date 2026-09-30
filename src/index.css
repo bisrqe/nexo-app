@@ -329,7 +329,7 @@ section.full{padding:0;}
 .step p{font-size:14px; color:var(--text-soft);}
 
 /* ── Misión / Visión — two plain columns ──────── */
-.mv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:48px 60px; margin:0 var(--gutter);}
+.mv-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:48px 60px;}
 .mv-heading{font-family:var(--serif); font-style:italic; font-weight:500; font-size:1.9rem; margin-bottom:14px; letter-spacing:-.01em;}
 .mv-mision{color:var(--navy);}
 .mv-vision{color:var(--gold-ink);}
