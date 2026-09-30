@@ -342,11 +342,27 @@ section.full{padding:0;}
 /* ── Values — numbered dark tiles ─────────────── */
 .value-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px; margin:0 var(--gutter);}
 .value-tile{border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:30px 26px; background:rgba(255,255,255,.02);}
-.value-num{display:block; font-family:var(--serif); font-weight:600; font-size:2.1rem; color:rgba(255,215,127,.32); line-height:1; margin-bottom:20px;}
 .value-name{font-size:16px; font-weight:700; color:#fff;}
 
 @media (max-width:700px){
   .mv-grid{grid-template-columns:1fr; gap:32px;}
+}
+
+/* ── Valores + ODS combined (Nosotros) ────────── */
+.identity-columns{display:grid; grid-template-columns:repeat(2,1fr); gap:48px 64px; margin:0 var(--gutter);}
+.identity-col-label{display:block; font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:#7E8FAE; margin-bottom:16px;}
+.values-list{border-top:1px solid rgba(255,255,255,.14);}
+.values-list-row{display:flex; align-items:center; gap:20px; padding:16px 0; border-bottom:1px solid rgba(255,255,255,.14);}
+.values-list-row .value-num{font-family:var(--serif); font-weight:600; font-size:1.5rem; color:var(--gold); line-height:1;}
+.tile-grid-dark{grid-template-columns:repeat(2,1fr); border-color:rgba(255,255,255,.14); margin:0;}
+.tile.tile-dark{background:transparent; border-radius:8px; border-color:rgba(255,255,255,.14);}
+.tile.tile-dark .tile-eyebrow{color:#8FA6D6;}
+.tile.tile-dark .tile-title{color:#fff;}
+.tile.tile-dark.featured{background:rgba(255,215,127,.08); border-color:var(--gold);}
+.tile.tile-dark.featured .tile-eyebrow{color:var(--gold);}
+
+@media (max-width:700px){
+  .identity-columns{grid-template-columns:1fr; gap:40px;}
 }
 
 /* ── CTA band (full-bleed) ─────────────────────── */

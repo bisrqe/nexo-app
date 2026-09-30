@@ -17,13 +17,9 @@ const VALUES = [
 ]
 
 const ODS_LIST = [
-  { num: 4, title: 'Educación de calidad' },
-  { num: 5, title: 'Igualdad de género' },
   { num: 8, title: 'Trabajo decente y crecimiento económico' },
   { num: 9, title: 'Industria, innovación e infraestructura' },
-  { num: 10, title: 'Reducción de las desigualdades' },
   { num: 11, title: 'Ciudades y comunidades sostenibles' },
-  { num: 16, title: 'Paz, justicia e instituciones sólidas' },
   { num: 17, title: 'Alianzas para lograr los objetivos', featured: true },
 ]
 
@@ -61,39 +57,39 @@ export default function Nosotros() {
         </div>
       </section>
 
-      {/* ── VALUES ────────────────────────────────── */}
+      {/* ── VALORES + ODS ─────────────────────────── */}
       <section className="section-dark">
         <div className="section-head">
           <div className="head-title">
-            <span className="kicker on-dark">Cómo trabajamos</span>
-            <h2>Nuestros valores</h2>
+            <span className="kicker on-dark">Cómo trabajamos · Impacto</span>
+            <h2>Nuestros valores y los ODS que atacamos</h2>
           </div>
         </div>
-        <div className="value-grid">
-          {VALUES.map((name, i) => (
-            <div className="value-tile" key={name}>
-              <span className="value-num">{String(i + 1).padStart(2, '0')}</span>
-              <span className="value-name">{name}</span>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── ODS ───────────────────────────────────── */}
-      <section className="bg-alt">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Impacto</span>
-            <h2>Los ODS que atacamos</h2>
-          </div>
-        </div>
-        <div className="tile-grid">
-          {ODS_LIST.map((o) => (
-            <div className={`tile ${o.featured ? 'featured' : ''}`} key={o.num}>
-              <span className="tile-eyebrow">ODS {o.num}{o.featured ? ' ★' : ''}</span>
-              <span className="tile-title">{o.title}</span>
+        <div className="identity-columns">
+          <div>
+            <span className="identity-col-label">Valores</span>
+            <div className="values-list">
+              {VALUES.map((name, i) => (
+                <div className="values-list-row" key={name}>
+                  <span className="value-num">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="value-name">{name}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div>
+            <span className="identity-col-label">Objetivos de Desarrollo Sostenible</span>
+            <div className="tile-grid tile-grid-dark">
+              {ODS_LIST.map((o) => (
+                <div className={`tile tile-dark ${o.featured ? 'featured' : ''}`} key={o.num}>
+                  <span className="tile-eyebrow">ODS {o.num}{o.featured ? ' ★' : ''}</span>
+                  <span className="tile-title">{o.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
