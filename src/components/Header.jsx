@@ -41,7 +41,7 @@ export default function Header() {
 
         <div className="navcta">
           {user ? (
-            <Link to="/app" className="btn btn-primary">Ir a mi panel →</Link>
+            <Link to="/app/dashboard" className="btn btn-primary">Ir a mi panel →</Link>
           ) : (
             <>
               <Link to="/login" className="link-quiet">Ingresar</Link>
@@ -71,7 +71,7 @@ export default function Header() {
           ))}
           <div className="mobile-menu-cta">
             {user ? (
-              <Link to="/app" className="btn btn-primary">Ir a mi panel →</Link>
+              <Link to="/app/dashboard" className="btn btn-primary">Ir a mi panel →</Link>
             ) : (
               <>
                 <Link to="/login" className="btn btn-ghost">Ingresar</Link>
