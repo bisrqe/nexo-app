@@ -92,7 +92,7 @@ export default function EventosPublicos() {
       <section className="full">
         <div className="cta-band">
           <div>
-            <h2>¿Quieres <span className="mark">inscribirte</span> a un evento?</h2>
+            <h2>¿Quieres <i>inscribirte</i> a un evento?</h2>
             <p>Ingresa o regístrate para apartar tu lugar y ver el detalle completo de cada evento.</p>
           </div>
           <div className="hero-actions">
