@@ -4,6 +4,7 @@ import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
+import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { RESOURCES } from '../data/resources.js'
 
@@ -20,8 +21,8 @@ function formatEventDate(dateStr) {
 }
 
 export default function Home() {
-  const [initiatives] = useFirestoreCollection('initiatives')
-  const [events] = useFirestoreCollection('events')
+  const [initiatives, initiativesLoading] = useFirestoreCollection('initiatives')
+  const [events, eventsLoading] = useFirestoreCollection('events')
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -136,7 +137,9 @@ export default function Home() {
           </div>
         </div>
 
-        {featuredInitiatives.length > 0 ? (
+        {initiativesLoading ? (
+          <SkeletonCards />
+        ) : featuredInitiatives.length > 0 ? (
           <div className="catalog-grid">
             {featuredInitiatives.map((i) => (
               <InitiativeCard key={i.docId} initiative={i} allowSave={false} />
@@ -193,7 +196,9 @@ export default function Home() {
           </div>
         </div>
 
-        {upcomingEvents.length > 0 ? (
+        {eventsLoading ? (
+          <div className="in"><SkeletonCards gridClassName="page-grid" /></div>
+        ) : upcomingEvents.length > 0 ? (
           <div className="page-grid in">
             {upcomingEvents.map((event) => (
               <div className="event-card" key={event.docId}>

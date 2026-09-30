@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
+import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
 export default function IniciativasPublicas() {
-  const [allInitiatives] = useFirestoreCollection('initiatives')
+  const [allInitiatives, loading] = useFirestoreCollection('initiatives')
 
   const featuredInitiatives = useMemo(
     () => [...allInitiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 10),
@@ -26,7 +27,9 @@ export default function IniciativasPublicas() {
           </div>
         </div>
 
-        {featuredInitiatives.length > 0 ? (
+        {loading ? (
+          <SkeletonCards />
+        ) : featuredInitiatives.length > 0 ? (
           <div className="catalog-grid">
             {featuredInitiatives.map((i) => (
               <InitiativeCard key={i.docId || i.id} initiative={i} allowSave={false} />

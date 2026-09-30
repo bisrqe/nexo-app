@@ -317,6 +317,19 @@ section.full{padding:0;}
   color:var(--text-soft); font-size:14.5px;
 }
 
+/* Mientras Firestore resuelve la primera carga, en vez del empty-state
+   (que contradice el mensaje "aquí ya hay actividad") se muestran estas
+   tarjetas fantasma — así nunca se confunde "todavía no llega la
+   respuesta" con "de verdad no hay nada". */
+@keyframes skeleton-pulse{0%,100%{opacity:.5;} 50%{opacity:1;}}
+.skel-card{background:var(--paper); padding:28px 26px; display:flex; flex-direction:column; gap:13px;}
+.skel-line{background:var(--line); border-radius:3px; animation:skeleton-pulse 1.4s ease-in-out infinite;}
+.skel-line.skel-title{height:21px; width:70%;}
+.skel-line.skel-org{height:11px; width:40%;}
+.skel-line.skel-desc{height:13px; width:100%;}
+.skel-line.skel-desc-short{height:13px; width:60%;}
+.skel-line.skel-tag{height:11px; width:45%; margin-top:auto;}
+
 /* ── How it works ─────────────────────────────── */
 .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:32px; padding:0 var(--gutter); position:relative;}
 .steps::before{

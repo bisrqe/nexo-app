@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
 
@@ -11,7 +12,7 @@ function formatDate(dateStr) {
 }
 
 export default function EventosPublicos() {
-  const [realEvents] = useFirestoreCollection('events')
+  const [realEvents, loading] = useFirestoreCollection('events')
   const today = new Date().toISOString().slice(0, 10)
   const events = useMemo(
     () => realEvents.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 10),
@@ -32,7 +33,9 @@ export default function EventosPublicos() {
         </div>
 
         <div className="in">
-          {events.length === 0 ? (
+          {loading ? (
+            <SkeletonCards gridClassName="page-grid" />
+          ) : events.length === 0 ? (
             <div className="empty-state"><p>Todavía no hay eventos programados.</p></div>
           ) : (
             <div className="page-grid">
