@@ -6,7 +6,6 @@ import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { RESOURCES } from '../data/resources.js'
 
 const WHY_STATS = [
   { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
@@ -15,14 +14,9 @@ const WHY_STATS = [
   { num: '4', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
 ]
 
-function formatEventDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
 export default function Home() {
   const [initiatives, initiativesLoading] = useFirestoreCollection('initiatives')
-  const [events, eventsLoading] = useFirestoreCollection('events')
+  const [events] = useFirestoreCollection('events')
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -44,13 +38,6 @@ export default function Home() {
     () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 3),
     [initiatives]
   )
-
-  const upcomingEvents = useMemo(
-    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3),
-    [events, today]
-  )
-
-  const featuredResources = useMemo(() => (RESOURCES.nacional || []).slice(0, 3), [])
 
   return (
     <>
@@ -155,83 +142,17 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── FEATURED RESOURCES ───────────────────── */}
-      <section>
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Aprovechar lo que ya existe</span>
-            <h2>Recursos destacados</h2>
-          </div>
-        </div>
-
-        {featuredResources.length > 0 ? (
-          <div className="page-grid in">
-            {featuredResources.map((item) => (
-              <div className="resource-card" key={item.id}>
-                <div className="resource-title">{item.title}</div>
-                <div className="resource-org">{item.category}</div>
-                <p className="resource-desc">{item.desc}</p>
-                <a href={`https://${item.link}`} target="_blank" rel="noreferrer" className="resource-tag">
-                  Visitar sitio →
-                </a>
-              </div>
-            ))}
-            <div className="explore-more-card">
-              <Link to="/recursos" className="btn btn-ghost">Explorar los demás →</Link>
-            </div>
-          </div>
-        ) : (
-          <div className="empty-state in">
-            <p>Todavía no tenemos recursos capturados.</p>
-          </div>
-        )}
-      </section>
-
-      {/* ── UPCOMING EVENTS ──────────────────────── */}
-      <section className="bg-alt">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Comunidad</span>
-            <h2>Próximos eventos</h2>
-          </div>
-        </div>
-
-        {eventsLoading ? (
-          <div className="in"><SkeletonCards gridClassName="page-grid" /></div>
-        ) : upcomingEvents.length > 0 ? (
-          <div className="page-grid in">
-            {upcomingEvents.map((event) => (
-              <div className="event-card" key={event.docId}>
-                <div className="event-stripe" />
-                <div className="event-body">
-                  <div className="event-top">
-                    <span className="event-cat">{event.category}</span>
-                    <span className="event-date">{formatEventDate(event.date)}</span>
-                  </div>
-                  <div className="event-title">{event.title}</div>
-                  <p className="event-desc">{event.description}</p>
-                </div>
-              </div>
-            ))}
-            <div className="explore-more-card">
-              <Link to="/eventos" className="btn btn-ghost">Explorar los demás →</Link>
-            </div>
-          </div>
-        ) : (
-          <div className="empty-state in">
-            <p>Todavía no hay eventos programados.</p>
-          </div>
-        )}
-      </section>
-
       {/* ── CTA ──────────────────────────────────── */}
       <section className="full">
         <div className="cta-band">
           <div>
-            <h2>¿Tu emprendimiento <i>todavía</i> no está en el mapa?</h2>
-            <p>Créala en cinco minutos. La comunidad se encarga del resto.</p>
+            <h2>¿Te unes a un emprendimiento, o <i>arrancas</i> el tuyo?</h2>
+            <p>Conecta con uno que ya existe, o créalo en cinco minutos — la comunidad se encarga del resto.</p>
           </div>
-          <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar mi emprendimiento →</Link>
+          <div className="hero-actions">
+            <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar emprendimientos →</Link>
+            <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío →</Link>
+          </div>
         </div>
       </section>
 

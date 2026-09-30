@@ -592,8 +592,16 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 
 @media (max-width:900px){
   .hero-flex{flex-direction:column; min-height:0;}
-  .hero-text{flex:1; max-width:none; padding-bottom:8px;}
+  .hero-text{flex:1; max-width:none; padding-bottom:8px; display:flex; flex-direction:column;}
   .hero-graphic{display:none;}
+  /* En móvil, el H1/lede/CTA van antes que las definiciones — la
+     definición es un remate delicioso, no la apertura, y en una pantalla
+     angosta no puede tapar el gancho real antes de que se lea. */
+  .hero-text .kicker{order:0;}
+  .hero-text h1{order:1;}
+  .hero-text .lede{order:2;}
+  .hero-text .hero-actions{order:3;}
+  .hero-text .def-block{order:4; margin-top:22px;}
   .navlinks, .navcta{display:none;}
   .menu-toggle{display:flex;}
   .mobile-menu{display:flex;}
