@@ -85,11 +85,18 @@ export function scoreMentorForProfile(mentor, profile) {
 }
 
 export function rankMentorsForProfile(mentors, profile, limit = 3) {
-  return mentors
+  const scored = mentors
     .map((m) => ({ item: m, score: scoreMentorForProfile(m, profile) }))
     .sort((a, b) => b.score - a.score)
-    .map((x) => x.item)
-    .slice(0, limit)
+
+  // Prioriza mentores que de verdad atienden lo que la cuenta busca
+  // (score > 0, viene de cruzar mentor.expertise/advisoryOffer contra
+  // profile.lookingFor/bio/industryLabel/occupation) — solo cae a
+  // mostrar cualquier mentor si ninguno coincide, para no dejar la
+  // sección vacía si sí hay mentores en la plataforma.
+  const matched = scored.filter((x) => x.score > 0)
+  const pool = matched.length > 0 ? matched : scored
+  return pool.map((x) => x.item).slice(0, limit)
 }
 
 export function rankForProfile(items, profile, { onlyPositive = true } = {}) {

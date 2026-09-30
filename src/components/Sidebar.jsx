@@ -51,7 +51,7 @@ export default function Sidebar() {
       </button>
 
       <aside className={`app-sidebar ${open ? 'open' : ''}`}>
-        <Link to="/app/dashboard" className="app-brand">
+        <Link to="/" className="app-brand">
           <img src={logo} alt="" width="24" height="24" />
           NEXO.
         </Link>

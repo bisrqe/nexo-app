@@ -171,6 +171,20 @@ export default function Recursos() {
           <button className={`chip ${topTab === 'otras' ? 'active' : ''}`} onClick={() => setTopTab('otras')}>
             Otras ciudades
           </button>
+          {topTab === 'otras' && (
+            <select
+              className="chip-select"
+              value={otherCity}
+              onChange={(e) => setOtherCity(e.target.value)}
+            >
+              <option value="">Selecciona una ciudad</option>
+              {(myRegion ? RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion) : RESOURCE_REGIONS.filter((r) => r.id !== 'nacional'))
+                .concat(OTHER_CITIES.filter((c) => c.id !== myRegion))
+                .map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+            </select>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           {isAdmin && (
@@ -185,18 +199,6 @@ export default function Recursos() {
           )}
         </div>
       </div>
-
-      {topTab === 'otras' && (
-        <div className="filters" style={{ marginTop: -8 }}>
-          {(myRegion ? RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion) : RESOURCE_REGIONS.filter((r) => r.id !== 'nacional'))
-            .concat(OTHER_CITIES.filter((c) => c.id !== myRegion))
-            .map((c) => (
-              <button key={c.id} className={`chip ${otherCity === c.id ? 'active' : ''}`} onClick={() => setOtherCity(c.id)}>
-                {c.name}
-              </button>
-            ))}
-        </div>
-      )}
 
       {showAdminForm && (
         <div className="settings-card" style={{ marginBottom: 28 }}>

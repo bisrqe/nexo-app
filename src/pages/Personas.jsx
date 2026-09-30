@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { ODS_FILTERS } from '../data/initiatives.js'
+import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
+import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { getCityName } from '../data/cities.js'
+import { CITIES, getCityName } from '../data/cities.js'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -23,9 +24,13 @@ function profileToPerson(p) {
     slug: p.username || p.docId,
     name: p.name,
     role: p.occupation,
+    profileType: p.profileType,
     location: getCityName(p.city) || p.location,
     city: p.city,
+    ods: p.interests || [],
     odsLabel,
+    industry: p.industry,
+    cause: p.cause,
     offers,
     looking: p.lookingFor,
     bio: p.bio,
@@ -41,6 +46,9 @@ export default function Personas() {
   const [realProfiles] = useFirestoreCollection('profiles')
   const [query, setQuery] = useState('')
   const [showAllCities, setShowAllCities] = useState(false)
+  const [specificCity, setSpecificCity] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   const allPeople = useMemo(() => {
     return realProfiles
@@ -51,12 +59,19 @@ export default function Personas() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return allPeople.filter((p) => {
-      const matchesCity = showAllCities || !profile.city || !p.city || p.city === profile.city
+      const matchesCity = specificCity
+        ? p.city === specificCity
+        : showAllCities || !profile.city || !p.city || p.city === profile.city
       if (!matchesCity) return false
+      if (roleFilter && p.profileType !== roleFilter) return false
+      if (categoryFilter) {
+        const matchesCategory = p.ods?.includes(categoryFilter) || p.industry === categoryFilter || p.cause === categoryFilter
+        if (!matchesCategory) return false
+      }
       if (!q) return true
       return [p.name, p.role, p.odsLabel, ...(p.offers || []), p.looking].join(' ').toLowerCase().includes(q)
     })
-  }, [allPeople, query, profile.city, showAllCities])
+  }, [allPeople, query, profile.city, showAllCities, specificCity, roleFilter, categoryFilter])
 
   return (
     <DashboardLayout
@@ -64,16 +79,60 @@ export default function Personas() {
       title="Personas"
       subtitle="Quién sabe hacer qué, y qué está buscando — sin currículums de relleno."
     >
-      {profile.city && (
-        <div className="filters">
-          <button className={`chip ${!showAllCities ? 'active' : ''}`} onClick={() => setShowAllCities(false)}>
-            {getCityName(profile.city)}
-          </button>
-          <button className={`chip ${showAllCities ? 'active' : ''}`} onClick={() => setShowAllCities(true)}>
-            Ver todas las zonas
-          </button>
-        </div>
-      )}
+      <div className="filters">
+        {profile.city && (
+          <>
+            <button
+              className={`chip ${!showAllCities && !specificCity ? 'active' : ''}`}
+              onClick={() => { setShowAllCities(false); setSpecificCity('') }}
+            >
+              {getCityName(profile.city)}
+            </button>
+            <button
+              className={`chip ${showAllCities && !specificCity ? 'active' : ''}`}
+              onClick={() => { setShowAllCities(true); setSpecificCity('') }}
+            >
+              Ver todas las zonas
+            </button>
+          </>
+        )}
+        <select
+          className="chip-select"
+          value={specificCity}
+          onChange={(e) => setSpecificCity(e.target.value)}
+        >
+          <option value="">Otra ciudad…</option>
+          {CITIES.filter((c) => c.id !== profile.city).map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+
+        <select className="chip-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+          <option value="">Todos los roles</option>
+          {PROFILE_TYPES.map((t) => (
+            <option key={t.id} value={t.id}>{t.label}</option>
+          ))}
+        </select>
+
+        <select className="chip-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+          <option value="">Industria / causa / ODS</option>
+          <optgroup label="Industria">
+            {INDUSTRY_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </optgroup>
+          <optgroup label="Causa">
+            {CAUSE_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </optgroup>
+          <optgroup label="ODS">
+            {ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </optgroup>
+        </select>
+      </div>
       <div className="filters">
         <input
           className="search-input"

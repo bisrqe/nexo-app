@@ -49,7 +49,7 @@ export default function InitiativeCatalog({
 
   return (
     <>
-      <div className="filters" style={{ marginBottom: 14 }}>
+      <div className="filters">
         {PROJECT_TYPE_FILTERS.map((f) => (
           <button
             key={f.id}
@@ -59,24 +59,19 @@ export default function InitiativeCatalog({
             {f.label}
           </button>
         ))}
+        {category && (
+          <select
+            className="chip-select"
+            value={activeCategory}
+            onChange={(e) => setActiveCategory(e.target.value)}
+          >
+            <option value="todos">Todas las categorías</option>
+            {category.set.filter((f) => f.id !== 'todos').map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
+        )}
       </div>
-
-      {category && (
-        <div className="filters">
-          <button className={`chip ${activeCategory === 'todos' ? 'active' : ''}`} onClick={() => setActiveCategory('todos')}>
-            Todos
-          </button>
-          {category.set.filter((f) => f.id !== 'todos').map((f) => (
-            <button
-              key={f.id}
-              className={`chip ${activeCategory === f.id ? 'active' : ''}`}
-              onClick={() => setActiveCategory(activeCategory === f.id ? 'todos' : f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {filtered.length > 0 ? (
         <div className="catalog-grid">
