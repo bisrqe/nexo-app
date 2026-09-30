@@ -49,20 +49,25 @@ export default function Home() {
           <div className="hero-text">
             <span className="kicker">Núcleo de Emprendimiento · México</span>
 
-            <div className="def-block">
-              <b>nexo</b><span className="cls">sust. m.</span><br />
-              Punto donde convergen dos o más cosas; lo que las mantiene unidas.
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(16,27,38,.1)', margin: '18px 0' }} />
-              <b>N.E.X.O.</b><span className="cls">sigla</span><br />
-              Núcleo de Emprendedores eXplorando Oportunidades.
-            </div>
-
+            {/* El bloque de definiciones va después del CTA en el orden
+                del documento a propósito — en escritorio se reubica
+                visualmente antes con CSS (order), pero un lector de
+                pantalla siempre debe llegar primero a la propuesta de
+                valor real, no a la definición del nombre. */}
             <h1>El punto donde tu proyecto<br />deja de estar <span className="mark">solo</span>.</h1>
             <p className="lede">Nexo reúne lo que ya existe en tu ecosistema — emprendimientos, personas y recursos — para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
 
             <div className="hero-actions">
               <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar emprendimientos →</Link>
               <Link to="/como-funciona" className="btn btn-ghost btn-lg">Ver cómo funciona</Link>
+            </div>
+
+            <div className="def-block">
+              <b>nexo</b><span className="cls">sust. m.</span><br />
+              Punto donde convergen dos o más cosas; lo que las mantiene unidas.
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(16,27,38,.1)', margin: '18px 0' }} />
+              <b>N.E.X.O.</b><span className="cls">sigla</span><br />
+              Núcleo de Emprendedores eXplorando Oportunidades.
             </div>
           </div>
 
@@ -147,11 +152,11 @@ export default function Home() {
         <div className="cta-band">
           <div>
             <h2>¿Te unes a un emprendimiento, o <i>arrancas</i> el tuyo?</h2>
-            <p>Conecta con uno que ya existe, o créalo en cinco minutos — la comunidad se encarga del resto.</p>
+            <p>Conecta con uno que ya existe, o créalo en cinco minutos sin crear cuenta — la comunidad se encarga del resto.</p>
           </div>
           <div className="hero-actions">
             <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar emprendimientos →</Link>
-            <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío →</Link>
+            <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío, sin cuenta →</Link>
           </div>
         </div>
       </section>
