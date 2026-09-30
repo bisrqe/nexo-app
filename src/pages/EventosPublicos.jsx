@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
 
 function formatDate(dateStr) {
@@ -13,11 +12,10 @@ function formatDate(dateStr) {
 
 export default function EventosPublicos() {
   const [realEvents] = useFirestoreCollection('events')
-  const [category, setCategory] = useState('Todos')
-  const allEvents = useMemo(() => [...realEvents].sort((a, b) => a.date.localeCompare(b.date)), [realEvents])
+  const today = new Date().toISOString().slice(0, 10)
   const events = useMemo(
-    () => allEvents.filter((e) => category === 'Todos' || e.category === category),
-    [allEvents, category]
+    () => realEvents.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 10),
+    [realEvents, today]
   )
 
   return (
@@ -28,23 +26,12 @@ export default function EventosPublicos() {
         <div className="section-head">
           <div className="head-title">
             <span className="kicker">Comunidad</span>
-            <h2>Eventos</h2>
+            <h2>Eventos destacados</h2>
             <p className="head-desc-below">Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real.</p>
           </div>
         </div>
 
         <div className="in">
-          <div className="filters">
-            {['Todos', ...EVENT_CATEGORIES].map((cat) => (
-              <button
-                key={cat}
-                className={`chip ${category === cat ? 'active' : ''}`}
-                onClick={() => setCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
           {events.length === 0 ? (
             <div className="empty-state"><p>Todavía no hay eventos programados.</p></div>
           ) : (
@@ -99,6 +86,19 @@ export default function EventosPublicos() {
               })}
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="full">
+        <div className="cta-band">
+          <div>
+            <h2>¿Quieres inscribirte a un evento?</h2>
+            <p>Ingresa o regístrate para apartar tu lugar y ver el detalle completo de cada evento.</p>
+          </div>
+          <div className="hero-actions">
+            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
+            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
+          </div>
         </div>
       </section>
 

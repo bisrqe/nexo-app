@@ -27,11 +27,13 @@ export default function Home() {
   const stats = useMemo(() => {
     const cities = new Set(initiatives.map((i) => i.city).filter(Boolean))
     const ods = new Set(initiatives.flatMap((i) => i.ods || []).filter(Boolean))
+    const upcoming = events.filter((e) => e.date >= today).length
     const realizedEvents = events.filter((e) => e.date < today).length
     return [
       { num: String(initiatives.length).padStart(2, '0'), label: 'Emprendimientos activos' },
       { num: String(cities.size).padStart(2, '0'), label: 'Ciudades con presencia' },
       { num: String(ods.size).padStart(2, '0'), label: 'ODS con actividad' },
+      { num: String(upcoming).padStart(2, '0'), label: 'Eventos programados' },
       { num: String(realizedEvents).padStart(2, '0'), label: 'Eventos realizados' },
     ]
   }, [initiatives, events, today])
@@ -142,19 +144,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="full">
-        <div className="cta-band">
-          <div>
-            <h2>¿Quieres ver el dossier completo?</h2>
-            <p>Ingresa o regístrate para conocer a fondo cada emprendimiento y conectar con quien lo lidera.</p>
-          </div>
-          <div className="hero-actions">
-            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
-            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── UPCOMING EVENTS ──────────────────────── */}
       <section>
         <div className="section-head">
@@ -188,19 +177,6 @@ export default function Home() {
 
         <div className="section-cta">
           <Link to="/eventos" className="link-arrow">Ver todos los eventos →</Link>
-        </div>
-      </section>
-
-      <section className="full">
-        <div className="cta-band">
-          <div>
-            <h2>¿Quieres inscribirte a un evento?</h2>
-            <p>Ingresa o regístrate para apartar tu lugar y ver el detalle completo de cada evento.</p>
-          </div>
-          <div className="hero-actions">
-            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
-            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
-          </div>
         </div>
       </section>
 
