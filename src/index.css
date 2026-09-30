@@ -78,6 +78,8 @@ nav{display:flex; align-items:center; justify-content:space-between; height:68px
   transition:.15s;
 }
 .navlinks a.primary{color:var(--ink); font-weight:700;}
+.navlinks a.secondary{color:var(--text-faint); font-size:11px; font-weight:500;}
+.navlinks a.secondary:first-of-type{margin-left:10px; padding-left:16px; border-left:1px solid var(--line);}
 .navlinks a:hover{color:var(--navy);}
 .navlinks a.active{color:var(--navy);}
 .navcta{display:flex; align-items:center; gap:14px;}
@@ -192,6 +194,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:68px
 .pivot-quote + .pivot-quote{margin-top:20px;}
 .pivot-quote-muted{color:#8B96AC;}
 .pivot-attr{font-family:var(--mono); font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:#7E8FAE; margin-top:28px;}
+.pivot-attr.pivot-sources{text-transform:none; letter-spacing:.01em;}
 
 .why-stats-row{
   display:grid; grid-template-columns:repeat(4,1fr);
@@ -200,7 +203,11 @@ nav{display:flex; align-items:center; justify-content:space-between; height:68px
 }
 .why-stat{padding:0 28px; border-left:1px solid rgba(255,255,255,.14); display:flex; flex-direction:column; gap:8px;}
 .why-stat:first-child{padding-left:0; border-left:none;}
-.why-stat .stat-label{line-height:1.4;}
+/* Las etiquetas del stat-strip son rótulos cortos (2-4 palabras) y
+   funcionan bien en mayúsculas; las de why-stats son oraciones completas
+   — en mayúsculas se vuelven difíciles de leer y arriesgan que un lector
+   de pantalla las deletree en vez de leerlas. */
+.why-stat .stat-label{line-height:1.4; text-transform:none; font-size:12.5px; letter-spacing:.01em;}
 
 @media (max-width:900px){
   .why-stats-row{grid-template-columns:repeat(2,1fr); row-gap:28px;}
@@ -404,7 +411,7 @@ section.full{padding:0;}
 footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .foot-grid{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; margin-bottom:38px; max-width:var(--maxw); margin-left:auto; margin-right:auto;}
 .foot-brand p{font-family:var(--serif); font-style:italic; color:var(--text-soft); font-size:14.5px; margin-top:14px; max-width:300px; line-height:1.5;}
-.foot-col h4{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:14px;}
+.foot-col .foot-heading{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:14px;}
 .foot-col a{display:block; font-size:14px; color:var(--text); margin-bottom:9px;}
 .foot-col a:hover{color:var(--navy);}
 .foot-bottom{
@@ -795,7 +802,7 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .resource-org{font-family:var(--mono); font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.02em;}
 .resource-desc{font-size:13.5px; color:var(--text-soft);}
 .resource-tag{
-  display:inline-block; align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:700;
+  display:inline-block; align-self:flex-start; font-family:var(--mono); font-size:11.5px; font-weight:700;
   background:var(--paper-alt); color:var(--gold-ink); padding:4px 9px; border-radius:3px; margin-top:4px;
 }
 a.resource-tag:hover{background:var(--gold);}

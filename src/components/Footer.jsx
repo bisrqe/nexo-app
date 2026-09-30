@@ -14,17 +14,17 @@ export default function Footer() {
           <p>Este mapa cambia cada semana. Si tu emprendimiento no está todavía, ese es el primer problema que puedes resolver aquí.</p>
         </div>
         <div className="foot-col">
-          <h4>Plataforma</h4>
+          <p className="foot-heading">Plataforma</p>
           <Link to="/recursos">Recursos</Link>
           <Link to="/iniciativas">Emprendimientos</Link>
         </div>
         <div className="foot-col">
-          <h4>Comunidad</h4>
+          <p className="foot-heading">Comunidad</p>
           <Link to="/nosotros">Nosotros</Link>
           <Link to="/eventos">Eventos</Link>
         </div>
         <div className="foot-col">
-          <h4>Cuenta</h4>
+          <p className="foot-heading">Cuenta</p>
           <Link to="/login">Ingresar</Link>
           <Link to="/register">Registrarse</Link>
         </div>

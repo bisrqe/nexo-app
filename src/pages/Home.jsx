@@ -109,7 +109,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p className="pivot-attr" style={{ marginTop: 20 }}>
+          <p className="pivot-attr pivot-sources" style={{ marginTop: 20 }}>
             Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
           </p>
         </div>

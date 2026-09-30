@@ -3,13 +3,16 @@ import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/iconotipo-azul.png'
 import { useAuth } from '../context/AuthContext.jsx'
 
+// El logo ya lleva a Inicio, así que no se repite aquí — son 5 enlaces
+// en vez de 6, y los 3 "primary" (contenido en vivo) quedan visualmente
+// más pesados que Cómo funciona/Nosotros (info institucional), en vez de
+// competir los 5 al mismo nivel.
 const NAV_LINKS = [
-  { to: '/', label: 'Inicio' },
   { to: '/iniciativas', label: 'Explorar', primary: true },
   { to: '/recursos', label: 'Recursos', primary: true },
   { to: '/eventos', label: 'Eventos', primary: true },
-  { to: '/como-funciona', label: 'Cómo funciona' },
-  { to: '/nosotros', label: 'Nosotros' },
+  { to: '/como-funciona', label: 'Cómo funciona', secondary: true },
+  { to: '/nosotros', label: 'Nosotros', secondary: true },
 ]
 
 export default function Header() {
@@ -32,8 +35,12 @@ export default function Header() {
         </Link>
 
         <div className="navlinks">
-          {NAV_LINKS.map(({ to, label, primary }) => (
-            <Link key={to} to={to} className={[isActive(to) ? 'active' : '', primary ? 'primary' : ''].filter(Boolean).join(' ')}>
+          {NAV_LINKS.map(({ to, label, primary, secondary }) => (
+            <Link
+              key={to}
+              to={to}
+              className={[isActive(to) ? 'active' : '', primary ? 'primary' : '', secondary ? 'secondary' : ''].filter(Boolean).join(' ')}
+            >
               {label}
             </Link>
           ))}
