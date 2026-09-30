@@ -11,7 +11,7 @@ const WHY_STATS = [
   { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
   { num: '75–80%', label: 'De las startups fracasan en sus primeros 3 años por falta de redes y apoyo' },
   { num: '36%', label: 'De los emprendedores logran acceso a mentores o incubadoras estructuradas' },
-  { num: '8', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
+  { num: '4', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
 ]
 
 function formatEventDate(dateStr) {
