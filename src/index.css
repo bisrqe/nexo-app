@@ -334,6 +334,10 @@ section.full{padding:0;}
 .mv-mision{color:var(--navy);}
 .mv-vision{color:var(--gold-ink);}
 .mv-text{color:var(--text-soft); font-size:15.5px; line-height:1.6; max-width:480px;}
+.mv-num{display:block; font-family:var(--mono); font-size:13px; color:var(--text-faint); margin-bottom:14px;}
+.mv-grid-divided{border-top:1px solid var(--line); padding-top:44px;}
+.mv-grid-divided > div{border-left:1px solid var(--line); padding-left:60px;}
+.mv-grid-divided > div:first-child{border-left:none; padding-left:0;}
 
 /* ── Dark section modifier (Valores, etc.) ────── */
 .section-dark{background:var(--ink);}
@@ -346,6 +350,7 @@ section.full{padding:0;}
 
 @media (max-width:700px){
   .mv-grid{grid-template-columns:1fr; gap:32px;}
+  .mv-grid-divided > div{border-left:none; padding-left:0;}
 }
 
 /* ── Valores + ODS combined (Nosotros) ────────── */

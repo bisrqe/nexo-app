@@ -46,9 +46,10 @@ export default function Nosotros() {
             innovación.
           </p>
 
-          <div className="mv-grid" style={{ marginTop: 32 }}>
-            {MISSION_VISION.map((v) => (
+          <div className="mv-grid mv-grid-divided" style={{ marginTop: 48 }}>
+            {MISSION_VISION.map((v, i) => (
               <div key={v.key}>
+                <span className="mv-num">{String(i + 1).padStart(2, '0')}</span>
                 <h3 className={`mv-heading mv-${v.key}`}>{v.label}</h3>
                 <p className="mv-text">{v.text}</p>
               </div>
