@@ -191,12 +191,16 @@ export default function Mensajes() {
                   <p className="dash-empty">Todavía no hay mensajes — sé quien abra la conversación.</p>
                 ) : (
                   messages.map((m) => (
-                    <div className={`msg-bubble ${m.senderUid === user.uid ? 'self' : ''}`} key={m.id}>
-                      <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : (m.senderName || otherName)}</div>
-                      {m.text && <div className="msg-text">{m.text}</div>}
-                      {m.fileUrl && <Attachment url={m.fileUrl} name={m.fileName} type={m.fileType} />}
-                      <div className="msg-time">{formatTime(m.createdAt)}</div>
-                    </div>
+                    m.system ? (
+                      <div className="msg-system" key={m.id}>{m.text}</div>
+                    ) : (
+                      <div className={`msg-bubble ${m.senderUid === user.uid ? 'self' : ''}`} key={m.id}>
+                        <div className="msg-author">{m.senderUid === user.uid ? 'Tú' : (m.senderName || otherName)}</div>
+                        {m.text && <div className="msg-text">{m.text}</div>}
+                        {m.fileUrl && <Attachment url={m.fileUrl} name={m.fileName} type={m.fileType} />}
+                        <div className="msg-time">{formatTime(m.createdAt)}</div>
+                      </div>
+                    )
                   ))
                 )}
               </div>

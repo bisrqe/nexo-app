@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 
@@ -58,6 +59,19 @@ export default function ComoFunciona() {
               <p>{s.text}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="full">
+        <div className="cta-band">
+          <div>
+            <h2>¿Listo para <i>dejar de empezar de cero</i>?</h2>
+            <p>Regístrate en cinco minutos y empieza a conectar con el ecosistema.</p>
+          </div>
+          <div className="hero-actions">
+            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
+            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
+          </div>
         </div>
       </section>
 

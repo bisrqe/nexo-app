@@ -197,6 +197,54 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const otherResources = (resources || []).filter((r) => !isImageResource(r))
   const isRemote = city === 'remoto'
 
+  if (!isApp && !user) {
+    const gateBody = (
+      <div className="in">
+        <div className="dossier-topbar">
+          <Link to={backTo} className="link-arrow">← Volver al catálogo</Link>
+          <span className="dossier-topbar-label">DOSSIER</span>
+        </div>
+
+        <div className="dossier-header">
+          <div className="dossier-header-row">
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="dossier-logo" />
+            ) : (
+              <div className="dossier-logo-placeholder"><NavIcon name="box" size={34} /></div>
+            )}
+            <div className="dossier-head-main">
+              <div className="dossier-status-line">
+                N° {String(id).padStart(3, '0')} · {stage.toUpperCase()}
+                {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
+              </div>
+              <h1 className="detail-title">{title}</h1>
+              <p className="dossier-subtitle">{org} — {getCityName(city) || location}</p>
+            </div>
+          </div>
+          <p className="detail-lede" style={{ marginTop: 20 }}>{desc}</p>
+        </div>
+
+        <div className="cta-band" style={{ marginTop: 8 }}>
+          <div>
+            <h2>¿Quieres saber más de este {kind.noun}?</h2>
+            <p>Ingresa o regístrate para ver el dossier completo — impacto, documentos, colaboradores y contacto directo.</p>
+          </div>
+          <div className="hero-actions">
+            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
+            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
+          </div>
+        </div>
+      </div>
+    )
+    return (
+      <>
+        <Header />
+        <section className="detail-section">{gateBody}</section>
+        <Footer />
+      </>
+    )
+  }
+
   const body = (
     <div className="in">
       <div className="dossier-topbar">

@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/iconotipo-azul.png'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Inicio', primary: true },
+  { to: '/', label: 'Inicio' },
   { to: '/iniciativas', label: 'Explorar', primary: true },
-  { to: '/recursos', label: 'Recursos' },
+  { to: '/recursos', label: 'Recursos', primary: true },
+  { to: '/eventos', label: 'Eventos', primary: true },
   { to: '/como-funciona', label: 'Cómo funciona' },
   { to: '/nosotros', label: 'Nosotros' },
-  { to: '/eventos', label: 'Eventos', primary: true },
 ]
 
 export default function Header() {
   const location = useLocation()
+  const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -38,8 +40,14 @@ export default function Header() {
         </div>
 
         <div className="navcta">
-          <Link to="/login" className="link-quiet">Ingresar</Link>
-          <Link to="/register" className="btn btn-primary">Registrarse</Link>
+          {user ? (
+            <Link to="/app" className="btn btn-primary">Ir a mi panel →</Link>
+          ) : (
+            <>
+              <Link to="/login" className="link-quiet">Ingresar</Link>
+              <Link to="/register" className="btn btn-primary">Registrarse</Link>
+            </>
+          )}
         </div>
 
         <button
@@ -62,8 +70,14 @@ export default function Header() {
             </Link>
           ))}
           <div className="mobile-menu-cta">
-            <Link to="/login" className="btn btn-ghost">Ingresar</Link>
-            <Link to="/register" className="btn btn-primary">Registrarse</Link>
+            {user ? (
+              <Link to="/app" className="btn btn-primary">Ir a mi panel →</Link>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-ghost">Ingresar</Link>
+                <Link to="/register" className="btn btn-primary">Registrarse</Link>
+              </>
+            )}
           </div>
         </div>
       )}

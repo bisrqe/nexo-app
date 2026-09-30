@@ -132,14 +132,21 @@ exports.onInitiativeInterest = onDocumentUpdated(
 
     for (const uid of newInterested) {
       const interestedSnap = await db.doc(`profiles/${uid}`).get()
-      const interestedName = interestedSnap.exists ? interestedSnap.data().name || 'Alguien' : 'Alguien'
+      const interestedData = interestedSnap.exists ? interestedSnap.data() : {}
+      const interestedName = interestedData.name || 'Alguien'
+      const interestedUsername = interestedData.username || ''
+      const interestedEmail = interestedData.email || ''
       await sendEmail({
         to: owner.email,
         subject: `${interestedName} está interesado en "${after.title}"`,
         html: renderEmail({
           preheader: `${interestedName} marcó "Me interesa" en ${after.title}`,
           heading: 'Nuevo interés en tu emprendimiento',
-          bodyHtml: `<p style="margin:0;"><b>${escapeHtml(interestedName)}</b> marcó "Me interesa" en tu emprendimiento <b>${escapeHtml(after.title)}</b>.</p>`,
+          bodyHtml: `
+            <p style="margin:0 0 4px;"><b>${escapeHtml(interestedName)}</b> marcó "Me interesa" en tu emprendimiento <b>${escapeHtml(after.title)}</b>.</p>
+            ${interestedUsername ? `<p style="margin:0 0 4px; color:#5E6672;"><b>Usuario:</b> @${escapeHtml(interestedUsername)}</p>` : ''}
+            ${interestedEmail ? `<p style="margin:0; color:#5E6672;"><b>Correo:</b> ${escapeHtml(interestedEmail)}</p>` : ''}
+          `,
           cta: { href: `${APP_URL}/app/mi-iniciativa`, label: 'Ver quién más →' },
         }),
       })

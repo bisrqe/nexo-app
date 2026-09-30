@@ -6,6 +6,13 @@ import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 
+const WHY_STATS = [
+  { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
+  { num: '75–80%', label: 'De las startups fracasan en sus primeros 3 años por falta de redes y apoyo' },
+  { num: '36%', label: 'De los emprendedores logran acceso a mentores o incubadoras estructuradas' },
+  { num: '8', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
+]
+
 function formatEventDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -15,25 +22,27 @@ export default function Home() {
   const [initiatives] = useFirestoreCollection('initiatives')
   const [events] = useFirestoreCollection('events')
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const stats = useMemo(() => {
     const cities = new Set(initiatives.map((i) => i.city).filter(Boolean))
     const ods = new Set(initiatives.flatMap((i) => i.ods || []).filter(Boolean))
+    const realizedEvents = events.filter((e) => e.date < today).length
     return [
       { num: String(initiatives.length).padStart(2, '0'), label: 'Emprendimientos activos' },
       { num: String(cities.size).padStart(2, '0'), label: 'Ciudades con presencia' },
       { num: String(ods.size).padStart(2, '0'), label: 'ODS con actividad' },
-      { num: String(events.length).padStart(2, '0'), label: 'Eventos programados' },
+      { num: String(realizedEvents).padStart(2, '0'), label: 'Eventos realizados' },
     ]
-  }, [initiatives, events])
+  }, [initiatives, events, today])
 
   const featuredInitiatives = useMemo(
-    () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 3),
+    () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 10),
     [initiatives]
   )
 
-  const today = new Date().toISOString().slice(0, 10)
   const upcomingEvents = useMemo(
-    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3),
+    () => events.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 10),
     [events, today]
   )
 
@@ -92,6 +101,18 @@ export default function Home() {
             de México. El problema nunca fue la falta de ideas — fue que nadie las encontraba a tiempo para sumarse.
           </p>
           <p className="pivot-attr">Por eso dejamos de ser un feed y empezamos a ser un mapa</p>
+
+          <div className="impact-grid" style={{ marginTop: 48 }}>
+            {WHY_STATS.map((s) => (
+              <div className="stat-item" key={s.label}>
+                <span className="stat-num" style={{ color: 'var(--gold)' }}>{s.num}</span>
+                <span className="stat-label" style={{ color: '#AEBBD0' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="pivot-attr" style={{ marginTop: 20 }}>
+            Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
+          </p>
         </div>
       </section>
 
@@ -118,6 +139,19 @@ export default function Home() {
 
         <div className="section-cta">
           <Link to="/iniciativas" className="link-arrow">Ver todos los emprendimientos →</Link>
+        </div>
+      </section>
+
+      <section className="full">
+        <div className="cta-band">
+          <div>
+            <h2>¿Quieres ver el dossier completo?</h2>
+            <p>Ingresa o regístrate para conocer a fondo cada emprendimiento y conectar con quien lo lidera.</p>
+          </div>
+          <div className="hero-actions">
+            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
+            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
+          </div>
         </div>
       </section>
 
@@ -154,6 +188,19 @@ export default function Home() {
 
         <div className="section-cta">
           <Link to="/eventos" className="link-arrow">Ver todos los eventos →</Link>
+        </div>
+      </section>
+
+      <section className="full">
+        <div className="cta-band">
+          <div>
+            <h2>¿Quieres inscribirte a un evento?</h2>
+            <p>Ingresa o regístrate para apartar tu lugar y ver el detalle completo de cada evento.</p>
+          </div>
+          <div className="hero-actions">
+            <Link to="/register" className="btn btn-gold btn-lg">Registrarse →</Link>
+            <Link to="/login" className="btn btn-ghost-dark btn-lg">Ingresar</Link>
+          </div>
         </div>
       </section>
 

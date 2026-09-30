@@ -29,6 +29,25 @@ function regionLabel(id) {
 
 const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', region: '' }
 
+// Qué tan relevante es cada categoría de recurso según el tipo de perfil
+// de la cuenta — no filtra nada (todo sigue visible), solo reordena para
+// que lo más útil para esa cuenta aparezca primero. Coincide por
+// substring contra item.category, que es texto libre.
+const PROFILE_CATEGORY_WEIGHTS = {
+  emprendedor: ['financiamiento', 'incubaci', 'aceleraci', 'convocatoria', 'grant', 'premio', 'crédito', 'capital'],
+  estudiante: ['incubaci', 'competencia', 'beca', 'mentoría', 'formación', 'evento', 'networking'],
+  mentor: ['mentoría', 'red', 'comunidad', 'directorio', 'networking'],
+  voluntario: ['comunidad', 'red', 'directorio', 'evento', 'networking'],
+  organizacion: ['programas estatales', 'directorio', 'grant', 'alianza', 'financiamiento'],
+}
+
+function relevanceScore(item, profileType) {
+  const keywords = PROFILE_CATEGORY_WEIGHTS[profileType]
+  if (!keywords) return 0
+  const category = (item.category || '').toLowerCase()
+  return keywords.some((k) => category.includes(k)) ? 1 : 0
+}
+
 export default function Recursos() {
   const { profile } = useProfile()
   const { user, isAdmin, isResourceApprover } = useAuth()
@@ -52,10 +71,14 @@ export default function Recursos() {
   const approvedCustom = customResources.filter((r) => !r.status || r.status === 'approved')
   const pendingCustom = customResources.filter((r) => r.status === 'pending')
 
-  const items = [
-    ...(RESOURCES[region] || []),
-    ...approvedCustom.filter((r) => r.region === region),
-  ]
+  const items = useMemo(() => {
+    const all = [
+      ...(RESOURCES[region] || []),
+      ...approvedCustom.filter((r) => r.region === region),
+    ]
+    return [...all].sort((a, b) => relevanceScore(b, profile.profileType) - relevanceScore(a, profile.profileType))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region, approvedCustom, profile.profileType])
 
   const handleAdminChange = (e) => setAdminDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
   const handleSuggestChange = (e) => setSuggestDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
@@ -281,7 +304,12 @@ export default function Recursos() {
         <div className="page-grid">
           {items.map((item) => (
             <div className="resource-card" key={item.docId || item.id}>
-              <div className="resource-title">{item.title}</div>
+              <div className="resource-title">
+                {item.title}
+                {relevanceScore(item, profile.profileType) > 0 && (
+                  <span className="need-badge" style={{ marginLeft: 8, verticalAlign: 'middle' }}>Recomendado para ti</span>
+                )}
+              </div>
               <div className="resource-org">{item.category}</div>
               <p className="resource-desc">{item.desc}</p>
               <a

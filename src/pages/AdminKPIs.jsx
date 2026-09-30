@@ -96,6 +96,10 @@ export default function AdminKPIs() {
             <span className="kpi-stat-num">{totals.events}</span>
             <span className="kpi-stat-label">Eventos creados</span>
           </div>
+          <div className="kpi-stat-card">
+            <span className="kpi-stat-num">{totals.realizedEvents}</span>
+            <span className="kpi-stat-label">Eventos realizados</span>
+          </div>
         </div>
       </div>
 

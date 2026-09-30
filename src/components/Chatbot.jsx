@@ -65,11 +65,12 @@ export default function Chatbot() {
   const isInside = user && location.pathname.startsWith('/app')
 
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState(() => [isInside ? INSIDE_GREETING : OUTSIDE_GREETING])
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
-  const [showMenu, setShowMenu] = useState(true)
+  const [showMenu, setShowMenu] = useState(false)
+  const [greeting, setGreeting] = useState(true)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [feedbackText, setFeedbackText] = useState('')
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
@@ -77,50 +78,79 @@ export default function Chatbot() {
 
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, open, loading])
+  }, [messages, open, loading, greeting])
 
   // El chatbot vive montado una sola vez (ver abajo), así que isInside
   // puede cambiar por navegación sin que el componente se remonte — sin
   // esto, el saludo se quedaba congelado en lo que fuera cierto cuando se
   // montó por primera vez. Solo resetea si todavía no hay conversación
-  // real, para no borrar algo que la persona ya está escribiendo.
+  // real, para no borrar algo que la persona ya está escribiendo. El
+  // saludo tarda un momento en aparecer (como si "pensara") y el menú de
+  // sugerencias solo aparece después, no junto con el saludo.
   useEffect(() => {
-    setMessages((m) => (m.length <= 1 ? [isInside ? INSIDE_GREETING : OUTSIDE_GREETING] : m))
+    setMessages((m) => (m.length <= 1 ? [] : m))
+    setShowMenu(false)
+    setGreeting(true)
+    const t = setTimeout(() => {
+      setMessages((m) => (m.length === 0 ? [isInside ? INSIDE_GREETING : OUTSIDE_GREETING] : m))
+      setGreeting(false)
+      setShowMenu(true)
+    }, 700)
+    return () => clearTimeout(t)
   }, [isInside])
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
   // Fuera del dashboard, el bot responde con FAQ locales — sin red, sin
   // costo por token, y 100% predecible. Dentro del dashboard sigue usando
   // la API con contexto real de la cuenta (ver buildInsideContext arriba).
-  const sendOutside = (text) => {
+  const sendOutside = async (text) => {
+    setLoading(true)
+    await wait(600)
     const match = matchFaq(text)
     if (match) {
       setMessages((m) => [...m, { role: 'assistant', content: match.answer, link: match.link }])
     } else {
       setMessages((m) => [...m, { role: 'assistant', content: FAQ_FALLBACK.content, link: FAQ_FALLBACK.link }])
     }
+    setLoading(false)
+    setShowMenu(true)
   }
 
   // Atajo para las sugerencias que aparecen junto al saludo: evita
   // depender de matchFaq (que reconoce texto libre) cuando ya sabemos
   // exactamente qué entrada de la FAQ corresponde.
-  const askSuggested = (entry) => {
+  const askSuggested = async (entry) => {
     setShowMenu(false)
-    setMessages((m) => [...m, { role: 'user', content: entry.prompt }, { role: 'assistant', content: entry.answer, link: entry.link }])
+    setMessages((m) => [...m, { role: 'user', content: entry.prompt }])
+    setLoading(true)
+    await wait(600)
+    setMessages((m) => [...m, { role: 'assistant', content: entry.answer, link: entry.link }])
+    setLoading(false)
+    setShowMenu(true)
   }
 
   const handleLogoutFromChat = async () => {
     setShowMenu(false)
+    setLoading(true)
     await signOutUser()
+    await wait(500)
     setMessages((m) => [...m, { role: 'assistant', content: 'Cerraste sesión correctamente. ¡Hasta pronto!' }])
+    setLoading(false)
+    setShowMenu(true)
   }
 
-  const handleTalkToHuman = () => {
+  const handleTalkToHuman = async () => {
     setShowMenu(false)
+    setMessages((m) => [...m, { role: 'user', content: 'Quiero hablar con una persona' }])
+    setLoading(true)
+    await wait(600)
     setMessages((m) => [
       ...m,
-      { role: 'user', content: 'Quiero hablar con una persona' },
       { role: 'assistant', content: 'Claro — escríbenos directamente y alguien del equipo te responde:', link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL } },
     ])
+    setLoading(false)
+    setShowMenu(true)
   }
 
   const handleFeedbackSubmit = async (e) => {
@@ -167,13 +197,14 @@ export default function Chatbot() {
       setMessages((m) => [...m, { role: 'assistant', content: `No pude responder justo ahora — intenta de nuevo, o escríbenos a ${SUPPORT_EMAIL}.` }])
     } finally {
       setLoading(false)
+      setShowMenu(true)
     }
   }
 
   const send = (e) => {
     e.preventDefault()
     const text = input.trim()
-    if (!text || loading) return
+    if (!text || loading || greeting) return
     setError(false)
     setShowMenu(false)
     const history = messages.slice(1).map((m) => ({ role: m.role, content: m.content }))
@@ -256,7 +287,7 @@ export default function Chatbot() {
                 </ul>
               </div>
             ) : null}
-            {loading && <div className="nexo-chatbot-msg nexo-chatbot-msg-assistant nexo-chatbot-typing">Escribiendo…</div>}
+            {(loading || greeting) && <div className="nexo-chatbot-msg nexo-chatbot-msg-assistant nexo-chatbot-typing">Escribiendo…</div>}
             <div ref={bottomRef} />
           </div>
           <form className="nexo-chatbot-input" onSubmit={send}>
@@ -265,9 +296,9 @@ export default function Chatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Escribe tu pregunta…"
-              disabled={loading}
+              disabled={loading || greeting}
             />
-            <button type="submit" disabled={loading || !input.trim()}>Enviar</button>
+            <button type="submit" disabled={loading || greeting || !input.trim()}>Enviar</button>
           </form>
           {error && <p className="nexo-chatbot-error">Si el problema sigue, escríbenos directamente.</p>}
           <p className="nexo-chatbot-footnote">¿Prefieres escribirnos? <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></p>

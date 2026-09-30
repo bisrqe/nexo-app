@@ -27,9 +27,11 @@ function sortedEntries(map) {
 }
 
 export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [], groups = [] }) {
+  const today = new Date().toISOString().slice(0, 10)
   const totalProfiles = profiles.length
   const totalInitiatives = initiatives.length
   const totalEvents = events.length
+  const totalRealizedEvents = events.filter((e) => e.date < today).length
   const totalConversations = conversations.length
   const totalDirectMessages = conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0)
   const totalGroupMessages = groups.reduce((sum, g) => sum + (g.messageCount || 0), 0)
@@ -127,6 +129,7 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
       profiles: totalProfiles,
       initiatives: totalInitiatives,
       events: totalEvents,
+      realizedEvents: totalRealizedEvents,
       interest: totalInterest,
       connections: connectionPairs.size,
       connectedPeople: connectedPeople.size,

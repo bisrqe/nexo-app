@@ -28,19 +28,12 @@ const ODS_LIST = [
   { num: 17, title: 'Alianzas para lograr los objetivos', featured: true },
 ]
 
-const IMPACT_STATS = [
-  { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
-  { num: '75–80%', label: 'De las startups fracasan en sus primeros 3 años por falta de redes y apoyo' },
-  { num: '36%', label: 'De los emprendedores logran acceso a mentores o incubadoras estructuradas' },
-  { num: '8', label: 'ODS de la ONU con los que alineamos nuestro trabajo' },
-]
-
 export default function Nosotros() {
   return (
     <>
       <Header />
 
-      {/* ── QUIÉNES SOMOS ─────────────────────────── */}
+      {/* ── NUESTRA IDENTIDAD ─────────────────────── */}
       <section>
         <div className="section-head">
           <div className="head-title">
@@ -61,25 +54,15 @@ export default function Nosotros() {
             emprendimientos que buscan un mismo objetivo: impulsar el desarrollo social a través de la tecnología y la
             innovación.
           </p>
-        </div>
-      </section>
 
-      {/* ── VISIÓN Y MISIÓN ───────────────────────── */}
-      <section className="bg-alt">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Nuestra identidad</span>
-            <h2>Visión y misión</h2>
+          <div className="mv-grid" style={{ marginTop: 32 }}>
+            {MISSION_VISION.map((v) => (
+              <div key={v.key}>
+                <h3 className={`mv-heading mv-${v.key}`}>{v.label}</h3>
+                <p className="mv-text">{v.text}</p>
+              </div>
+            ))}
           </div>
-        </div>
-
-        <div className="mv-grid">
-          {MISSION_VISION.map((v) => (
-            <div key={v.key}>
-              <h3 className={`mv-heading mv-${v.key}`}>{v.label}</h3>
-              <p className="mv-text">{v.text}</p>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -116,30 +99,6 @@ export default function Nosotros() {
               <span className="tile-title">{o.title}</span>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── WHY IT MATTERS / IMPACT ──────────────── */}
-      <section>
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Por qué existimos</span>
-            <h2>México tiene talento e iniciativa. Le falta conectividad.</h2>
-          </div>
-        </div>
-
-        <div className="impact-card">
-          <div className="impact-grid">
-            {IMPACT_STATS.map((s) => (
-              <div className="stat-item" key={s.label}>
-                <span className="stat-num">{s.num}</span>
-                <span className="stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
-          <p className="impact-sources">
-            Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
-          </p>
         </div>
       </section>
 
