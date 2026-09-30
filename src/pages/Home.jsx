@@ -150,10 +150,6 @@ export default function Home() {
             <p>Este mapa cambia cada semana. Sé quien registre el primer emprendimiento.</p>
           </div>
         )}
-
-        <div className="section-cta">
-          <Link to="/iniciativas" className="link-arrow">Ver todos los emprendimientos →</Link>
-        </div>
       </section>
 
       {/* ── FEATURED RESOURCES ───────────────────── */}
@@ -186,10 +182,6 @@ export default function Home() {
             <p>Todavía no tenemos recursos capturados.</p>
           </div>
         )}
-
-        <div className="section-cta">
-          <Link to="/recursos" className="link-arrow">Ver todos los recursos →</Link>
-        </div>
       </section>
 
       {/* ── UPCOMING EVENTS ──────────────────────── */}
@@ -225,10 +217,6 @@ export default function Home() {
             <p>Todavía no hay eventos programados.</p>
           </div>
         )}
-
-        <div className="section-cta">
-          <Link to="/eventos" className="link-arrow">Ver todos los eventos →</Link>
-        </div>
       </section>
 
       {/* ── CTA ──────────────────────────────────── */}
