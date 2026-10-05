@@ -8,9 +8,8 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth'
-import { httpsCallable } from 'firebase/functions'
-import { doc, deleteDoc } from 'firebase/firestore'
-import { auth, db, functions } from '../lib/firebase.js'
+import { doc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { auth, db } from '../lib/firebase.js'
 import { ADMIN_EMAILS, RESOURCE_APPROVER_EMAILS } from '../data/admins.js'
 
 const AuthContext = createContext(null)
@@ -31,11 +30,22 @@ export function AuthProvider({ children }) {
   const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const signOutUser = () => signOut(auth)
   // El correo mismo (y el link de acción con handleCodeInApp:true que
-  // manda a src/pages/auth-action/) se genera y manda desde funtions/
-  // index.js con el Admin SDK — así usamos nuestra propia plantilla de
-  // marca en vez de la genérica que Firebase manda por su cuenta.
-  const resendVerificationEmail = () => auth.currentUser && httpsCallable(functions, 'sendVerificationEmail')()
-  const sendPasswordReset = (email) => httpsCallable(functions, 'sendPasswordResetLink')({ email })
+  // manda a src/pages/auth-action/) se genera y manda desde
+  // functions/index.js (onAuthEmailRequested) con el Admin SDK — así
+  // usamos nuestra propia plantilla de marca en vez de la genérica que
+  // Firebase manda por su cuenta. Es un trigger de Firestore, no una
+  // función invocable directa: aquí solo se escribe la "solicitud" y la
+  // función la procesa — ver authEmailRequests en firestore.rules.
+  const resendVerificationEmail = () => auth.currentUser && addDoc(collection(db, 'authEmailRequests'), {
+    type: 'verify',
+    uid: auth.currentUser.uid,
+    createdAt: serverTimestamp(),
+  })
+  const sendPasswordReset = (email) => addDoc(collection(db, 'authEmailRequests'), {
+    type: 'reset',
+    email,
+    createdAt: serverTimestamp(),
+  })
   const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
   const isResourceApprover = Boolean(user && RESOURCE_APPROVER_EMAILS.includes(user.email))
 

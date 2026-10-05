@@ -172,5 +172,25 @@ service cloud.firestore {
         request.resource.data.get('details', '').size() <= 2000;
       allow read, update, delete: if false;
     }
+
+    // Disparador de los correos de verificación/restablecimiento con
+    // plantilla propia (ver onAuthEmailRequested en functions/index.js) —
+    // nadie los lee de vuelta, solo los procesa la función con permisos de
+    // administrador. "verify" requiere sesión y solo a nombre de uno
+    // mismo; "reset" es público (como el flujo normal de "olvidé mi
+    // contraseña"), validado solo por forma para frenar spam obvio.
+    match /authEmailRequests/{id} {
+      allow create: if (
+        request.resource.data.type == 'verify' &&
+        request.auth != null &&
+        request.resource.data.uid == request.auth.uid
+      ) || (
+        request.resource.data.type == 'reset' &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() > 0 &&
+        request.resource.data.email.size() <= 320
+      );
+      allow read, update, delete: if false;
+    }
   }
 }
