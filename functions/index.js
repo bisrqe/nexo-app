@@ -228,6 +228,20 @@ exports.onFeedbackCreate = onDocumentCreated(
 // agregar "allUsers" a cualquier política de IAM sin excepción. Un
 // trigger de Firestore no necesita invocación pública: Eventarc lo
 // dispara internamente, así que esta restricción no aplica.
+// generateEmailVerificationLink/generatePasswordResetLink del Admin SDK
+// siempre arman un link al handler genérico que hostea Firebase
+// (.firebaseapp.com/__/auth/action?...&continueUrl=...) — handleCodeInApp
+// no aplica aquí como sí lo hace con el correo que manda el SDK de
+// cliente; continueUrl solo es el botón "Continuar" DESPUÉS de esa
+// página genérica, no un reemplazo. Nuestras páginas en
+// src/pages/auth-action/ solo necesitan oobCode (ya tienen su propio
+// apiKey vía la config de Firebase del cliente), así que se arma el link
+// directo a nexohub.mx a mano, en vez del que genera el Admin SDK.
+function toCustomActionLink(firebaseGeneratedLink, path) {
+  const oobCode = new URL(firebaseGeneratedLink).searchParams.get('oobCode')
+  return `${AUTH_ACTION_URL}${path}?mode=${path.includes('verificar') ? 'verifyEmail' : 'resetPassword'}&oobCode=${oobCode}`
+}
+
 exports.onAuthEmailRequested = onDocumentCreated(
   { document: 'authEmailRequests/{id}', secrets: [RESEND_API_KEY] },
   async (event) => {
@@ -236,10 +250,10 @@ exports.onAuthEmailRequested = onDocumentCreated(
     if (req.type === 'verify') {
       const userRecord = await admin.auth().getUser(req.uid)
       if (!userRecord.email || userRecord.emailVerified) return
-      const link = await admin.auth().generateEmailVerificationLink(userRecord.email, {
+      const generated = await admin.auth().generateEmailVerificationLink(userRecord.email, {
         url: `${AUTH_ACTION_URL}/auth/verificar-correo`,
-        handleCodeInApp: true,
       })
+      const link = toCustomActionLink(generated, '/auth/verificar-correo')
       await sendEmail({
         to: userRecord.email,
         subject: 'Confirma tu correo en Nexo',
@@ -258,10 +272,10 @@ exports.onAuthEmailRequested = onDocumentCreated(
       // tenía sendPasswordResetEmail del SDK de cliente, solo que ahora
       // el correo lo mandamos nosotros con nuestra propia plantilla.
       try {
-        const link = await admin.auth().generatePasswordResetLink(req.email, {
+        const generated = await admin.auth().generatePasswordResetLink(req.email, {
           url: `${AUTH_ACTION_URL}/auth/restablecer-contrasena`,
-          handleCodeInApp: true,
         })
+        const link = toCustomActionLink(generated, '/auth/restablecer-contrasena')
         await sendEmail({
           to: req.email,
           subject: 'Restablece tu contraseña de Nexo',
