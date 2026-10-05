@@ -4,23 +4,16 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  sendEmailVerification,
-  sendPasswordResetEmail,
   deleteUser,
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth'
+import { httpsCallable } from 'firebase/functions'
 import { doc, deleteDoc } from 'firebase/firestore'
-import { auth, db } from '../lib/firebase.js'
+import { auth, db, functions } from '../lib/firebase.js'
 import { ADMIN_EMAILS, RESOURCE_APPROVER_EMAILS } from '../data/admins.js'
 
 const AuthContext = createContext(null)
-
-// Dominio de las páginas que resuelven los enlaces de los correos de
-// Firebase Auth (ver src/pages/auth-action/). nexohub.mx debe estar en la
-// lista de "Authorized domains" del proyecto de Firebase Auth, o el envío
-// falla con auth/unauthorized-continue-uri.
-const AUTH_ACTION_URL = 'https://nexohub.mx'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -37,21 +30,12 @@ export function AuthProvider({ children }) {
   const signUp = (email, password) => createUserWithEmailAndPassword(auth, email, password)
   const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const signOutUser = () => signOut(auth)
-  // handleCodeInApp:true es lo que realmente manda el enlace a nuestra
-  // página en vez de a la plantilla genérica que Firebase hostea por su
-  // cuenta — sin esto, "url" no hace nada (solo sería un link de
-  // "continuar" dentro de esa plantilla genérica, y ni eso en algunos
-  // templates). Con handleCodeInApp, Firebase manda directo a "url" con
-  // ?mode=...&oobCode=... en la query, que es lo que leen las páginas en
-  // src/pages/auth-action/.
-  const resendVerificationEmail = () => auth.currentUser && sendEmailVerification(auth.currentUser, {
-    url: `${AUTH_ACTION_URL}/auth/verificar-correo`,
-    handleCodeInApp: true,
-  })
-  const sendPasswordReset = (email) => sendPasswordResetEmail(auth, email, {
-    url: `${AUTH_ACTION_URL}/auth/restablecer-contrasena`,
-    handleCodeInApp: true,
-  })
+  // El correo mismo (y el link de acción con handleCodeInApp:true que
+  // manda a src/pages/auth-action/) se genera y manda desde funtions/
+  // index.js con el Admin SDK — así usamos nuestra propia plantilla de
+  // marca en vez de la genérica que Firebase manda por su cuenta.
+  const resendVerificationEmail = () => auth.currentUser && httpsCallable(functions, 'sendVerificationEmail')()
+  const sendPasswordReset = (email) => httpsCallable(functions, 'sendPasswordResetLink')({ email })
   const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
   const isResourceApprover = Boolean(user && RESOURCE_APPROVER_EMAILS.includes(user.email))
 

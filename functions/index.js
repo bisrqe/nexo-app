@@ -4,6 +4,7 @@
 // destinatario antes de mandar nada.
 const { setGlobalOptions } = require('firebase-functions/v2')
 const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore')
+const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { defineSecret } = require('firebase-functions/params')
 const logger = require('firebase-functions/logger')
 const admin = require('firebase-admin')
@@ -13,6 +14,10 @@ admin.initializeApp()
 const db = admin.firestore()
 
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 })
+
+// Mismo dominio que src/context/AuthContext.jsx (AUTH_ACTION_URL) — tiene
+// que estar en "Authorized domains" del proyecto de Firebase Auth.
+const AUTH_ACTION_URL = 'https://nexohub.mx'
 
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY')
 // Requiere que nexohub.mx esté verificado como dominio en Resend (Resend
@@ -207,5 +212,66 @@ exports.onFeedbackCreate = onDocumentCreated(
         footerNote: 'Este correo es interno — se manda solo al equipo de Nexo cuando alguien usa "Enviar retroalimentación" en el chatbot.',
       }),
     })
+  }
+)
+
+// Correos de verificación y restablecimiento de contraseña con control
+// total sobre el HTML (en vez de la plantilla genérica que Firebase manda
+// por su cuenta) — se genera el link de acción con el Admin SDK y se manda
+// con la misma plantilla de marca que el resto de los correos de Nexo.
+exports.sendVerificationEmail = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Necesitas iniciar sesión.')
+    const userRecord = await admin.auth().getUser(request.auth.uid)
+    if (!userRecord.email) throw new HttpsError('failed-precondition', 'Esta cuenta no tiene correo.')
+    if (userRecord.emailVerified) return { sent: false }
+
+    const link = await admin.auth().generateEmailVerificationLink(userRecord.email, {
+      url: `${AUTH_ACTION_URL}/auth/verificar-correo`,
+      handleCodeInApp: true,
+    })
+    await sendEmail({
+      to: userRecord.email,
+      subject: 'Confirma tu correo en Nexo',
+      html: renderEmail({
+        preheader: 'Confirma tu correo para asegurar tu cuenta de Nexo.',
+        heading: 'Confirma tu correo',
+        bodyHtml: '<p style="margin:0;">Un último paso para asegurar tu cuenta — confirma que esta dirección es tuya.</p>',
+        cta: { href: link, label: 'Confirmar correo →' },
+      }),
+    })
+    return { sent: true }
+  }
+)
+
+exports.sendPasswordResetLink = onCall(
+  { secrets: [RESEND_API_KEY] },
+  async (request) => {
+    const email = (request.data?.email || '').trim()
+    if (!email) throw new HttpsError('invalid-argument', 'Falta el correo.')
+
+    // No revelamos si la cuenta existe o no — mismo comportamiento que
+    // tenía sendPasswordResetEmail del SDK de cliente, solo que ahora el
+    // correo lo mandamos nosotros con nuestra propia plantilla.
+    try {
+      const link = await admin.auth().generatePasswordResetLink(email, {
+        url: `${AUTH_ACTION_URL}/auth/restablecer-contrasena`,
+        handleCodeInApp: true,
+      })
+      await sendEmail({
+        to: email,
+        subject: 'Restablece tu contraseña de Nexo',
+        html: renderEmail({
+          preheader: 'Restablece tu contraseña de Nexo.',
+          heading: 'Restablece tu contraseña',
+          bodyHtml: '<p style="margin:0;">Pediste restablecer tu contraseña. Si no fuiste tú, ignora este correo — tu cuenta sigue segura.</p>',
+          cta: { href: link, label: 'Elegir nueva contraseña →' },
+        }),
+      })
+    } catch (err) {
+      if (err.code !== 'auth/user-not-found') logger.error('Error generando link de restablecimiento', err)
+    }
+    return { sent: true }
   }
 )
