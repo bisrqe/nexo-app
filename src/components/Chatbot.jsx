@@ -147,7 +147,7 @@ export default function Chatbot() {
     await wait(600)
     setMessages((m) => [
       ...m,
-      { role: 'assistant', content: 'Claro — escríbenos directamente y alguien del equipo te responde:', link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL } },
+      { role: 'assistant', content: 'Claro, escríbenos directamente y alguien del equipo te responde:', link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL } },
     ])
     setLoading(false)
     setShowMenu(true)
@@ -170,7 +170,7 @@ export default function Chatbot() {
     } catch (err) {
       setMessages((m) => [...m, {
         role: 'assistant',
-        content: 'No pudimos enviar tu retroalimentación — intenta de nuevo o escríbenos directamente:',
+        content: 'No pudimos enviar tu retroalimentación, intenta de nuevo o escríbenos directamente:',
         link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL },
       }])
     } finally {
@@ -194,7 +194,7 @@ export default function Chatbot() {
       setMessages((m) => [...m, { role: 'assistant', content: data.reply }])
     } catch (err) {
       setError(true)
-      setMessages((m) => [...m, { role: 'assistant', content: `No pude responder justo ahora — intenta de nuevo, o escríbenos a ${SUPPORT_EMAIL}.` }])
+      setMessages((m) => [...m, { role: 'assistant', content: `No pude responder justo ahora, intenta de nuevo, o escríbenos a ${SUPPORT_EMAIL}.` }])
     } finally {
       setLoading(false)
       setShowMenu(true)

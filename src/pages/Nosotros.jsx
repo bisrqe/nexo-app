@@ -41,7 +41,7 @@ export default function Nosotros() {
           <p className="head-desc-below" style={{ maxWidth: 'none' }}>
             Somos una comunidad multidisciplinaria de jóvenes líderes, investigadores y emprendedores comprometidos con
             construir un México más conectado, sostenible e inclusivo. Creemos que la colaboración intersectorial es la
-            clave para pasar de las ideas a la acción — por eso trabajamos para reducir la fragmentación entre
+            clave para pasar de las ideas a la acción, por eso trabajamos para reducir la fragmentación entre
             emprendimientos que buscan un mismo objetivo: impulsar el desarrollo social a través de la tecnología y la
             innovación.
           </p>
@@ -100,7 +100,7 @@ export default function Nosotros() {
           <span className="kicker">Contacto</span>
           <h2>¿Quieres hablar con Nexo?</h2>
           <p className="head-desc-below" style={{ marginTop: 4, marginBottom: 24 }}>
-            Dudas, alianzas institucionales o prensa — escríbenos directamente.
+            Dudas, alianzas institucionales o prensa, escríbenos directamente.
           </p>
           <a href="mailto:support@nexohub.mx" className="btn btn-gold btn-lg">support@nexohub.mx</a>
 

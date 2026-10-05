@@ -30,7 +30,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="foot-bottom">
-        <span>© {new Date().getFullYear()} NEXO — hecho en México.</span>
+        <span>© {new Date().getFullYear()} NEXO, hecho en México.</span>
         <span>support@nexohub.mx</span>
       </div>
     </footer>

@@ -44,7 +44,7 @@ export default function Header() {
     <header>
       <nav>
         <Link to="/" className="brand">
-          <img src={logo} alt="" width="24" height="24" />
+          <img src={logo} alt="" width="34" height="34" />
           NEXO.
         </Link>
 

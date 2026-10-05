@@ -23,7 +23,7 @@ export default function IniciativasPublicas() {
           <div className="head-title">
             <span className="kicker">Explorar</span>
             <h2>Emprendimientos destacados</h2>
-            <p className="head-desc-below">Un vistazo a lo que ya se mueve en el mapa — sin publicaciones sueltas.</p>
+            <p className="head-desc-below">Un vistazo a lo que ya se mueve en el mapa, sin publicaciones sueltas.</p>
           </div>
         </div>
 

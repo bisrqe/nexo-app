@@ -55,7 +55,7 @@ export default function Home() {
                 pantalla siempre debe llegar primero a la propuesta de
                 valor real, no a la definición del nombre. */}
             <h1>El punto donde tu proyecto<br />deja de estar <span className="mark">solo</span>.</h1>
-            <p className="lede">Nexo reúne lo que ya existe en tu ecosistema — emprendimientos, personas y recursos — para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
+            <p className="lede">Nexo reúne lo que ya existe en tu ecosistema (emprendimientos, personas y recursos) para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
 
             <div className="hero-actions">
               <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar emprendimientos →</Link>
@@ -77,23 +77,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── STAT STRIP ───────────────────────────── */}
-      <section className="stat-section">
-        <div className="stat-strip">
-          {stats.map((s) => (
-            <div className="stat-item" key={s.label}>
-              <span className="stat-num">{s.num}</span>
-              <span className="stat-label">
-                {s.label === 'ODS con actividad' ? (
-                  <>ODS con actividad</>
-                ) : s.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── PIVOT / MANIFESTO ────────────────────── */}
+      {/* ── PIVOT / MANIFESTO (datos de impacto) ─── */}
       <section className="pivot">
         <div className="wrap">
           <span className="kicker on-dark">Por qué existe Nexo</span>
@@ -102,7 +86,7 @@ export default function Home() {
             de México.
           </p>
           <p className="pivot-quote pivot-quote-muted">
-            El problema nunca fue la falta de ideas — fue que nadie las encontraba a tiempo para sumarse.
+            El problema nunca fue la falta de ideas, sino que nadie las encontraba a tiempo para sumarse.
           </p>
           <p className="pivot-attr">Por eso dejamos de ser un feed y empezamos a ser un mapa</p>
 
@@ -117,6 +101,22 @@ export default function Home() {
           <p className="pivot-attr pivot-sources" style={{ marginTop: 20 }}>
             Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
           </p>
+        </div>
+      </section>
+
+      {/* ── STAT STRIP ───────────────────────────── */}
+      <section className="stat-section">
+        <div className="stat-strip">
+          {stats.map((s) => (
+            <div className="stat-item" key={s.label}>
+              <span className="stat-num">{s.num}</span>
+              <span className="stat-label">
+                {s.label === 'ODS con actividad' ? (
+                  <>ODS con actividad</>
+                ) : s.label}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -152,7 +152,7 @@ export default function Home() {
         <div className="cta-band">
           <div>
             <h2>¿Te unes a un emprendimiento, o <i>arrancas</i> el tuyo?</h2>
-            <p>Conecta con uno que ya existe, o créalo en cinco minutos sin crear cuenta — la comunidad se encarga del resto.</p>
+            <p>Conecta con uno que ya existe, o créalo en cinco minutos sin crear cuenta, la comunidad se encarga del resto.</p>
           </div>
           <div className="hero-actions">
             <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar emprendimientos →</Link>

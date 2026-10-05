@@ -28,7 +28,7 @@ export default function EventosPublicos() {
           <div className="head-title">
             <span className="kicker">Comunidad</span>
             <h2>Eventos destacados</h2>
-            <p className="head-desc-below">Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real.</p>
+            <p className="head-desc-below">Talleres, hackathons y pitch days, donde el mapa se vuelve conversación real.</p>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default function EventosPublicos() {
                       <p className="event-desc">{event.description}</p>
                       <div className="event-meta">
                         <span>
-                          {event.time} hrs —{' '}
+                          {event.time} hrs -{' '}
                           {virtual
                             ? (callLink ? <a href={callLink} target="_blank" rel="noreferrer">Unirse a la llamada →</a> : 'Liga por confirmar')
                             : event.location}

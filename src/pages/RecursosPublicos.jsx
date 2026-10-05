@@ -16,7 +16,7 @@ export default function RecursosPublicos() {
           <div className="head-title">
             <span className="kicker">Aprovechar lo que ya existe</span>
             <h2>Recursos</h2>
-            <p className="head-desc-below">Convocatorias, financiamiento, mentoría y aceleración de alcance nacional — sin filtrar todavía por tu ciudad.</p>
+            <p className="head-desc-below">Convocatorias, financiamiento, mentoría y aceleración de alcance nacional, sin filtrar todavía por tu ciudad.</p>
           </div>
         </div>
 

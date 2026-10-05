@@ -24,7 +24,7 @@ export default function InitiativeCard({ initiative, basePath = '/iniciativas', 
     <div className="cat-card">
       <div className="cat-top-row">
         <div className="cat-id">
-          N° {String(id).padStart(3, '0')} — {stage.toUpperCase()}
+          N° {String(id).padStart(3, '0')} - {stage.toUpperCase()}
           {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
         </div>
         {!isPreview && allowSave && (
