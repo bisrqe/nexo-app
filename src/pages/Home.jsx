@@ -77,7 +77,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PIVOT / MANIFESTO (datos de impacto) ─── */}
+      {/* ── STAT STRIP ───────────────────────────── */}
+      <section className="stat-section">
+        <div className="stat-strip">
+          {stats.map((s) => (
+            <div className="stat-item" key={s.label}>
+              <span className="stat-num">{s.num}</span>
+              <span className="stat-label">
+                {s.label === 'ODS con actividad' ? (
+                  <>ODS con actividad</>
+                ) : s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── PIVOT / MANIFESTO ────────────────────── */}
       <section className="pivot">
         <div className="wrap">
           <span className="kicker on-dark">Por qué existe Nexo</span>
@@ -101,22 +117,6 @@ export default function Home() {
           <p className="pivot-attr pivot-sources" style={{ marginTop: 20 }}>
             Fuentes: INEGI 2021 · OCDE 2024 · GEM México 2022–23 · Registro Federal de Organizaciones de la Sociedad Civil
           </p>
-        </div>
-      </section>
-
-      {/* ── STAT STRIP ───────────────────────────── */}
-      <section className="stat-section">
-        <div className="stat-strip">
-          {stats.map((s) => (
-            <div className="stat-item" key={s.label}>
-              <span className="stat-num">{s.num}</span>
-              <span className="stat-label">
-                {s.label === 'ODS con actividad' ? (
-                  <>ODS con actividad</>
-                ) : s.label}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 
