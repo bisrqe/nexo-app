@@ -1,4 +1,5 @@
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
+import { isSupportProfile } from '../data/admins.js'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { getRegionName, regionsOf, sedesOf } from '../data/cities.js'
 
@@ -26,7 +27,16 @@ function sortedEntries(map) {
     .sort((a, b) => b.value - a.value)
 }
 
-export function computeKpis({ profiles = [], initiatives = [], events = [], conversations = [], groups = [] }) {
+export function computeKpis(raw) {
+  // La cuenta de soporte (y todo lo que es suyo) no cuenta como actividad de
+  // la comunidad.
+  const supportUids = new Set((raw.profiles || []).filter(isSupportProfile).map((p) => p.docId))
+  const profiles = (raw.profiles || []).filter((p) => !supportUids.has(p.docId))
+  const initiatives = (raw.initiatives || []).filter((i) => !supportUids.has(i.ownerUid))
+  const events = (raw.events || []).filter((e) => !supportUids.has(e.ownerUid))
+  const conversations = (raw.conversations || []).filter((c) => !(c.participants || []).some((u) => supportUids.has(u)))
+  const groups = (raw.groups || []).filter((g) => !supportUids.has(g.ownerUid))
+
   const today = new Date().toISOString().slice(0, 10)
   // Borrar una cuenta borra su perfil, pero no limpia el uid de arreglos
   // sueltos en otros documentos (interestedBy, ownerUid…) — se descartan

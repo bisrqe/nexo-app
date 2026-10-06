@@ -12,6 +12,7 @@ import { buildRecommendations } from '../lib/recommend.js'
 import { getRegionName, profileRegion } from '../data/cities.js'
 import { kindFor, myProjectsLabel, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 import { flattenResources } from '../data/resources.js'
+import { isSupportProfile } from '../data/admins.js'
 import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
 
 const BUILT_IN_RESOURCES = flattenResources()
@@ -53,7 +54,7 @@ export default function Dashboard() {
       initiatives: allInitiatives.filter((i) => !(i.memberUids || []).includes(user?.uid)),
       events: upcomingEvents,
       groups: groups.filter((g) => g.docId !== SUPPORT_GROUP_ID),
-      mentors,
+      mentors: mentors.filter((m) => !isSupportProfile(m)),
       resources,
       scope: showAllRegions ? 'all' : 'region',
     }),

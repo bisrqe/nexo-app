@@ -8,6 +8,7 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { locationLabel, profileRegion, matchesRegionFilter } from '../data/cities.js'
+import { isSupportProfile } from '../data/admins.js'
 import { profileRoles } from '../lib/initiativeKind.js'
 
 function initials(name) {
@@ -91,7 +92,7 @@ export default function Personas() {
 
   const allPeople = useMemo(() => {
     return realProfiles
-      .filter((p) => p.docId !== user?.uid && p.name)
+      .filter((p) => p.docId !== user?.uid && p.name && !isSupportProfile(p))
       .map(profileToPerson)
   }, [realProfiles, user])
 

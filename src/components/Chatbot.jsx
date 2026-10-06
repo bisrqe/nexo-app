@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { collection, getDocs, query, where, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -10,6 +10,7 @@ import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 import { ODS_FILTERS } from '../data/initiatives.js'
 import { getRegionName, profileRegion, locationLabel, isRemoteItem } from '../data/cities.js'
 import { flattenResources } from '../data/resources.js'
+import { SUPPORT_EMAIL as SUPPORT_ACCOUNT_EMAIL, isSupportProfile } from '../data/admins.js'
 import { SUPPORT_GROUP_ID, SUPPORT_GROUP_SLUG } from '../data/supportGroup.js'
 import { kindFor } from '../lib/initiativeKind.js'
 import { buildRecommendations } from '../lib/recommend.js'
@@ -60,7 +61,7 @@ async function buildInsideContext(profile, groups, uid, myInitiatives) {
     initiatives: initiatives.filter((i) => !(i.memberUids || []).includes(uid)),
     events: events.filter((e) => !e.date || e.date >= today),
     groups: groups.filter((g) => g.docId !== SUPPORT_GROUP_ID),
-    mentors,
+    mentors: mentors.filter((m) => !isSupportProfile(m)),
     resources: [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved')],
     limits: { initiatives: 5, events: 4, groups: 3, mentors: 3, resources: 4 },
   })
@@ -121,6 +122,7 @@ async function buildInsideContext(profile, groups, uid, myInitiatives) {
 // orienta sobre qué es Nexo, sin datos de nadie.
 export default function Chatbot() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, signOutUser } = useAuth()
   const { profile } = useProfile()
   const { groups } = useGroups()
@@ -201,6 +203,25 @@ export default function Chatbot() {
     setMessages((m) => [...m, { role: 'assistant', content: 'Cerraste sesión correctamente. ¡Hasta pronto!' }])
     setLoading(false)
     setShowMenu(true)
+  }
+
+  // Lleva al chat privado con la cuenta de soporte. Su uid se busca por
+  // correo (esa cuenta no aparece en ningún directorio).
+  const handleTalkToSupport = async () => {
+    setShowMenu(false)
+    setLoading(true)
+    try {
+      const snap = await getDocs(query(collection(db, 'profiles'), where('email', '==', SUPPORT_ACCOUNT_EMAIL)))
+      const supportUid = snap.docs[0]?.id
+      if (!supportUid) throw new Error('sin soporte')
+      setOpen(false)
+      navigate(`/app/mensajes?to=${supportUid}`)
+    } catch {
+      setMessages((m) => [...m, { role: 'assistant', content: 'No pude abrir el chat con soporte ahora mismo. Intenta de nuevo en un momento o escribe en la mesa de dudas y onboarding.', link: { to: `/app/comunidad/${SUPPORT_GROUP_SLUG}`, label: 'Ir a la mesa de dudas' } }])
+    } finally {
+      setLoading(false)
+      setShowMenu(true)
+    }
   }
 
   const handleFeedbackSubmit = async (e) => {
@@ -330,6 +351,9 @@ export default function Chatbot() {
                       <button type="button" onClick={() => askSuggested(entry)}>{entry.prompt}</button>
                     </li>
                   ))}
+                  {isInside && (
+                    <li><button type="button" onClick={handleTalkToSupport}>Hablar con soporte (chat privado)</button></li>
+                  )}
                   {isInside && (
                     <li><button type="button" onClick={() => submit('¿Qué me recomiendas según mi perfil?')}>¿Qué me recomiendas?</button></li>
                   )}

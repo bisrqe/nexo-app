@@ -5,6 +5,7 @@ import RegionFilter, { useRegionFilter } from '../components/RegionFilter.jsx'
 import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { isSupportProfile } from '../data/admins.js'
 import { profileRegion, matchesRegionFilter } from '../data/cities.js'
 import { sortByOwnProjectType } from '../lib/initiativeKind.js'
 
@@ -48,7 +49,7 @@ export default function Iniciativas() {
       allInitiatives.filter((i) => i.ownerProfileType === 'organizacion').map((i) => i.ownerUid)
     )
     const profileCards = orgProfiles
-      .filter((p) => p.name && !ownersWithInstitution.has(p.docId))
+      .filter((p) => p.name && !isSupportProfile(p) && !ownersWithInstitution.has(p.docId))
       .map(institutionProfileToCard)
 
     const inRegion = [...allInitiatives, ...profileCards].filter((i) => matchesRegionFilter(i, regionFilter))

@@ -27,3 +27,10 @@ export const isResourceApproverUser = isStaffUser
 export function isSupportAccount(user) {
   return Boolean(user?.email === SUPPORT_EMAIL && user.emailVerified === true)
 }
+
+// La cuenta de soporte es del equipo, no una persona más del directorio:
+// se oculta de Personas, búsquedas, recomendaciones y KPIs. Se identifica
+// por el correo guardado en su perfil.
+export function isSupportProfile(profile) {
+  return profile?.email === SUPPORT_EMAIL
+}
