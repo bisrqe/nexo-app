@@ -2,16 +2,19 @@ import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
+import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
+import { useUserContent } from '../context/UserContentContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
-import { getCityName } from '../data/cities.js'
-import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
-import { RESOURCES } from '../data/resources.js'
-import { relevanceScore } from '../lib/resourceRelevance.js'
+import { buildRecommendations } from '../lib/recommend.js'
+import { getRegionName, profileRegion } from '../data/cities.js'
+import { kindFor, myProjectsLabel, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
+import { flattenResources } from '../data/resources.js'
+import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
 
-const CITY_TO_REGION = { mty: 'mty', cdmx: 'cdmx', gdl: 'gdl' }
+const BUILT_IN_RESOURCES = flattenResources()
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -20,88 +23,94 @@ function formatDate(dateStr) {
 
 export default function Dashboard() {
   const { profile } = useProfile()
-  const [allInitiatives, initiativesLoading] = useFirestoreCollection('initiatives')
+  const { user } = useAuth()
+  const { myInitiatives } = useUserContent()
+  const myRegion = profileRegion(profile)
+  const [allInitiatives, initiativesLoading, initiativesError] = useFirestoreCollection('initiatives')
   const [realEvents, eventsLoading] = useFirestoreCollection('events')
-  const [allProfiles] = useFirestoreCollection('profiles')
+  // Solo se traen los mentores, no el directorio completo — el dashboard
+  // únicamente necesita esos, y bajar todos los perfiles hacía más lenta
+  // cada carga a medida que crece la plataforma.
+  const [mentors] = useFirestoreCollection('profiles', ['profileType', '==', 'mentor'])
+  const [customResources] = useFirestoreCollection('resources')
   const { groups } = useGroups()
-  const [showAllCities, setShowAllCities] = useState(false)
+  const [showAllRegions, setShowAllRegions] = useState(false)
 
-  const allEvents = useMemo(
-    () => [...realEvents].sort((a, b) => new Date(a.date) - new Date(b.date)),
-    [realEvents]
+  const today = new Date().toISOString().slice(0, 10)
+  const upcomingEvents = useMemo(
+    () => realEvents.filter((e) => !e.date || e.date >= today).sort((a, b) => new Date(a.date) - new Date(b.date)),
+    [realEvents, today]
   )
 
-  const inMyCity = (item) => showAllCities || !profile.city || !item.city || item.city === profile.city
-  // Un evento remoto no compite por zona — no importa tu ciudad, siempre
-  // debería poder recomendarse.
-  const eventInMyCity = (item) => item.city === 'remoto' || inMyCity(item)
+  const resources = useMemo(
+    () => [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved')],
+    [customResources]
+  )
 
-  const rankedInitiatives = useMemo(() => {
-    const pool = allInitiatives.filter(inMyCity)
-    const ranked = rankForProfile(pool, profile)
-    return (ranked.length > 0 ? ranked : pool).slice(0, 6)
-  }, [allInitiatives, profile, showAllCities])
+  const recommended = useMemo(
+    () => buildRecommendations({
+      profile,
+      initiatives: allInitiatives.filter((i) => !(i.memberUids || []).includes(user?.uid)),
+      events: upcomingEvents,
+      groups: groups.filter((g) => g.docId !== SUPPORT_GROUP_ID),
+      mentors,
+      resources,
+      scope: showAllRegions ? 'all' : 'region',
+    }),
+    [profile, user, allInitiatives, upcomingEvents, groups, mentors, resources, showAllRegions]
+  )
 
-  const rankedEvents = useMemo(() => {
-    const pool = allEvents.filter(eventInMyCity)
-    const ranked = rankForProfile(pool, profile)
-    return (ranked.length > 0 ? ranked : pool).slice(0, 3)
-  }, [allEvents, profile, showAllCities])
+  // La mesa de dudas y onboarding siempre se le ofrece primero a quien
+  // todavía no se ha unido, sin importar qué tan afín sea por industria.
+  const supportGroup = groups.find((g) => g.docId === SUPPORT_GROUP_ID)
+  const showSupportGroup = Boolean(supportGroup) && !profile.joinedGroups?.includes(SUPPORT_GROUP_ID)
+  const rankedGroups = recommended.groups
 
-  const rankedGroups = useMemo(() => {
-    const pool = groups.filter(inMyCity)
-    const ranked = rankForProfile(pool, profile)
-    return (ranked.length > 0 ? ranked : pool).slice(0, 3)
-  }, [groups, profile, showAllCities])
-
-  const rankedMentors = useMemo(() => {
-    if (profile.profileType === 'mentor') return []
-    const pool = allProfiles.filter((p) => p.profileType === 'mentor').filter(inMyCity)
-    return rankMentorsForProfile(pool, profile, 3)
-  }, [allProfiles, profile, showAllCities])
-
-  const rankedResources = useMemo(() => {
-    const region = CITY_TO_REGION[profile.city] || ''
-    const pool = [...(RESOURCES[region] || []), ...(RESOURCES.nacional || [])]
-    const scored = pool
-      .map((r) => ({ item: r, score: relevanceScore(r, profile.profileType) }))
-      .sort((a, b) => b.score - a.score)
-    const matched = scored.filter((x) => x.score > 0)
-    return (matched.length > 0 ? matched : scored).map((x) => x.item).slice(0, 3)
-  }, [profile])
+  const ownKind = kindFor(profile.profileType, profile.subtype)
+  const canRegister = !PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)
 
   return (
     <DashboardLayout
       eyebrow="Tu mapa"
       title="Recomendado para ti"
-      subtitle="Emprendimientos, eventos y mesas de trabajo afines a tu perfil — por causas, industria y lo que buscas."
+      subtitle="Emprendimientos, eventos y mesas de trabajo afines a tu perfil — por causas, industria, región y lo que buscas."
     >
-      {profile.city && (
+      {myRegion && (
         <div className="filters">
-          <button className={`chip ${!showAllCities ? 'active' : ''}`} onClick={() => setShowAllCities(false)}>
-            {getCityName(profile.city)}
+          <button className={`chip ${!showAllRegions ? 'active' : ''}`} onClick={() => setShowAllRegions(false)}>
+            {getRegionName(myRegion)}
           </button>
-          <button className={`chip ${showAllCities ? 'active' : ''}`} onClick={() => setShowAllCities(true)}>
-            Ver todas las zonas
+          <button className={`chip ${showAllRegions ? 'active' : ''}`} onClick={() => setShowAllRegions(true)}>
+            Ver todas las regiones
           </button>
         </div>
+      )}
+      {myRegion && !showAllRegions && (
+        <p className="filter-note">
+          Incluye proyectos remotos de otras regiones que coinciden con lo que buscas.
+        </p>
       )}
 
       <div className="dash-grid">
         <div className="dash-col">
           <h2 className="dash-col-heading">Emprendimientos afines a ti</h2>
           {initiativesLoading ? (
-            <p className="auth-sub">Cargando…</p>
-          ) : rankedInitiatives.length === 0 ? (
+            <SkeletonCards count={2} gridClassName="page-grid" />
+          ) : initiativesError ? (
             <div className="empty-state">
-              <p>Todavía no hay emprendimientos en tu zona — sé quien abra el primero.</p>
-              {!PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType) && (
-                <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar {kindFor(profile.profileType, profile.subtype).noun} →</Link>
+              <p>No pudimos cargar los emprendimientos. Revisa tu conexión e intenta de nuevo.</p>
+              <button type="button" className="link-arrow" onClick={() => window.location.reload()}>Reintentar →</button>
+            </div>
+          ) : recommended.initiatives.length === 0 ? (
+            <div className="empty-state">
+              <p>Todavía no hay emprendimientos en tu región — sé quien abra el primero.</p>
+              {canRegister && (
+                <Link to="/app/iniciativas/nueva" className="link-arrow">Registrar {ownKind.noun} →</Link>
               )}
             </div>
           ) : (
             <div className="page-grid">
-              {rankedInitiatives.map((i) => (
+              {recommended.initiatives.map((i) => (
                 <InitiativeCard key={i.docId || i.id} initiative={i} basePath="/app/iniciativas" />
               ))}
             </div>
@@ -109,11 +118,28 @@ export default function Dashboard() {
         </div>
 
         <div className="dash-col">
-          {rankedMentors.length > 0 && (
+          {canRegister && myInitiatives.length > 0 && (
+            <div className="dash-widget">
+              <h3>{myProjectsLabel(profile, myInitiatives)}</h3>
+              <div className="dash-list">
+                {myInitiatives.map((i) => (
+                  <Link to={`/app/iniciativas/${i.slug}`} className="dash-list-item" key={i.docId}>
+                    <span>{i.title}</span>
+                    <span>{i.stage}</span>
+                  </Link>
+                ))}
+              </div>
+              <p style={{ marginTop: '14px' }}>
+                <Link to="/app/mi-iniciativa" className="link-arrow">Administrar →</Link>
+              </p>
+            </div>
+          )}
+
+          {recommended.mentors.length > 0 && (
             <div className="dash-widget">
               <h3>Mentores afines a ti</h3>
               <div className="dash-list">
-                {rankedMentors.map((m) => (
+                {recommended.mentors.map((m) => (
                   <Link to={`/app/personas/${m.username || m.docId}`} className="dash-list-item" key={m.docId}>
                     <span>{m.name}</span>
                     <span>{m.expertise}</span>
@@ -123,12 +149,12 @@ export default function Dashboard() {
             </div>
           )}
 
-          {rankedResources.length > 0 && (
+          {recommended.resources.length > 0 && (
             <div className="dash-widget">
               <h3>Recursos recomendados para ti</h3>
               <div className="dash-list">
-                {rankedResources.map((r) => (
-                  <a href={`https://${r.link}`} target="_blank" rel="noreferrer" className="dash-list-item" key={r.id}>
+                {recommended.resources.map((r) => (
+                  <a href={`https://${r.link}`} target="_blank" rel="noreferrer" className="dash-list-item" key={r.docId || r.id}>
                     <span>{r.title}</span>
                     <span>{r.category}</span>
                   </a>
@@ -142,10 +168,16 @@ export default function Dashboard() {
 
           <div className="dash-widget">
             <h3>Mesas de trabajo afines a ti</h3>
-            {rankedGroups.length === 0 ? (
+            {!showSupportGroup && rankedGroups.length === 0 ? (
               <p className="dash-empty">Todavía no hay mesas de trabajo. <Link to="/app/comunidad" className="link-arrow">Ver comunidad →</Link></p>
             ) : (
               <div className="dash-list">
+                {showSupportGroup && (
+                  <Link to={`/app/comunidad/${supportGroup.slug}`} className="dash-list-item">
+                    <span>{supportGroup.name}</span>
+                    <span>Resuelve tus dudas</span>
+                  </Link>
+                )}
                 {rankedGroups.map((g) => (
                   <Link to={`/app/comunidad/${g.slug}`} className="dash-list-item" key={g.docId}>
                     <span>{g.name}</span>
@@ -160,11 +192,11 @@ export default function Dashboard() {
             <h3>Eventos afines a ti</h3>
             {eventsLoading ? (
               <p className="auth-sub">Cargando…</p>
-            ) : rankedEvents.length === 0 ? (
-              <p className="dash-empty">Todavía no hay eventos. <Link to="/app/eventos" className="link-arrow">Ver eventos →</Link></p>
+            ) : recommended.events.length === 0 ? (
+              <p className="dash-empty">Todavía no hay eventos próximos para ti.</p>
             ) : (
               <div className="dash-list">
-                {rankedEvents.map((e) => (
+                {recommended.events.map((e) => (
                   <div className="dash-list-item dash-list-item-static" key={e.docId}>
                     <span>{e.title}</span>
                     <span>{formatDate(e.date)}</span>

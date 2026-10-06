@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import {
   collection, doc, onSnapshot, updateDoc, deleteDoc, writeBatch,
   getDocs, query, where, arrayUnion, arrayRemove, increment, serverTimestamp,
 } from 'firebase/firestore'
+import { SUPPORT_GROUP_ID, SUPPORT_GROUP_SLUG, SUPPORT_GROUP_DATA } from '../data/supportGroup.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from './AuthContext.jsx'
 import { useProfile } from './ProfileContext.jsx'
@@ -21,20 +22,55 @@ function slugify(str) {
 }
 
 export function GroupsProvider({ children }) {
-  const { user } = useAuth()
+  const { user, isSupport } = useAuth()
   const { profile } = useProfile()
   const [groups, setGroups] = useState([])
+  const [groupsLoaded, setGroupsLoaded] = useState(false)
 
   useEffect(() => {
     if (!user) {
       setGroups([])
+      setGroupsLoaded(false)
       return
     }
-    const unsub = onSnapshot(collection(db, 'groups'), (snap) => {
-      setGroups(snap.docs.map((d) => ({ ...d.data(), docId: d.id })))
-    })
+    const unsub = onSnapshot(
+      collection(db, 'groups'),
+      (snap) => {
+        setGroups(snap.docs.map((d) => ({ ...d.data(), docId: d.id })))
+        setGroupsLoaded(true)
+      },
+      (err) => {
+        console.error('No se pudieron leer las mesas de trabajo', err)
+        setGroupsLoaded(true)
+      }
+    )
     return unsub
   }, [user])
+
+  // La mesa oficial de dudas y onboarding la crea la cuenta de soporte la
+  // primera vez que entra (con el correo verificado) y todavía no existe —
+  // queda a su nombre, con permisos de administración. Solo se intenta una
+  // vez por sesión para no repetir el intento si falla.
+  const supportSeedTried = useRef(false)
+  useEffect(() => {
+    if (!user || !isSupport || !groupsLoaded || supportSeedTried.current) return
+    if (groups.some((g) => g.docId === SUPPORT_GROUP_ID)) return
+    supportSeedTried.current = true
+    const batch = writeBatch(db)
+    batch.set(doc(db, 'groups', SUPPORT_GROUP_ID), {
+      ...SUPPORT_GROUP_DATA,
+      slug: SUPPORT_GROUP_SLUG,
+      ownerUid: user.uid,
+      adminUids: [user.uid],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastMessage: '',
+      lastSenderUid: '',
+      messageCount: 0,
+    })
+    batch.set(doc(db, 'profiles', user.uid), { joinedGroups: arrayUnion(SUPPORT_GROUP_ID) }, { merge: true })
+    batch.commit().catch((err) => console.error('No se pudo crear la mesa de soporte', err))
+  }, [user, isSupport, groupsLoaded, groups])
 
   // Crea la mesa y en el mismo batch se auto-une el dueño a su propia
   // mesa (si no, no podría escribir en su propio chat de grupo). adminUids

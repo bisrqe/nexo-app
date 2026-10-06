@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout.jsx'
+import RegionFilter, { useRegionFilter } from '../components/RegionFilter.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
-import { CITIES, getCityName } from '../data/cities.js'
+import { locationLabel, profileRegion, matchesRegionFilter } from '../data/cities.js'
+import { profileRoles } from '../lib/initiativeKind.js'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -25,43 +27,32 @@ function profileToPerson(p) {
     name: p.name,
     role: p.occupation,
     profileType: p.profileType,
-    location: getCityName(p.city) || p.location,
+    roles: profileRoles(p),
+    location: locationLabel(p),
+    region: p.region,
+    cityName: p.cityName,
     city: p.city,
     ods: p.interests || [],
     odsLabel,
-    industry: p.industry,
+    industries: [p.industry, p.industrySecondary].filter(Boolean),
     cause: p.cause,
     offers,
     looking: p.lookingFor,
     bio: p.bio,
-    contact: p.email,
-    linkedin: p.linkedin,
     photo: p.photo,
   }
-}
-
-// Qué filtro de categoría tiene sentido mostrar según el rol elegido —
-// cada tipo de perfil captura una categoría distinta (industria, causa u
-// ODS), así que no tiene caso mostrar los tres desplegables si ya se sabe
-// cuál aplica. Estudiante es el único caso con dos a la vez (ver
-// isStudentEntrepreneur en lib/initiativeKind.js para el mismo criterio
-// en emprendimientos).
-const ROLE_CATEGORY_VISIBILITY = {
-  emprendedor: { industry: true },
-  organizacion: { cause: true },
-  voluntario: { ods: true },
-  estudiante: { industry: true, ods: true },
 }
 
 // Qué tanto empata una persona con el perfil de quien está buscando —
 // mismo criterio que scoreForProfile en lib/recommend.js pero para
 // personas en vez de emprendimientos: no filtra nada, solo ordena para
-// que las coincidencias más fuertes (ciudad, industria, causa, ODS
+// que las coincidencias más fuertes (región, industria, causa, ODS
 // compartidos, mismo rol) aparezcan primero.
 function scorePersonForProfile(person, profile) {
   let score = 0
-  if (person.city && profile.city && person.city === profile.city) score += 2
-  if (person.industry && profile.industry && person.industry === profile.industry) score += 3
+  const myRegion = profileRegion(profile)
+  if (person.region && myRegion && person.region === myRegion) score += 2
+  if (profile.industry && person.industries.includes(profile.industry)) score += 3
   if (person.cause && profile.cause && person.cause === profile.cause) score += 3
   const sharedOds = (person.ods || []).filter((id) => (profile.interests || []).includes(id))
   score += sharedOds.length * 2
@@ -72,14 +63,14 @@ function scorePersonForProfile(person, profile) {
 export default function Personas() {
   const { profile } = useProfile()
   const { user } = useAuth()
-  const [realProfiles] = useFirestoreCollection('profiles')
-  // Filtros de ciudad/rol/categoría viven en la URL — refrescar la
-  // página o mandarle el link a alguien no debe regresar todo a los
+  const myRegion = profileRegion(profile)
+  const [realProfiles, profilesLoading] = useFirestoreCollection('profiles')
+  // Rol/categoría/búsqueda viven en la URL (junto con la región) — refrescar
+  // la página o mandarle el link a alguien no debe regresar todo a los
   // valores por defecto.
   const [searchParams, setSearchParams] = useSearchParams()
+  const [regionFilter, setRegionFilter] = useRegionFilter(myRegion)
   const query = searchParams.get('q') || ''
-  const showAllCities = searchParams.get('zonas') !== 'mia'
-  const specificCity = searchParams.get('ciudad') || ''
   const roleFilter = searchParams.get('rol') || ''
   const industryFilter = searchParams.get('industria') || ''
   const causeFilter = searchParams.get('causa') || ''
@@ -91,33 +82,12 @@ export default function Personas() {
     else next.delete(key)
     return next
   })
-  const setQuery = (v) => setParam('q', v)
-  const setShowAllCities = (v) => setSearchParams((prev) => {
-    const next = new URLSearchParams(prev)
-    if (v) next.delete('zonas')
-    else next.set('zonas', 'mia')
-    next.delete('ciudad')
+  const clearFilters = () => setSearchParams((prev) => {
+    const next = new URLSearchParams()
+    if (prev.get('region')) next.set('region', prev.get('region'))
     return next
   })
-  const setSpecificCity = (v) => setParam('ciudad', v)
-  const setIndustryFilter = (v) => setParam('industria', v)
-  const setCauseFilter = (v) => setParam('causa', v)
-  const setOdsFilter = (v) => setParam('ods', v)
-
-  const categoryVisibility = ROLE_CATEGORY_VISIBILITY[roleFilter] || {}
-
-  const handleRoleChange = (value) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      if (value) next.set('rol', value)
-      else next.delete('rol')
-      const visible = ROLE_CATEGORY_VISIBILITY[value] || {}
-      if (!visible.industry) next.delete('industria')
-      if (!visible.cause) next.delete('causa')
-      if (!visible.ods) next.delete('ods')
-      return next
-    })
-  }
+  const hasActiveFilters = Boolean(query || roleFilter || industryFilter || causeFilter || odsFilter)
 
   const allPeople = useMemo(() => {
     return realProfiles
@@ -128,22 +98,22 @@ export default function Personas() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const list = allPeople.filter((p) => {
-      const matchesCity = !showAllCities
-        ? p.city === profile.city
-        : (!specificCity || p.city === specificCity)
-      if (!matchesCity) return false
-      if (roleFilter && p.profileType !== roleFilter) return false
-      if (categoryVisibility.industry && industryFilter && p.industry !== industryFilter) return false
-      if (categoryVisibility.cause && causeFilter && p.cause !== causeFilter) return false
-      if (categoryVisibility.ods && odsFilter && !p.ods?.includes(odsFilter)) return false
+      if (!matchesRegionFilter(p, regionFilter)) return false
+      // Un estudiante con segundo perfil de voluntario también aparece al
+      // filtrar por "Voluntario/a" (ver profileRoles).
+      if (roleFilter && !p.roles.includes(roleFilter)) return false
+      // Industria cuenta tanto la principal como la segunda industria.
+      if (industryFilter && !p.industries.includes(industryFilter)) return false
+      if (causeFilter && p.cause !== causeFilter) return false
+      if (odsFilter && !p.ods.includes(odsFilter)) return false
       if (!q) return true
-      return [p.name, p.role, p.odsLabel, ...(p.offers || []), p.looking].join(' ').toLowerCase().includes(q)
+      return [p.name, p.role, p.location, p.odsLabel, ...(p.offers || []), p.looking, p.bio].join(' ').toLowerCase().includes(q)
     })
     // Sin ningún filtro activo, aparece todo el directorio — solo se
     // reordena para que quien más empata con tu propio perfil quede
     // hasta arriba, en vez de recortar la lista.
     return [...list].sort((a, b) => scorePersonForProfile(b, profile) - scorePersonForProfile(a, profile))
-  }, [allPeople, query, profile, showAllCities, specificCity, roleFilter, industryFilter, causeFilter, odsFilter, categoryVisibility])
+  }, [allPeople, query, profile, regionFilter, roleFilter, industryFilter, causeFilter, odsFilter])
 
   return (
     <DashboardLayout
@@ -151,84 +121,64 @@ export default function Personas() {
       title="Personas"
       subtitle="Quién sabe hacer qué, y qué está buscando — sin currículums de relleno."
     >
-      {profile.city && (
-        <div className="filters">
-          <button
-            className={`chip ${!showAllCities ? 'active' : ''}`}
-            onClick={() => { setShowAllCities(false); setSpecificCity('') }}
-          >
-            {getCityName(profile.city)}
-          </button>
-          <button
-            className={`chip ${showAllCities ? 'active' : ''}`}
-            onClick={() => setShowAllCities(true)}
-          >
-            Ver todas las zonas
-          </button>
-          {showAllCities && (
-            <select
-              className="chip-select"
-              value={specificCity}
-              onChange={(e) => setSpecificCity(e.target.value)}
-            >
-              <option value="">Otras ciudades…</option>
-              {CITIES.filter((c) => c.id !== profile.city).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          )}
-        </div>
-      )}
+      <RegionFilter value={regionFilter} onChange={setRegionFilter} myRegion={myRegion} includeRemote={false} />
 
       <div className="filters">
-        <select className="chip-select" value={roleFilter} onChange={(e) => handleRoleChange(e.target.value)}>
+        <select className="chip-select" value={roleFilter} onChange={(e) => setParam('rol', e.target.value)} aria-label="Filtrar por rol">
           <option value="">Todos los roles</option>
           {PROFILE_TYPES.map((t) => (
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>
 
-        {categoryVisibility.industry && (
-          <select className="chip-select" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
-            <option value="">Industria</option>
-            {INDUSTRY_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
-        )}
+        <select className="chip-select" value={industryFilter} onChange={(e) => setParam('industria', e.target.value)} aria-label="Filtrar por industria">
+          <option value="">Toda industria</option>
+          {INDUSTRY_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+            <option key={f.id} value={f.id}>{f.label}</option>
+          ))}
+        </select>
 
-        {categoryVisibility.cause && (
-          <select className="chip-select" value={causeFilter} onChange={(e) => setCauseFilter(e.target.value)}>
-            <option value="">Causa</option>
-            {CAUSE_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
-        )}
+        <select className="chip-select" value={causeFilter} onChange={(e) => setParam('causa', e.target.value)} aria-label="Filtrar por causa">
+          <option value="">Toda causa</option>
+          {CAUSE_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+            <option key={f.id} value={f.id}>{f.label}</option>
+          ))}
+        </select>
 
-        {categoryVisibility.ods && (
-          <select className="chip-select" value={odsFilter} onChange={(e) => setOdsFilter(e.target.value)}>
-            <option value="">ODS</option>
-            {ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
-        )}
+        <select className="chip-select" value={odsFilter} onChange={(e) => setParam('ods', e.target.value)} aria-label="Filtrar por ODS">
+          <option value="">Todo ODS</option>
+          {ODS_FILTERS.filter((f) => f.id !== 'todos').map((f) => (
+            <option key={f.id} value={f.id}>{f.label}</option>
+          ))}
+        </select>
       </div>
 
       <div className="filters">
         <input
           className="search-input"
           type="text"
-          placeholder="Buscar por nombre, habilidad u ODS..."
+          placeholder="Buscar por nombre, habilidad, ciudad u ODS..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => setParam('q', e.target.value)}
         />
+        {hasActiveFilters && (
+          <button type="button" className="btn btn-ghost" onClick={clearFilters}>Limpiar filtros</button>
+        )}
+        {!profilesLoading && (
+          <span className="filter-count">{filtered.length} {filtered.length === 1 ? 'persona' : 'personas'}</span>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
+      {profilesLoading ? (
+        <p className="auth-sub">Cargando…</p>
+      ) : filtered.length === 0 ? (
         <div className="empty-state">
           <p>No encontramos a nadie con ese criterio todavía.</p>
+          {(hasActiveFilters || regionFilter !== 'todas') && (
+            <button type="button" className="link-arrow" onClick={() => { clearFilters(); setRegionFilter('todas') }}>
+              Ver todo el directorio →
+            </button>
+          )}
         </div>
       ) : (
         <div className="page-grid">
@@ -238,7 +188,7 @@ export default function Personas() {
                 {p.photo ? <img src={p.photo} alt="" /> : initials(p.name)}
               </div>
               <div className="person-name">{p.name}</div>
-              <div className="person-role">{p.role} — {p.location}</div>
+              <div className="person-role">{p.role}{p.role && p.location ? ' — ' : ''}{p.location}</div>
               {p.odsLabel && <div className="cat-tags"><span>{p.odsLabel}</span></div>}
               <div className="person-offers">
                 {(p.offers || []).map((o) => (

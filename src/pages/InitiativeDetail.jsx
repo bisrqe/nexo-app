@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import MembersContacts from '../components/MembersContacts.jsx'
 import NavIcon from '../components/NavIcon.jsx'
-import { getCityName } from '../data/cities.js'
+import { locationLabel } from '../data/cities.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
@@ -38,7 +38,7 @@ function InterestedPeople({ uids }) {
               {p.photo ? <img src={p.photo} alt="" /> : initials(p.name)}
             </span>
             <span className="tile-title">{p.name || 'Sin nombre'}</span>
-            <p className="tile-text">{p.occupation}{p.city ? ` — ${getCityName(p.city)}` : ''}</p>
+            <p className="tile-text">{p.occupation}{locationLabel(p) ? ` — ${locationLabel(p)}` : ''}</p>
           </div>
         ))}
       </div>
@@ -102,7 +102,9 @@ export default function InitiativeDetail({ variant = 'public' }) {
   const isApp = variant === 'app'
   const backTo = isApp ? '/app/iniciativas' : '/iniciativas'
   const { user } = useAuth()
-  const { addInitiativeMember, removeInitiativeMember } = useUserContent()
+  const { addInitiativeMember, removeInitiativeMember, deleteInitiative } = useUserContent()
+  const navigate = useNavigate()
+  const [deleting, setDeleting] = useState(false)
 
   const [remote, setRemote] = useState(undefined)
 
@@ -143,6 +145,23 @@ export default function InitiativeDetail({ variant = 'public' }) {
     return result
   }
 
+  // Solo el dueño ve el botón (y las reglas de Firestore lo vuelven a
+  // exigir del lado del servidor). Es permanente, por eso pide confirmar.
+  const handleDelete = async () => {
+    if (!initiative?.docId || deleting) return
+    const noun = kindFor(initiative.ownerProfileType, initiative.ownerProfileSubtype).noun
+    if (!window.confirm(`¿Seguro que quieres borrar "${initiative.title}"? Se elimina para siempre, junto con su dossier, y ya no aparecerá en el catálogo de ${noun === 'iniciativa' ? 'iniciativas' : noun === 'emprendimiento' ? 'emprendimientos' : 'instituciones'}.`)) return
+    setDeleting(true)
+    try {
+      await deleteInitiative(initiative.docId)
+      navigate('/app/mi-iniciativa', { replace: true })
+    } catch (err) {
+      console.error(err)
+      window.alert('No se pudo borrar. Solo quien lo registró puede borrarlo — intenta de nuevo.')
+      setDeleting(false)
+    }
+  }
+
   const handleRemoveMember = async (uid) => {
     await removeInitiativeMember(initiative, uid)
     setRemote((r) => ({ ...r, memberUids: (r.memberUids || []).filter((id) => id !== uid) }))
@@ -151,7 +170,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
   if (loading) {
     const loadingBody = <p className="auth-sub">Cargando…</p>
     return isApp ? (
-      <DashboardLayout eyebrow="Emprendimientos" title="Dossier">{loadingBody}</DashboardLayout>
+      <DashboardLayout eyebrow="Explorar" title="Dossier">{loadingBody}</DashboardLayout>
     ) : (
       <>
         <Header />
@@ -165,14 +184,14 @@ export default function InitiativeDetail({ variant = 'public' }) {
     const notFound = (
       <div className="auth-card">
         <span className="kicker">No encontrada</span>
-        <h1 className="auth-title">Ese emprendimiento no está en el mapa</h1>
+        <h1 className="auth-title">Ese proyecto no está en el mapa</h1>
         <p className="auth-sub">Puede que se haya movido de nombre, o que todavía no exista.</p>
         <Link to={backTo} className="btn btn-primary">Volver al catálogo</Link>
       </div>
     )
     if (isApp) {
       return (
-        <DashboardLayout eyebrow="Emprendimientos" title="No encontrada">
+        <DashboardLayout eyebrow="Explorar" title="No encontrado">
           {notFound}
         </DashboardLayout>
       )
@@ -187,15 +206,17 @@ export default function InitiativeDetail({ variant = 'public' }) {
   }
 
   const {
-    id, stage, title, org, location, city, link, odsLabel, odsSecondaryLabel,
+    id, stage, title, org, location, link, odsLabel, odsSecondaryLabel,
     industryLabel, industrySecondaryLabel, causeLabel, need, desc, longDesc, collaborators, impact,
-    ownerUid, ownerProfileType, ownerProfileSubtype, memberUids, resources, logoUrl,
+    ownerUid, ownerProfileType, ownerProfileSubtype, memberUids, resources, logoUrl, metrics,
   } = initiative
   const kind = kindFor(ownerProfileType, ownerProfileSubtype)
   const projectType = projectTypeFor(ownerProfileType, ownerProfileSubtype)
   const imageResources = (resources || []).filter(isImageResource)
   const otherResources = (resources || []).filter((r) => !isImageResource(r))
-  const isRemote = city === 'remoto'
+  const placeText = locationLabel(initiative) || location
+  const subtitleText = [org, placeText].filter(Boolean).join(' — ')
+  const metricItems = (metrics || []).filter((m) => m.label && m.value)
 
   if (!isApp && !user) {
     const gateBody = (
@@ -218,7 +239,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
                 {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
               </div>
               <h1 className="detail-title">{title}</h1>
-              <p className="dossier-subtitle">{org} — {getCityName(city) || location}</p>
+              <p className="dossier-subtitle">{subtitleText}</p>
             </div>
           </div>
           <p className="detail-lede" style={{ marginTop: 20 }}>{desc}</p>
@@ -265,7 +286,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
               {projectType !== 'emprendimientos' && ` · ${kind.Noun.toUpperCase()}`}
             </div>
             <h1 className="detail-title">{title}</h1>
-            <p className="dossier-subtitle">{org} — {getCityName(city) || location}</p>
+            <p className="dossier-subtitle">{subtitleText}</p>
           </div>
         </div>
         <div className="dossier-tags">
@@ -275,7 +296,21 @@ export default function InitiativeDetail({ variant = 'public' }) {
           {industrySecondaryLabel && <span className="chip">{industrySecondaryLabel}</span>}
           {causeLabel && <span className="chip">{causeLabel}</span>}
         </div>
+        {link && (
+          <a href={link} target="_blank" rel="noreferrer" className="btn btn-gold btn-lg dossier-visit">Visitar sitio ↗</a>
+        )}
       </div>
+
+      {metricItems.length > 0 && (
+        <div className="dossier-metrics" aria-label="Métricas">
+          {metricItems.map((m, i) => (
+            <div className="dossier-metric" key={`${m.label}-${i}`}>
+              <span className="dossier-metric-value">{m.value}</span>
+              <span className="dossier-metric-label">{m.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="dossier-grid">
         <div className="dossier-main">
@@ -295,18 +330,6 @@ export default function InitiativeDetail({ variant = 'public' }) {
               <div className="dossier-section">
                 <span className="kicker">Colaboradores</span>
                 <p className="dossier-meta-value">{collaborators.join(', ')}</p>
-              </div>
-            )}
-            {!impact && isRemote && (
-              <div className="dossier-section">
-                <span className="kicker">Modalidad</span>
-                <p className="dossier-meta-value">Remoto</p>
-              </div>
-            )}
-            {link && (
-              <div className="dossier-section">
-                <span className="kicker">Sitio</span>
-                <p className="dossier-meta-value"><a href={link} target="_blank" rel="noreferrer" className="link-arrow">Visitar sitio →</a></p>
               </div>
             )}
           </div>
@@ -365,6 +388,12 @@ export default function InitiativeDetail({ variant = 'public' }) {
             <Link to={`/app/iniciativas/${slug}/editar`} className="btn btn-ghost dossier-action">Editar {kind.noun}</Link>
           )}
 
+          {isApp && isOwner && initiative.docId && (
+            <button type="button" className="btn btn-ghost-danger dossier-action" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Borrando…' : `Borrar ${kind.noun}`}
+            </button>
+          )}
+
           {isApp && user && !isMember && initiative.docId && (
             <button type="button" className={`btn dossier-action ${interested ? 'btn-ghost' : 'btn-primary'}`} onClick={toggleInterest}>
               {interested ? '✓ Ya no me interesa' : 'Me interesa →'}
@@ -379,7 +408,7 @@ export default function InitiativeDetail({ variant = 'public' }) {
 
   if (isApp) {
     return (
-      <DashboardLayout eyebrow="Emprendimientos" title="Dossier">
+      <DashboardLayout eyebrow={kind.eyebrow} title={isMember ? kind.my : 'Dossier'}>
         {body}
       </DashboardLayout>
     )

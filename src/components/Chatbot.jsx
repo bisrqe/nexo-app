@@ -5,49 +5,111 @@ import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
+import { useUserContent } from '../context/UserContentContext.jsx'
 import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
+import { ODS_FILTERS } from '../data/initiatives.js'
+import { getRegionName, profileRegion, locationLabel, isRemoteItem } from '../data/cities.js'
+import { flattenResources } from '../data/resources.js'
+import { SUPPORT_GROUP_ID, SUPPORT_GROUP_SLUG } from '../data/supportGroup.js'
 import { kindFor } from '../lib/initiativeKind.js'
-import { rankForProfile, rankMentorsForProfile } from '../lib/recommend.js'
+import { buildRecommendations } from '../lib/recommend.js'
 import { CHATBOT_FAQ, matchFaq, FAQ_FALLBACK, SUPPORT_EMAIL } from '../data/chatbotFaq.js'
 import nexoIconWhite from '../assets/iconotipo-blanco.png'
 
 const OUTSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Puedo orientarte sobre qué es Nexo, cómo registrar tu emprendimiento, eventos y recursos. Si necesitas algo más puntual, escríbenos directo.' }
-const INSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Pregúntame cómo registrar tu emprendimiento, unirte a una mesa de trabajo, o cualquier otra duda sobre la plataforma.' }
+const INSIDE_GREETING = { role: 'assistant', content: '¡Hola! Soy el asistente de Nexo. Conozco tu perfil: pregúntame qué emprendimientos, eventos, mesas de trabajo, mentores o recursos te convienen, o cualquier duda sobre cómo usar la plataforma.' }
 
-// Arma un resumen corto y real (nombres, no inventado) de qué le conviene
-// ver a esta cuenta ahora mismo — se manda como contexto al chatbot "de
-// adentro" para que recomiende en vez de solo explicar la plataforma. Solo
-// se llama al mandar un mensaje dentro del dashboard, no en cada render.
-async function buildInsideContext(profile, groups) {
-  const [initSnap, mentorSnap] = await Promise.all([
-    getDocs(collection(db, 'initiatives')),
-    getDocs(query(collection(db, 'profiles'), where('profileType', '==', 'mentor'))),
-  ])
-  const initiatives = initSnap.docs.map((d) => ({ ...d.data(), docId: d.id }))
-  const mentors = mentorSnap.docs.map((d) => ({ ...d.data(), docId: d.id }))
+const BUILT_IN_RESOURCES = flattenResources()
+const DATA_TTL_MS = 60 * 1000
+let dataCache = null
 
-  const rankedInitiatives = rankForProfile(initiatives, profile).slice(0, 4)
-  const rankedMentors = profile.profileType === 'mentor' ? [] : rankMentorsForProfile(mentors, profile, 3)
-  const rankedGroups = rankForProfile(groups, profile).slice(0, 3)
+// Lee de Firestore lo que el chatbot necesita para recomendar — emprendimientos,
+// eventos, mentores y recursos reales de la plataforma. Se guarda un minuto
+// en memoria para que varias preguntas seguidas no vuelvan a leer todo. Cada
+// lectura es independiente: si una falla (permisos, red) el bot sigue
+// recomendando con lo demás en vez de caerse.
+async function loadPlatformData() {
+  if (dataCache && Date.now() - dataCache.at < DATA_TTL_MS) return dataCache.data
+  const read = (q) => getDocs(q).then((snap) => snap.docs.map((d) => ({ ...d.data(), docId: d.id })))
+  const [initiatives, events, mentors, customResources] = await Promise.allSettled([
+    read(collection(db, 'initiatives')),
+    read(collection(db, 'events')),
+    read(query(collection(db, 'profiles'), where('profileType', '==', 'mentor'))),
+    read(collection(db, 'resources')),
+  ]).then((results) => results.map((r) => (r.status === 'fulfilled' ? r.value : [])))
+  const data = { initiatives, events, mentors, customResources }
+  dataCache = { at: Date.now(), data }
+  return data
+}
+
+const short = (text, n) => (text || '').slice(0, n)
+
+// Arma el contexto real de la cuenta — su perfil completo y lo que Nexo le
+// recomienda hoy (el MISMO cálculo que el dashboard: buildRecommendations) —
+// para que el chatbot "de adentro" recomiende emprendimientos, eventos,
+// mesas de trabajo, mentores y recursos concretos en vez de solo explicar la
+// plataforma. Nunca manda el género de la cuenta: las recomendaciones ya
+// vienen adaptadas, y el modelo no necesita saberlo. Solo se llama al mandar
+// un mensaje dentro del dashboard, no en cada render.
+async function buildInsideContext(profile, groups, uid, myInitiatives) {
+  const { initiatives, events, mentors, customResources } = await loadPlatformData()
+  const today = new Date().toISOString().slice(0, 10)
+
+  const recommended = buildRecommendations({
+    profile,
+    initiatives: initiatives.filter((i) => !(i.memberUids || []).includes(uid)),
+    events: events.filter((e) => !e.date || e.date >= today),
+    groups: groups.filter((g) => g.docId !== SUPPORT_GROUP_ID),
+    mentors,
+    resources: [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved')],
+    limits: { initiatives: 5, events: 4, groups: 3, mentors: 3, resources: 4 },
+  })
 
   const baseTypeLabel = PROFILE_TYPES.find((p) => p.id === profile.profileType)?.label || profile.profileType
   const subtypeLabel = profile.profileType === 'estudiante' ? STUDENT_SUBTYPES.find((s) => s.id === profile.subtype)?.label : ''
+  const secondaryLabel = profile.profileType === 'estudiante' && profile.secondaryProfile
+    ? PROFILE_TYPES.find((p) => p.id === profile.secondaryProfile)?.label
+    : ''
+  const profileTypeLabel = [baseTypeLabel, subtypeLabel, secondaryLabel].filter(Boolean).join(' · ')
 
   return {
     name: profile.name,
-    profileTypeLabel: subtypeLabel ? `${baseTypeLabel} · ${subtypeLabel}` : baseTypeLabel,
+    profileTypeLabel,
+    occupation: profile.occupation,
     industryLabel: profile.industryLabel,
-    cause: profile.cause || profile.expertise || '',
-    city: profile.city,
+    industrySecondaryLabel: profile.industrySecondaryLabel,
+    odsLabel: ODS_FILTERS.find((f) => f.id === profile.interests?.[0])?.label || '',
+    cause: profile.causeLabel || profile.expertise || '',
+    advisoryOffer: short(profile.advisoryOffer, 160),
+    region: getRegionName(profileRegion(profile)),
+    city: profile.cityName || '',
+    bio: short(profile.bio, 240),
+    lookingFor: short(profile.lookingFor, 160),
+    ownProjects: myInitiatives.map((i) => ({
+      title: i.title,
+      kind: kindFor(i.ownerProfileType, i.ownerProfileSubtype).noun,
+      stage: i.stage,
+      need: short(i.need, 100),
+    })),
     recommended: {
-      initiatives: rankedInitiatives.map((i) => ({
+      initiatives: recommended.initiatives.map((i) => ({
         title: i.title,
         kind: kindFor(i.ownerProfileType, i.ownerProfileSubtype).noun,
-        tag: i.industryLabel || i.odsLabel,
-        need: (i.need || '').slice(0, 100),
+        stage: i.stage,
+        tag: i.industryLabel || i.causeLabel || i.odsLabel,
+        need: short(i.need, 100),
+        location: locationLabel(i),
+        remote: isRemoteItem(i),
       })),
-      mentors: rankedMentors.map((m) => ({ name: m.name, expertise: (m.expertise || '').slice(0, 100) })),
-      groups: rankedGroups.map((g) => ({ name: g.name, industryLabel: g.industryLabel })),
+      events: recommended.events.map((e) => ({
+        title: e.title,
+        date: e.date,
+        category: e.category,
+        location: isRemoteItem(e) ? 'En línea' : locationLabel(e),
+      })),
+      groups: recommended.groups.map((g) => ({ name: g.name, industryLabel: g.industryLabel })),
+      mentors: recommended.mentors.map((m) => ({ name: m.name, expertise: short(m.expertise, 100) })),
+      resources: recommended.resources.map((r) => ({ title: r.title, category: r.category, link: r.link })),
     },
   }
 }
@@ -62,6 +124,7 @@ export default function Chatbot() {
   const { user, signOutUser } = useAuth()
   const { profile } = useProfile()
   const { groups } = useGroups()
+  const { myInitiatives } = useUserContent()
   const isInside = user && location.pathname.startsWith('/app')
 
   const [open, setOpen] = useState(false)
@@ -140,19 +203,6 @@ export default function Chatbot() {
     setShowMenu(true)
   }
 
-  const handleTalkToHuman = async () => {
-    setShowMenu(false)
-    setMessages((m) => [...m, { role: 'user', content: 'Quiero hablar con una persona' }])
-    setLoading(true)
-    await wait(600)
-    setMessages((m) => [
-      ...m,
-      { role: 'assistant', content: 'Claro, escríbenos directamente y alguien del equipo te responde:', link: { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL } },
-    ])
-    setLoading(false)
-    setShowMenu(true)
-  }
-
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault()
     const text = feedbackText.trim()
@@ -183,7 +233,7 @@ export default function Chatbot() {
   const sendInside = async (text, history) => {
     setLoading(true)
     try {
-      const context = await buildInsideContext(profile, groups)
+      const context = await buildInsideContext(profile, groups, user?.uid, myInitiatives)
       const res = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -201,9 +251,7 @@ export default function Chatbot() {
     }
   }
 
-  const send = (e) => {
-    e.preventDefault()
-    const text = input.trim()
+  const submit = (text) => {
     if (!text || loading || greeting) return
     setError(false)
     setShowMenu(false)
@@ -215,6 +263,11 @@ export default function Chatbot() {
     } else {
       sendOutside(text)
     }
+  }
+
+  const send = (e) => {
+    e.preventDefault()
+    submit(input.trim())
   }
 
   return (
@@ -278,7 +331,12 @@ export default function Chatbot() {
                     </li>
                   ))}
                   {isInside && (
-                    <li><button type="button" onClick={handleTalkToHuman}>Hablar con una persona</button></li>
+                    <li><button type="button" onClick={() => submit('¿Qué me recomiendas según mi perfil?')}>¿Qué me recomiendas?</button></li>
+                  )}
+                  {isInside && (
+                    <li>
+                      <Link to={`/app/comunidad/${SUPPORT_GROUP_SLUG}`} onClick={() => setOpen(false)}>Mesa de dudas y onboarding</Link>
+                    </li>
                   )}
                   <li><button type="button" onClick={() => setFeedbackOpen(true)}>Enviar retroalimentación</button></li>
                   {!isInside && user && (

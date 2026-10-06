@@ -139,7 +139,7 @@ export default function AdminKPIs() {
           <DonutChart data={kpis.initiativesByStage} />
         </div>
         <div className="kpi-card">
-          <h3>Miembros por ciudad</h3>
+          <h3>Miembros por región</h3>
           <BarChart data={kpis.profilesByCity} color="var(--navy)" />
         </div>
         <div className="kpi-card">
@@ -151,7 +151,7 @@ export default function AdminKPIs() {
           <BarChart data={kpis.groupMembership} color="var(--gold-ink)" emptyLabel="Nadie se ha unido a una mesa todavía." />
         </div>
         <div className="kpi-card">
-          <h3>Eventos por ciudad</h3>
+          <h3>Eventos por región</h3>
           <BarChart data={kpis.eventsByCity} color="var(--indigo)" />
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function AdminKPIs() {
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Ciudad</th>
+                  <th>Región</th>
                   <th>Emprendimientos</th>
                   <th>Interés mostrado</th>
                   <th>Eventos</th>

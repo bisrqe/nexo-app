@@ -4,10 +4,12 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { ODS_FILTERS } from '../data/initiatives.js'
-import { getCityName } from '../data/cities.js'
+import { locationLabel } from '../data/cities.js'
+import { normalizeUrl } from '../lib/url.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
+import { kindFor } from '../lib/initiativeKind.js'
 
 function initials(name) {
   return (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -23,14 +25,20 @@ function profileToPerson(p, uid) {
   const offersLabel = p.profileType === 'mentor' ? 'Ofrece' : p.profileType === 'organizacion' ? 'Causa' : 'Industria'
   const baseTypeLabel = PROFILE_TYPES.find((t) => t.id === p.profileType)?.label
   const subtypeLabel = p.profileType === 'estudiante' ? STUDENT_SUBTYPES.find((s) => s.id === p.subtype)?.label : ''
+  const secondaryLabel = p.profileType === 'estudiante' && p.secondaryProfile
+    ? PROFILE_TYPES.find((t) => t.id === p.secondaryProfile)?.label
+    : ''
+  const typeLabel = [baseTypeLabel, subtypeLabel, secondaryLabel].filter(Boolean).join(' · ')
   return {
     uid,
+    profileType: p.profileType,
+    profileSubtype: p.subtype,
     name: p.name,
     username: p.username,
     role: p.occupation,
-    location: getCityName(p.city) || p.location,
+    location: locationLabel(p),
     odsLabel,
-    profileTypeLabel: subtypeLabel ? `${baseTypeLabel} · ${subtypeLabel}` : baseTypeLabel,
+    profileTypeLabel: p.profileType === 'organizacion' ? 'Perfil institucional' : typeLabel,
     offers,
     offersLabel,
     advisoryOffer: p.advisoryOffer,
@@ -39,7 +47,8 @@ function profileToPerson(p, uid) {
     bio: p.bio,
     lookingFor: p.lookingFor,
     contact: p.email,
-    linkedin: p.linkedin,
+    extraEmails: p.additionalEmails || [],
+    linkedin: normalizeUrl(p.linkedin),
     photo: p.photo,
   }
 }
@@ -115,8 +124,8 @@ export default function PersonProfile() {
   }
 
   const {
-    uid, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
-    bio, lookingFor, contact, linkedin, photo,
+    uid, profileType, profileSubtype, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
+    bio, lookingFor, contact, extraEmails, linkedin, photo,
   } = person
   const canMessage = Boolean(uid && user && uid !== user.uid)
 
@@ -159,9 +168,9 @@ export default function PersonProfile() {
                   <p className="dossier-meta-value">{offers.join(', ')}</p>
                 </div>
               )}
-              {role && (
+              {role && profileType !== 'organizacion' && (
                 <div className="dossier-section">
-                  <span className="kicker">Formación</span>
+                  <span className="kicker">Ocupación</span>
                   <p className="dossier-meta-value">{role}</p>
                 </div>
               )}
@@ -193,7 +202,7 @@ export default function PersonProfile() {
             )}
 
             <div className="dossier-section">
-              <span className="kicker">Emprendimientos</span>
+              <span className="kicker">{profileType === 'organizacion' ? 'Instituciones' : kindFor(profileType, profileSubtype).eyebrow}</span>
               {initiatives === undefined ? (
                 <p className="dossier-meta-value" style={{ color: 'var(--text-faint)' }}>Cargando…</p>
               ) : initiatives.length > 0 ? (
@@ -203,7 +212,9 @@ export default function PersonProfile() {
                   ))}
                 </div>
               ) : (
-                <div className="dossier-empty-box">Aún no hay emprendimientos ligados</div>
+                <div className="dossier-empty-box">
+                  {profileType === 'organizacion' ? 'Aún no ha registrado un dossier de su institución' : 'Aún no hay proyectos ligados'}
+                </div>
               )}
             </div>
           </div>
@@ -227,6 +238,7 @@ export default function PersonProfile() {
                   </div>
                 </div>
                 {contact && <span className="dossier-contact-email">{contact}</span>}
+                {extraEmails?.map((em) => <span className="dossier-contact-email" key={em}>{em}</span>)}
                 <div className="dossier-contact-actions">
                   {canMessage && (
                     <button type="button" className="btn btn-primary" onClick={() => navigate(`/app/mensajes?to=${uid}`)}>

@@ -150,7 +150,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 
 /* ── Hero (full-bleed) ────────────────────────── */
 .hero{padding-top:28px;}
-.hero-flex{display:flex; align-items:center; min-height:560px;}
+.hero-flex{display:flex; align-items:center; min-height:500px;}
 /* margin (not padding) carries the left gutter offset, so it stays
    outside the box: at very wide viewports --gutter can exceed 300px,
    and padding on both sides of a max-width:600px box was driving the
@@ -189,7 +189,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 .hero-actions{display:flex; gap:12px; flex-wrap:wrap;}
 
 /* ── Stat strip (contained card, separated from dark sections) ── */
-.stat-section{padding:44px 0 84px;}
+.stat-section{padding:32px 0 52px;}
 .stat-strip{
   background:var(--ink);
   border-radius:8px;
@@ -203,7 +203,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 .stat-label{font-family:var(--mono); font-size:11.5px; color:#AEBBD0; text-transform:uppercase; letter-spacing:.04em;}
 
 /* ── Pivot / manifesto ────────────────────────── */
-.pivot{background:var(--ink); padding:84px var(--gutter);}
+.pivot{background:var(--ink); padding:60px var(--gutter);}
 .pivot .wrap{padding:0; max-width:var(--maxw);}
 .pivot-quote{
   font-family:var(--serif); font-style:italic; font-weight:400;
@@ -220,7 +220,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 .why-stats-row{
   display:grid; grid-template-columns:repeat(4,1fr);
   border-top:1px solid rgba(255,255,255,.14);
-  margin-top:44px; padding-top:32px;
+  margin-top:32px; padding-top:28px;
 }
 .why-stat{padding:0 28px; border-left:1px solid rgba(255,255,255,.14); display:flex; flex-direction:column; gap:8px;}
 .why-stat:first-child{padding-left:0; border-left:none;}
@@ -240,12 +240,12 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 }
 
 /* ── Section shell ────────────────────────────── */
-section{padding:88px 0;}
+section{padding:60px 0;}
 section.full{padding:0;}
 .section-head{
   display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;
   gap:32px 56px;
-  margin-bottom:52px; padding:0 var(--gutter);
+  margin-bottom:36px; padding:0 var(--gutter);
 }
 .head-title{flex:1 1 420px;}
 .section-head h2{
@@ -294,7 +294,7 @@ section.full{padding:0;}
 
 /* ── Catalog preview ──────────────────────────── */
 .bg-alt{background:var(--paper-alt);}
-.filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; padding:0 var(--gutter);}
+.filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; padding:0 var(--gutter); align-items:center;}
 .chip{
   font-family:var(--mono); font-size:11.5px; font-weight:600; letter-spacing:.02em;
   padding:8px 13px; border-radius:4px;
@@ -420,8 +420,8 @@ section.full{padding:0;}
 /* ── CTA band (full-bleed) ─────────────────────── */
 .cta-band{
   background:var(--ink);
-  padding:70px var(--gutter);
-  display:flex; align-items:center; justify-content:space-between; gap:40px;
+  padding:52px var(--gutter);
+  display:flex; align-items:center; justify-content:space-between; gap:32px;
   flex-wrap:wrap;
 }
 .cta-band h2{font-family:var(--serif); font-weight:500; color:#fff; font-size:2.1rem; margin-bottom:10px; letter-spacing:-.01em;}
@@ -429,7 +429,7 @@ section.full{padding:0;}
 .cta-band p{color:#AEBBD0; font-size:15.5px;}
 
 /* ── Footer ───────────────────────────────────── */
-footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
+footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .foot-grid{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; margin-bottom:38px; max-width:var(--maxw); margin-left:auto; margin-right:auto;}
 .foot-brand p{font-family:var(--serif); font-style:italic; color:var(--text-soft); font-size:14.5px; margin-top:14px; max-width:300px; line-height:1.5;}
 .foot-col .foot-heading{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:14px;}
@@ -445,7 +445,7 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .auth-section{
   min-height:calc(100vh - 68px - 260px);
   display:flex; align-items:center; justify-content:center;
-  padding:64px var(--gutter);
+  padding:44px var(--gutter);
 }
 .auth-card{
   width:100%; max-width:440px;
@@ -527,12 +527,12 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
 .preview-label{font-family:var(--mono); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint);}
 
 /* ── Initiative detail page ───────────────────── */
-.detail-section{padding:56px 0 90px;}
+.detail-section{padding:40px 0 64px;}
 .back-link{display:inline-block; margin-bottom:32px;}
 .detail-head{margin-bottom:36px; padding-bottom:32px; border-bottom:1px solid var(--line);}
 .detail-title{font-family:var(--serif); font-weight:500; font-size:clamp(1.9rem,3.4vw,2.6rem); color:var(--ink); letter-spacing:-.01em; margin:10px 0 8px;}
 .detail-body{max-width:640px; display:flex; flex-direction:column; gap:24px; margin-bottom:40px;}
-.detail-lede{font-family:var(--serif); font-style:italic; font-size:19px; color:var(--ink);}
+.detail-lede{font-family:var(--serif); font-style:normal; font-size:19px; line-height:1.55; color:var(--ink);}
 .detail-body p{font-size:15.5px; color:var(--text-soft); line-height:1.65;}
 .detail-copy{font-family:var(--sans); font-style:normal; font-size:15.5px; color:var(--text-soft); line-height:1.65;}
 
@@ -793,10 +793,10 @@ footer{border-top:1px solid var(--line); padding:56px var(--gutter) 32px;}
   .toast-stack{left:16px; right:16px; bottom:16px; max-width:none;}
 }
 
-.app-topbar{padding:36px 32px 0; background:var(--paper);}
+.app-topbar{padding:28px 32px 0; background:var(--paper);}
 .app-topbar h1{font-family:var(--serif); font-weight:500; font-size:clamp(1.7rem,2.6vw,2.2rem); color:var(--ink); letter-spacing:-.01em; margin:6px 0 4px;}
 .app-topbar p{color:var(--text-soft); font-size:14.5px; max-width:560px;}
-.app-content{padding:32px 32px 80px;}
+.app-content{padding:24px 32px 56px;}
 
 /* content already inset by app-content's own padding — the marketing-page
    gutter classes would otherwise double up, so neutralize them in here */
@@ -1225,11 +1225,13 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .nexo-chatbot-suggestions{display:flex; flex-direction:column; gap:6px; align-self:flex-start; max-width:92%;}
 .nexo-chatbot-suggestions-label{font-size:11.5px; color:var(--text-soft); padding:0 2px;}
 .nexo-chatbot-suggestions ul{list-style:none; display:flex; flex-direction:column; gap:6px;}
-.nexo-chatbot-suggestions button{
+.nexo-chatbot-suggestions button,
+.nexo-chatbot-suggestions a{
   display:block; width:100%; text-align:left; border:1px solid var(--line-strong); border-radius:10px;
   padding:8px 12px; background:#fff; color:var(--navy); font-size:12.5px; font-weight:600; cursor:pointer; transition:.15s;
 }
-.nexo-chatbot-suggestions button:hover{background:var(--paper-alt); border-color:var(--navy);}
+.nexo-chatbot-suggestions button:hover,
+.nexo-chatbot-suggestions a:hover{background:var(--paper-alt); border-color:var(--navy);}
 .nexo-chatbot-feedback{display:flex; flex-direction:column; gap:8px; align-self:stretch;}
 .nexo-chatbot-feedback label{display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:var(--text-soft);}
 .nexo-chatbot-feedback textarea{
@@ -1260,3 +1262,80 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   .nexo-chatbot{right:14px; bottom:14px;}
   .nexo-chatbot-panel{right:0; width:calc(100vw - 28px);}
 }
+
+
+/* ══════════════════════════════════════════════
+   Ubicación por región, sedes, métricas, etapas
+   ══════════════════════════════════════════════ */
+.chip-select.active{background:var(--ink); border-color:var(--ink); color:#fff;}
+.filter-count{font-family:var(--mono); font-size:11.5px; color:var(--text-faint); margin-left:4px;}
+.filter-note{font-size:12.5px; color:var(--text-faint); margin:-8px 0 20px;}
+
+/* Explicación corta debajo de cada campo de los formularios largos
+   (registrar emprendimiento / iniciativa / institución). */
+.form-field span.field-hint,
+.field-hint{
+  font-family:var(--sans); font-size:12.5px; font-weight:400; letter-spacing:0; text-transform:none;
+  color:var(--text-faint); line-height:1.45;
+}
+.form-fieldset{
+  border:1px solid var(--line); border-radius:8px; padding:18px 18px 20px;
+  display:flex; flex-direction:column; gap:14px; min-width:0;
+}
+.form-fieldset legend{
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--text-soft); padding:0 8px;
+}
+.sede-row,
+.metric-row{
+  display:grid; grid-template-columns:1fr 1fr auto; gap:14px; align-items:end;
+  padding-bottom:14px; border-bottom:1px dashed var(--line);
+}
+.sede-row{grid-template-columns:1fr 1fr 1fr auto;}
+.sede-row:last-of-type,
+.metric-row:last-of-type{border-bottom:none; padding-bottom:0;}
+.sede-remove{padding-bottom:12px; color:#c0392b;}
+.form-check-inline{display:flex; align-items:flex-start; gap:10px; font-size:14px; color:var(--text); cursor:pointer;}
+.form-check-inline input{margin-top:4px; flex-shrink:0; width:16px; height:16px; accent-color:var(--navy);}
+.form-check-inline > span{display:flex; flex-direction:column; gap:3px; font-weight:600;}
+.form-check input{width:auto !important; margin-right:6px; accent-color:var(--navy);}
+.form-check > span:first-child{text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:14px; color:var(--text);}
+@media (max-width:700px){
+  .sede-row,
+  .metric-row{grid-template-columns:1fr;}
+  .sede-remove{padding-bottom:0; align-self:flex-start;}
+}
+
+/* Tarjeta del catálogo: ubicación, métricas y enlace al sitio */
+.cat-location{font-family:var(--mono); font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.03em; margin-top:-6px;}
+.cat-metrics{display:flex; gap:10px; flex-wrap:wrap;}
+.cat-metric{
+  display:flex; flex-direction:column; gap:2px; flex:1 1 120px;
+  background:var(--paper-alt); border-left:3px solid var(--gold); border-radius:4px; padding:8px 12px;
+}
+.cat-metric-value{font-family:var(--serif); font-weight:600; font-size:1.25rem; color:var(--ink); line-height:1.15;}
+.cat-metric-label{font-family:var(--mono); font-size:10.5px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.03em;}
+.cat-foot-links{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.cat-site-link{
+  font-family:var(--mono); font-weight:700; font-size:12px; color:var(--navy);
+  border:1.5px solid var(--navy); border-radius:4px; padding:5px 10px;
+}
+.cat-site-link:hover{background:var(--navy); color:#fff;}
+
+/* Dossier: métricas en grande y botón de sitio visible */
+.dossier-visit{margin-top:20px; align-self:flex-start;}
+.dossier-header{display:flex; flex-direction:column;}
+.dossier-metrics{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:14px;
+  margin-bottom:32px;
+}
+.dossier-metric{
+  background:#101B26; border-radius:12px; padding:20px 22px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.dossier-metric-value{font-family:var(--serif); font-weight:600; font-size:clamp(1.7rem,3vw,2.3rem); color:var(--gold); line-height:1.05;}
+.dossier-metric-label{font-family:var(--mono); font-size:11.5px; color:#C9D3E4; text-transform:uppercase; letter-spacing:.04em;}
+
+.my-project-cell{background:var(--paper); display:flex; flex-direction:column; gap:12px; padding-bottom:20px;}
+.my-project-cell .cat-card{flex:1;}
+.my-project-delete{margin:0 26px; align-self:flex-start;}

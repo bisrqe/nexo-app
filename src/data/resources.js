@@ -297,3 +297,11 @@ export const RESOURCES = {
     },
   ],
 }
+
+// Lista plana de los recursos fijos de este archivo, cada uno con su
+// `region` (mty/cdmx/gdl/nacional) — mismo formato que los recursos
+// capturados a mano en Firestore, para poder ordenarlos y recomendarlos
+// juntos (ver recommendResources en lib/recommend.js).
+export function flattenResources() {
+  return Object.entries(RESOURCES).flatMap(([region, list]) => list.map((r) => ({ ...r, region })))
+}

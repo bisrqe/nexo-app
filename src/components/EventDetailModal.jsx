@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase.js'
-import { getCityName } from '../data/cities.js'
+import { locationLabel } from '../data/cities.js'
 import { EVENT_REPORT_REASONS } from '../data/eventCategories.js'
 import { useProfilesByUids } from '../lib/useProfilesByUids.js'
 import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
@@ -87,7 +87,7 @@ export default function EventDetailModal({ event, currentUser, onClose, onToggle
               )}
             </span>
           )}
-          {event.city && <span>{getCityName(event.city)}</span>}
+          {locationLabel(event) && !isVirtualEvent(event) && <span>{locationLabel(event)}</span>}
         </div>
 
         <div className="dossier-section">

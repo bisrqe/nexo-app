@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 
 // Zona pública (landing) — usa Header/Footer, vive en rutas sueltas.
@@ -19,20 +19,24 @@ import RevertMfaEnrollment from './pages/auth-action/RevertMfaEnrollment.jsx'
 import ActionDispatcher from './pages/auth-action/ActionDispatcher.jsx'
 import NotFound from './pages/NotFound.jsx'
 
-// Zona post-login — todo vive bajo /app/*, con el shell de Sidebar.
-import Dashboard from './pages/Dashboard.jsx'
-import Iniciativas from './pages/Iniciativas.jsx'
-import Personas from './pages/Personas.jsx'
-import PersonProfile from './pages/PersonProfile.jsx'
-import Recursos from './pages/Recursos.jsx'
-import Comunidad from './pages/Comunidad.jsx'
-import GroupDetail from './pages/GroupDetail.jsx'
-import Eventos from './pages/Eventos.jsx'
-import Mensajes from './pages/Mensajes.jsx'
-import Saved from './pages/Saved.jsx'
-import Ajustes from './pages/Ajustes.jsx'
-import MyInitiative from './pages/MyInitiative.jsx'
-import AdminKPIs from './pages/AdminKPIs.jsx'
+// Zona post-login — todo vive bajo /app/*, con el shell de Sidebar. Cada
+// página se carga bajo demanda (lazy): antes todo el dashboard viajaba en un
+// solo paquete de más de 1 MB, y abrir cualquier página esperaba a bajarlo
+// completo — en una conexión lenta eso era justo lo que hacía tardar el
+// dashboard.
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
+const Iniciativas = lazy(() => import('./pages/Iniciativas.jsx'))
+const Personas = lazy(() => import('./pages/Personas.jsx'))
+const PersonProfile = lazy(() => import('./pages/PersonProfile.jsx'))
+const Recursos = lazy(() => import('./pages/Recursos.jsx'))
+const Comunidad = lazy(() => import('./pages/Comunidad.jsx'))
+const GroupDetail = lazy(() => import('./pages/GroupDetail.jsx'))
+const Eventos = lazy(() => import('./pages/Eventos.jsx'))
+const Mensajes = lazy(() => import('./pages/Mensajes.jsx'))
+const Saved = lazy(() => import('./pages/Saved.jsx'))
+const Ajustes = lazy(() => import('./pages/Ajustes.jsx'))
+const MyInitiative = lazy(() => import('./pages/MyInitiative.jsx'))
+const AdminKPIs = lazy(() => import('./pages/AdminKPIs.jsx'))
 import RequireAuth from './components/RequireAuth.jsx'
 import RequireAdmin from './components/RequireAdmin.jsx'
 import Chatbot from './components/Chatbot.jsx'
@@ -60,6 +64,7 @@ export default function App() {
   return (
     <>
       <ScrollManager />
+      <Suspense fallback={<div className="auth-section"><p className="auth-sub">Cargando…</p></div>}>
       <Routes>
         {/* ── Zona pública / landing ──────────────────────────── */}
         <Route path="/" element={<Home />} />
@@ -100,6 +105,7 @@ export default function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       <Chatbot />
     </>
   )

@@ -8,7 +8,9 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { CITIES, getCityName } from '../data/cities.js'
+import RegionFilter, { useRegionFilter } from '../components/RegionFilter.jsx'
+import LocationFields from '../components/LocationFields.jsx'
+import { locationLabel, profileRegion, matchesRegionFilter, regionsOf, sedesOf } from '../data/cities.js'
 import { EVENT_CATEGORIES } from '../data/eventCategories.js'
 import { normalizeUrl } from '../lib/url.js'
 import { isVirtualEvent, callLinkFor } from '../lib/eventLocation.js'
@@ -25,7 +27,7 @@ function excerpt(text, max = 140) {
 
 const EMPTY_EVENT = {
   title: '', date: '', time: '', locationType: 'fisico', location: '', mapsUrl: '', callUrl: '',
-  city: '', category: EVENT_CATEGORIES[0], ods: '', description: '', maxAttendees: 30,
+  region: '', state: '', cityName: '', category: EVENT_CATEGORIES[0], ods: '', description: '', maxAttendees: 30,
 }
 
 export default function Eventos() {
@@ -38,12 +40,10 @@ export default function Eventos() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
   const category = searchParams.get('categoria') || 'Todos'
-  // Mismo patrón que Recursos: mi ciudad + "Remoto" (equivalente de
-  // "Alcance nacional" — no depende de dónde estés) siempre visibles, y el
-  // resto de las ciudades vive bajo "Otras ciudades" con su propio filtro.
-  const myCity = profile.city && profile.city !== 'remoto' ? profile.city : ''
-  const topTab = searchParams.get('zona') || (myCity ? 'mine' : 'remoto')
-  const otherCity = searchParams.get('ciudad') || ''
+  // La región activa (la tuya por defecto) también vive en la URL — ver
+  // RegionFilter. "Remoto / en línea" muestra los eventos por videollamada.
+  const myRegion = profileRegion(profile)
+  const [regionFilter, setRegionFilter] = useRegionFilter(myRegion)
   const setQuery = (value) => setSearchParams((prev) => {
     const next = new URLSearchParams(prev)
     if (value) next.set('q', value)
@@ -56,18 +56,6 @@ export default function Eventos() {
     else next.delete('categoria')
     return next
   })
-  const setTopTab = (value) => setSearchParams((prev) => {
-    const next = new URLSearchParams(prev)
-    next.set('zona', value)
-    next.delete('ciudad')
-    return next
-  })
-  const setOtherCity = (value) => setSearchParams((prev) => {
-    const next = new URLSearchParams(prev)
-    if (value) next.set('ciudad', value)
-    else next.delete('ciudad')
-    return next
-  })
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_EVENT)
   const [editingEventId, setEditingEventId] = useState(null)
@@ -78,20 +66,6 @@ export default function Eventos() {
     [realEvents]
   )
   const activeEvent = activeEventId ? allEvents.find((e) => e.docId === activeEventId) : null
-
-  // Todas las ciudades que no son "mi ciudad" ni "remoto" — se muestran
-  // juntas cuando entras a "Otras ciudades" sin elegir todavía una
-  // específica en el desplegable, en vez de dejar la lista vacía.
-  const otherCityIds = useMemo(
-    () => CITIES.filter((c) => c.id !== 'remoto' && c.id !== myCity).map((c) => c.id),
-    [myCity]
-  )
-
-  const matchesCity = (eventCity) => {
-    if (topTab === 'mine') return eventCity === myCity
-    if (topTab === 'remoto') return eventCity === 'remoto'
-    return otherCity ? eventCity === otherCity : otherCityIds.includes(eventCity)
-  }
 
   const handleToggle = async (event) => {
     if (!user) return
@@ -125,7 +99,9 @@ export default function Eventos() {
       location: event.location || '',
       mapsUrl: event.mapsUrl || '',
       callUrl: event.callUrl || callLinkFor(event),
-      city: event.city || '',
+      region: regionsOf(event)[0] || '',
+      state: sedesOf(event)[0]?.state || '',
+      cityName: sedesOf(event)[0]?.cityName || '',
       category: event.category || EVENT_CATEGORIES[0],
       ods: (event.ods || []).join(', '),
       description: event.description || '',
@@ -154,7 +130,10 @@ export default function Eventos() {
       location: isVirtual ? '' : (form.location || 'Por definir'),
       mapsUrl: isVirtual ? '' : normalizeUrl(form.mapsUrl),
       callUrl: isVirtual ? normalizeUrl(form.callUrl) : '',
-      city: form.city,
+      region: form.locationType === 'virtual' ? '' : form.region,
+      state: form.locationType === 'virtual' ? '' : form.state,
+      cityName: form.cityName.trim(),
+      city: '',
       category: form.category || 'Otro',
       ods: form.ods ? form.ods.split(',').map((s) => s.trim()).filter(Boolean) : [],
       description: form.description || 'Sin descripción.',
@@ -173,10 +152,9 @@ export default function Eventos() {
     return allEvents.filter((e) => {
       const matchQ = !q || e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q)
       const matchCat = category === 'Todos' || e.category === category
-      return matchQ && matchCat && matchesCity(e.city)
+      return matchQ && matchCat && matchesRegionFilter(e, regionFilter)
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allEvents, query, category, topTab, myCity, otherCity, otherCityIds])
+  }, [allEvents, query, category, regionFilter])
 
   return (
     <DashboardLayout
@@ -184,31 +162,7 @@ export default function Eventos() {
       title="Eventos"
       subtitle="Talleres, hackathons y pitch days — donde el mapa se vuelve conversación real."
     >
-      <div className="filters">
-        {myCity && (
-          <button className={`chip ${topTab === 'mine' ? 'active' : ''}`} onClick={() => setTopTab('mine')}>
-            {getCityName(myCity)}
-          </button>
-        )}
-        <button className={`chip ${topTab === 'remoto' ? 'active' : ''}`} onClick={() => setTopTab('remoto')}>
-          Remoto
-        </button>
-        <button className={`chip ${topTab === 'otras' ? 'active' : ''}`} onClick={() => setTopTab('otras')}>
-          Otras ciudades
-        </button>
-        {topTab === 'otras' && (
-          <select
-            className="chip-select"
-            value={otherCity}
-            onChange={(e) => setOtherCity(e.target.value)}
-          >
-            <option value="">Todas las otras ciudades</option>
-            {otherCityIds.map((id) => (
-              <option key={id} value={id}>{getCityName(id)}</option>
-            ))}
-          </select>
-        )}
-      </div>
+      <RegionFilter value={regionFilter} onChange={setRegionFilter} myRegion={myRegion} />
       <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <input
           className="search-input"
@@ -271,16 +225,19 @@ export default function Eventos() {
                   <option value="virtual">Videollamada</option>
                 </select>
               </label>
-              <label className="form-field">
-                <span>Ciudad / región</span>
-                <select name="city" value={form.city} onChange={handleFormChange}>
-                  <option value="">Selecciona una ciudad</option>
-                  {CITIES.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </label>
             </div>
+            {form.locationType === 'fisico' && (
+              <LocationFields
+                region={form.region}
+                state={form.state}
+                cityName={form.cityName}
+                onChange={handleFormChange}
+                required
+                regionLabel="Región del evento"
+                cityLabel="Ciudad del evento"
+                cityPlaceholder="Escribe la ciudad"
+              />
+            )}
             {form.locationType === 'virtual' ? (
               <label className="form-field">
                 <span>Liga de la videollamada</span>
@@ -358,7 +315,7 @@ export default function Eventos() {
                     {!virtual && event.mapsUrl && (
                       <span><a href={event.mapsUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>Ver en el mapa →</a></span>
                     )}
-                    {event.city && <span>{getCityName(event.city)}</span>}
+                    {!virtual && locationLabel(event) && <span>{locationLabel(event)}</span>}
                   </div>
                   {event.ods?.length > 0 && (
                     <div className="event-ods">

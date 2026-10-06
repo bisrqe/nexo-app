@@ -6,8 +6,10 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES } from '../data/profileOptions.js'
-import { CITIES } from '../data/cities.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
+import LocationFields from '../components/LocationFields.jsx'
+import { profileRegion } from '../data/cities.js'
+import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
 import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
 
@@ -59,16 +61,38 @@ export default function Ajustes() {
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
     ...profile,
+    region: profileRegion(profile),
+    cityName: profile.cityName || profile.location || '',
     industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
     industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
     causeOtra: profile.cause === 'otra' ? profile.causeLabel : '',
   })
   const [saved, setSaved] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
+
+  // Correos adicionales de contacto — se guardan al momento (no esperan al
+  // botón "Guardar cambios"). El inicio de sesión sigue siendo solo con el
+  // correo principal de la cuenta.
+  const additionalEmails = profile.additionalEmails || []
+  const handleAddEmail = async (e) => {
+    e.preventDefault()
+    const email = newEmail.trim().toLowerCase()
+    setEmailError('')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setEmailError('Ese correo no parece válido.')
+    if (email === (profile.email || '').toLowerCase() || additionalEmails.includes(email)) return setEmailError('Ese correo ya está en tu cuenta.')
+    if (additionalEmails.length >= 5) return setEmailError('Puedes agregar hasta 5 correos adicionales.')
+    await updateProfile({ additionalEmails: [...additionalEmails, email] })
+    setNewEmail('')
+  }
+  const handleRemoveEmail = (email) => updateProfile({ additionalEmails: additionalEmails.filter((x) => x !== email) })
 
   // Si el perfil cambia desde otro lado (poco probable, pero por si acaso
   // hay más de una pestaña abierta), refleja el valor guardado.
   useEffect(() => setForm({
     ...profile,
+    region: profileRegion(profile),
+    cityName: profile.cityName || profile.location || '',
     industryOtra: profile.industry === 'otra' ? profile.industryLabel : '',
     industrySecondaryOtra: profile.industrySecondary === 'otra' ? profile.industrySecondaryLabel : '',
     causeOtra: profile.cause === 'otra' ? profile.causeLabel : '',
@@ -127,6 +151,10 @@ export default function Ajustes() {
     const isOrganizacion = profile.profileType === 'organizacion'
     await updateProfile({
       ...rest,
+      location: form.cityName.trim(),
+      cityName: form.cityName.trim(),
+      linkedin: normalizeUrl(form.linkedin),
+      secondaryProfile: profile.profileType === 'estudiante' && form.secondaryProfile ? form.secondaryProfile : '',
       industry: isEmprendedor ? form.industry : '',
       industryLabel: isEmprendedor ? labelFor(INDUSTRY_OPTIONS, form.industry, industryOtra) : '',
       industrySecondary: isEmprendedor ? form.industrySecondary : '',
@@ -210,30 +238,50 @@ export default function Ajustes() {
           </label>
 
           <label className="form-field">
-            <span>Correo electrónico</span>
+            <span>Correo electrónico principal</span>
             <input type="email" name="email" required value={form.email} onChange={handleChange} />
           </label>
 
-          <div className="form-row">
-            <label className="form-field">
-              <span>Ocupación</span>
-              <input type="text" name="occupation" value={form.occupation} onChange={handleChange} />
-            </label>
-            <label className="form-field">
-              <span>Ubicación (texto libre)</span>
-              <input type="text" name="location" value={form.location} onChange={handleChange} placeholder="Ciudad, estado" />
-            </label>
+          <div className="form-field">
+            <span>Correos adicionales</span>
+            {additionalEmails.length > 0 && (
+              <ul className="resource-link-list">
+                {additionalEmails.map((em) => (
+                  <li key={em}>
+                    <span>{em}</span>
+                    <button type="button" className="link-arrow" onClick={() => handleRemoveEmail(em)}>Quitar</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="resource-add-row">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="otro@correo.com"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddEmail(e) }}
+              />
+              <button type="button" className="btn btn-ghost" onClick={handleAddEmail}>Agregar +</button>
+            </div>
+            {emailError && <span style={{ color: '#c0392b', textTransform: 'none' }}>{emailError}</span>}
+            <span className="field-hint">Otros correos donde te pueden contactar; los ven quienes abren tu perfil. Para iniciar sesión se usa solo el principal.</span>
           </div>
 
           <label className="form-field">
-            <span>Ciudad / región</span>
-            <select name="city" value={form.city} onChange={handleChange}>
-              <option value="">Selecciona tu ciudad</option>
-              {CITIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <span>Ocupación</span>
+            <input type="text" name="occupation" value={form.occupation} onChange={handleChange} />
           </label>
+
+          <LocationFields
+            region={form.region}
+            state={form.state}
+            cityName={form.cityName}
+            onChange={handleChange}
+            regionLabel="Región donde vives"
+            cityLabel="Ciudad donde vives"
+            cityPlaceholder="Ej. San Pedro Garza García"
+          />
 
           {profile.profileType === 'estudiante' && (
             <label className="form-field">
@@ -248,6 +296,25 @@ export default function Ajustes() {
                   Si además de estudiar ya tienes un emprendimiento propio, esto hace que lo registres como emprendimiento (con industria) en vez de como iniciativa, y que el resto del sitio te recomiende como a cualquier otro emprendedor/a.
                 </span>
               )}
+            </label>
+          )}
+
+          {profile.profileType === 'estudiante' && (
+            <label className="form-field form-check">
+              <span>
+                <input
+                  type="checkbox"
+                  checked={form.secondaryProfile === SECONDARY_PROFILE_VOLUNTEER}
+                  onChange={(e) => {
+                    setSaved(false)
+                    setForm((f) => ({ ...f, secondaryProfile: e.target.checked ? SECONDARY_PROFILE_VOLUNTEER : '' }))
+                  }}
+                />
+                {' '}También soy voluntario/a (segundo perfil)
+              </span>
+              <span className="settings-card-desc" style={{ marginTop: 4 }}>
+                Sigues siendo estudiante y registrando tu iniciativa; además te recomendamos dónde sumarte como voluntario/a.
+              </span>
             </label>
           )}
 
@@ -344,7 +411,7 @@ export default function Ajustes() {
 
           <label className="form-field">
             <span>LinkedIn u otra red</span>
-            <input type="url" name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/tu-usuario" />
+            <input type="text" name="linkedin" value={form.linkedin} onChange={handleChange} onBlur={() => setForm((f) => ({ ...f, linkedin: normalizeUrl(f.linkedin) }))} placeholder="linkedin.com/in/tu-usuario" />
           </label>
 
           <label className="form-field">

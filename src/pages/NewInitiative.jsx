@@ -6,26 +6,52 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import NavIcon from '../components/NavIcon.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { CITIES } from '../data/cities.js'
+import { REGIONS, statesOfRegion, getRegionName, sedesOf, isRemoteItem } from '../data/cities.js'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { uploadFile } from '../lib/uploads.js'
 import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
-import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
+import {
+  kindFor, projectTypeFor, stageOptionsFor, defaultStageFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE,
+} from '../lib/initiativeKind.js'
 
-const STAGES = ['Idea', 'Prototipo', 'En marcha', 'Escalando']
+const MAX_METRICS = 4
+const EMPTY_SEDE = { region: '', state: '', cityName: '' }
+const EMPTY_METRIC = { label: '', value: '' }
+
+// "Organización / colectivo" confundía: no es el nombre del proyecto, sino a
+// qué grupo mayor pertenece (si pertenece a alguno) — la etiqueta y la
+// explicación cambian según el tipo de proyecto.
+const ORG_FIELD = {
+  emprendimientos: {
+    label: 'Empresa, organización o colectivo al que perteneces',
+    placeholder: 'Ej. Colectivo Raíz, Incubadora Tec',
+    hint: 'Solo si tu emprendimiento forma parte de una organización, colectivo, incubadora o universidad más grande. Si trabajas por tu cuenta, déjalo vacío.',
+  },
+  iniciativas: {
+    label: 'Colectivo, grupo estudiantil o escuela',
+    placeholder: 'Ej. Sociedad de Alumnos de Ingeniería, UANL',
+    hint: 'El grupo, club o institución educativa desde la que impulsas esta iniciativa. Si la haces por tu cuenta, déjalo vacío.',
+  },
+  instituciones: {
+    label: 'Red, consorcio o dependencia a la que pertenece',
+    placeholder: 'Ej. Secretaría de Economía de Nuevo León',
+    hint: 'Solo si tu institución forma parte de una red, consorcio, fundación o dependencia mayor. Si es independiente, déjalo vacío.',
+  },
+}
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
 const CAUSE_OPTIONS = CAUSE_FILTERS.filter((f) => f.id !== 'todos')
 
 const EMPTY = {
-  title: '', org: '', city: '', link: '', logoUrl: '',
+  title: '', org: '', sedes: [EMPTY_SEDE], remote: false, link: '', logoUrl: '',
   ods: 'ods4', odsOtra: '', odsSecondary: '', odsSecondaryOtra: '',
   industry: '', industryOtra: '', industrySecondary: '', industrySecondaryOtra: '',
   cause: '', causeOtra: '',
-  stage: 'Idea', desc: '', need: '',
+  stage: '', desc: '', need: '',
   collaboratorsText: '', impact: '', foundedDate: '',
+  metrics: [], womenFocus: false,
   resources: [],
 }
 
@@ -69,8 +95,25 @@ export default function NewInitiative({ variant = 'public' }) {
   const effectiveSubtypeForKind = isStudent && !editingInitiative
     ? (studentKind === 'emprendimiento' ? 'emprendedor' : '')
     : profile.subtype
-  const kind = kindFor(profile.profileType, effectiveSubtypeForKind)
-  const isOrg = profile.profileType === 'organizacion'
+  // Al editar, el tipo lo manda quien registró el proyecto (no el perfil de
+  // quien edita — un estudiante puede tener una iniciativa y un
+  // emprendimiento a la vez, y un cofundador no es necesariamente del mismo
+  // tipo que el dueño).
+  const ownerType = editingInitiative ? editingInitiative.ownerProfileType : profile.profileType
+  const ownerSubtype = editingInitiative ? (editingInitiative.ownerProfileSubtype || '') : effectiveSubtypeForKind
+  const kind = kindFor(ownerType, ownerSubtype)
+  const projectType = projectTypeFor(ownerType, ownerSubtype)
+  const isOrg = ownerType === 'organizacion'
+  const stageOptions = stageOptionsFor(projectType, editingInitiative?.stage)
+  const selectedStage = stageOptions.find((o) => o.id === form.stage)
+
+  // Si todavía no hay etapa (formulario nuevo) o la que había no existe para
+  // este tipo de proyecto (se cambió entre iniciativa/emprendimiento), se
+  // pone la primera de la lista de ese tipo.
+  useEffect(() => {
+    if (editingInitiative) return
+    setForm((f) => (stageOptionsFor(projectType).some((o) => o.id === f.stage) ? f : { ...f, stage: defaultStageFor(projectType) }))
+  }, [projectType, editingInitiative])
 
   useEffect(() => {
     if (isApp && editingInitiative && !prefilled) {
@@ -79,7 +122,10 @@ export default function NewInitiative({ variant = 'public' }) {
       setForm({
         title: editingInitiative.title || '',
         org: editingInitiative.org || '',
-        city: editingInitiative.city || '',
+        sedes: sedesOf(editingInitiative).length > 0
+          ? sedesOf(editingInitiative).map((x) => ({ region: x.region || '', state: x.state || '', cityName: x.cityName || '' }))
+          : [EMPTY_SEDE],
+        remote: isRemoteItem(editingInitiative),
         link: editingInitiative.link || '',
         logoUrl: editingInitiative.logoUrl || '',
         ods,
@@ -92,12 +138,14 @@ export default function NewInitiative({ variant = 'public' }) {
         industrySecondaryOtra: editingInitiative.industrySecondary === 'otra' ? editingInitiative.industrySecondaryLabel || '' : '',
         cause: editingInitiative.cause || '',
         causeOtra: editingInitiative.cause === 'otra' ? editingInitiative.causeLabel || '' : '',
-        stage: editingInitiative.stage || 'Idea',
+        stage: editingInitiative.stage || defaultStageFor(projectTypeFor(editingInitiative.ownerProfileType, editingInitiative.ownerProfileSubtype)),
         desc: editingInitiative.desc || '',
         need: editingInitiative.need || '',
         collaboratorsText: (editingInitiative.collaborators || []).join(', '),
         impact: editingInitiative.impact || '',
         foundedDate: editingInitiative.foundedDate || '',
+        metrics: editingInitiative.metrics || [],
+        womenFocus: editingInitiative.genderFocus === 'mujeres',
         resources: editingInitiative.resources || [],
       })
       setPrefilled(true)
@@ -105,6 +153,20 @@ export default function NewInitiative({ variant = 'public' }) {
   }, [isApp, editingInitiative, prefilled])
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+
+  const updateSede = (index, patch) => setForm((f) => ({
+    ...f,
+    sedes: f.sedes.map((sede, i) => (i === index ? { ...sede, ...patch } : sede)),
+  }))
+  const addSede = () => setForm((f) => ({ ...f, sedes: [...f.sedes, EMPTY_SEDE] }))
+  const removeSede = (index) => setForm((f) => ({ ...f, sedes: f.sedes.filter((_, i) => i !== index) }))
+
+  const updateMetric = (index, patch) => setForm((f) => ({
+    ...f,
+    metrics: f.metrics.map((m, i) => (i === index ? { ...m, ...patch } : m)),
+  }))
+  const addMetric = () => setForm((f) => (f.metrics.length >= MAX_METRICS ? f : { ...f, metrics: [...f.metrics, EMPTY_METRIC] }))
+  const removeMetric = (index) => setForm((f) => ({ ...f, metrics: f.metrics.filter((_, i) => i !== index) }))
 
   const handleUrlBlur = (e) => {
     const { name, value } = e.target
@@ -179,15 +241,32 @@ export default function NewInitiative({ variant = 'public' }) {
       : ''
     const causeLabel = isOrg ? labelFor(CAUSE_OPTIONS, form.cause, form.causeOtra) : ''
     const collaborators = form.collaboratorsText.split(',').map((s) => s.trim()).filter(Boolean)
+    const sedes = form.sedes
+      .map((x) => ({ region: x.region, state: x.state || '', cityName: x.cityName.trim() }))
+      .filter((x) => x.region || x.cityName)
+    const regions = [...new Set(sedes.map((x) => x.region).filter(Boolean))]
+    const metrics = form.metrics
+      .map((m) => ({ label: m.label.trim(), value: m.value.trim() }))
+      .filter((m) => m.label && m.value)
+      .slice(0, MAX_METRICS)
+    const locationText = sedes.map((x) => [x.cityName, x.state, getRegionName(x.region)].filter(Boolean).join(' · ')).join(' · ')
 
     const built = {
-      id: Math.floor(Math.random() * 900) + 100,
+      id: editingInitiative?.id ?? (Math.floor(Math.random() * 900) + 100),
       slug: isApp ? (editingInitiative?.slug || `${slugify(form.title)}-${Math.random().toString(36).slice(2, 6)}`) : 'vista-previa',
       stage: form.stage,
-      title: form.title || 'Tu emprendimiento',
-      org: form.org || 'Tu organización',
-      city: form.city,
-      location: CITIES.find((c) => c.id === form.city)?.name || 'Por definir',
+      title: form.title || `Tu ${kind.noun}`,
+      org: form.org || '',
+      // Un proyecto puede tener varias sedes — region/cityName son la
+      // principal (la primera), regions es la lista de todas las regiones
+      // donde tiene sede, y remote marca que también opera a distancia.
+      sedes,
+      regions,
+      region: sedes[0]?.region || '',
+      state: sedes[0]?.state || '',
+      cityName: sedes[0]?.cityName || '',
+      remote: form.remote,
+      location: locationText || (form.remote ? 'Remoto' : 'Por definir'),
       link: normalizeUrl(form.link),
       logoUrl: form.logoUrl,
       ods: [form.ods, form.odsSecondary].filter(Boolean),
@@ -205,6 +284,8 @@ export default function NewInitiative({ variant = 'public' }) {
       collaborators,
       impact: form.impact,
       foundedDate: form.foundedDate,
+      metrics,
+      genderFocus: form.womenFocus ? 'mujeres' : '',
       resources: form.resources,
     }
     setPreview(built)
@@ -271,12 +352,12 @@ export default function NewInitiative({ variant = 'public' }) {
         <div className="preview-block">
           <p className="preview-label">Así se vería en el catálogo:</p>
           <div className="catalog-grid catalog-grid-single">
-            <InitiativeCard initiative={{ ...preview, ownerProfileType: profile.profileType, ownerProfileSubtype: effectiveSubtypeForKind }} />
+            <InitiativeCard initiative={{ ...preview, ownerProfileType: ownerType, ownerProfileSubtype: ownerSubtype }} />
           </div>
           <div className="auth-note">
             <p>
               {isApp
-                ? `Ya quedó guardado como ${kind.un} ${kind.noun} tuy${kind.un === 'una' ? 'a' : 'o'} — puedes verlo y editarlo desde "${kind.myPlural}" en el sidebar.`
+                ? `Ya quedó guardado como ${kind.un} ${kind.noun} tuy${kind.un === 'una' ? 'a' : 'o'} — puedes verlo y editarlo desde "${kind.my}" en el menú lateral.`
                 : 'Para publicarla de verdad vas a necesitar una cuenta — eso llega en la siguiente etapa del proyecto.'}
             </p>
             <div className="form-actions">
@@ -322,43 +403,88 @@ export default function NewInitiative({ variant = 'public' }) {
             <label className="form-field">
               <span>Nombre de{kind.el === 'la' ? ' la' : 'l'} {kind.noun}</span>
               <input type="text" name="title" required value={form.title} onChange={handleChange} placeholder="Ej. Huertos urbanos escolares" />
+              <span className="field-hint">Con este nombre aparece en el catálogo y en el dossier.</span>
             </label>
             <label className="form-field">
-              <span>Organización / colectivo</span>
-              <input type="text" name="org" value={form.org} onChange={handleChange} placeholder="Ej. Colectivo Raíz" />
+              <span>{ORG_FIELD[projectType].label} (opcional)</span>
+              <input type="text" name="org" value={form.org} onChange={handleChange} placeholder={ORG_FIELD[projectType].placeholder} />
+              <span className="field-hint">{ORG_FIELD[projectType].hint}</span>
             </label>
           </div>
 
+          <fieldset className="form-fieldset">
+            <legend>¿Dónde está?</legend>
+            <p className="field-hint">
+              {kind.un === 'una' ? 'Una' : 'Un'} {kind.noun} puede tener varias sedes. Para cada una elige la región, el estado y escribe la ciudad.
+              {' '}La región es lo que usamos para filtrar y recomendar{kind.el === 'la' ? 'la' : 'lo'} a quien está cerca.
+            </p>
+            {form.sedes.map((sede, i) => (
+              <div className="sede-row" key={i}>
+                <label className="form-field">
+                  <span>{i === 0 ? 'Sede principal — región' : `Sede ${i + 1} — región`}</span>
+                  <select value={sede.region} required={!form.remote} onChange={(e) => updateSede(i, { region: e.target.value, state: '' })}>
+                    <option value="">Selecciona una región</option>
+                    {REGIONS.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span>Estado</span>
+                  <select value={sede.state} required={!form.remote} disabled={!sede.region} onChange={(e) => updateSede(i, { state: e.target.value })}>
+                    <option value="">{sede.region ? 'Selecciona el estado' : 'Primero elige la región'}</option>
+                    {statesOfRegion(sede.region).map((st) => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span>Ciudad</span>
+                  <input
+                    type="text"
+                    value={sede.cityName}
+                    required={!form.remote}
+                    onChange={(e) => updateSede(i, { cityName: e.target.value })}
+                    placeholder="Escribe la ciudad"
+                  />
+                </label>
+                {form.sedes.length > 1 && (
+                  <button type="button" className="link-arrow sede-remove" onClick={() => removeSede(i)}>Quitar sede</button>
+                )}
+              </div>
+            ))}
+            <button type="button" className="btn btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={addSede}>+ Agregar otra sede</button>
+            <label className="form-check-inline">
+              <input type="checkbox" checked={form.remote} onChange={(e) => setForm((f) => ({ ...f, remote: e.target.checked }))} />
+              <span>
+                También opera de forma remota o en línea
+                <span className="field-hint">Si lo marcas, {kind.el === 'la' ? 'la' : 'lo'} recomendamos a quien busque algo afín aunque viva en otra región. Si es 100% remoto, puedes dejar las sedes vacías.</span>
+              </span>
+            </label>
+          </fieldset>
+
           <div className="form-row">
             <label className="form-field">
-              <span>Ciudad / región</span>
-              <select name="city" required value={form.city} onChange={handleChange}>
-                <option value="">Selecciona una ciudad</option>
-                {CITIES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Sitio web / liga</span>
+              <span>Sitio web / liga (opcional)</span>
               <input type="text" name="link" value={form.link} onChange={handleChange} onBlur={handleUrlBlur} placeholder="www.ejemplo.com" />
+              <span className="field-hint">Aparece como botón "Visitar sitio" en el dossier. No necesitas escribir https://.</span>
             </label>
-          </div>
-
-          <div className="form-row">
             <label className="form-field">
               <span>Qué necesita ahora</span>
               <input type="text" name="need" value={form.need} onChange={handleChange} placeholder="Ej. Mentoría legal" />
-            </label>
-            <label className="form-field">
-              <span>Etapa</span>
-              <select name="stage" value={form.stage} onChange={handleChange}>
-                {STAGES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <span className="field-hint">Lo más urgente que buscas (mentoría, financiamiento, voluntarios, aliados…). Se muestra como "Busca:" en la tarjeta.</span>
             </label>
           </div>
+
+          <label className="form-field">
+            <span>Etapa</span>
+            <select name="stage" value={form.stage} onChange={handleChange}>
+              {stageOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.id}</option>
+              ))}
+            </select>
+            {selectedStage && <span className="field-hint">{selectedStage.hint}</span>}
+          </label>
 
           <div className="form-row">
             <label className="form-field">
@@ -368,6 +494,7 @@ export default function NewInitiative({ variant = 'public' }) {
                   <option key={f.id} value={f.id}>{f.label}</option>
                 ))}
               </select>
+              <span className="field-hint">El Objetivo de Desarrollo Sostenible de la ONU al que más contribuye.</span>
             </label>
             {form.ods === 'otra' ? (
               <label className="form-field">
@@ -403,6 +530,7 @@ export default function NewInitiative({ variant = 'public' }) {
                     <option key={f.id} value={f.id}>{f.label}</option>
                   ))}
                 </select>
+                <span className="field-hint">La problemática social principal que atiende tu institución.</span>
               </label>
               {form.cause === 'otra' && (
                 <label className="form-field">
@@ -422,6 +550,7 @@ export default function NewInitiative({ variant = 'public' }) {
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
+                  <span className="field-hint">El sector en el que opera. Es lo que más pesa para recomendarlo a otras personas.</span>
                 </label>
                 {form.industry === 'otra' ? (
                   <label className="form-field">
@@ -452,21 +581,56 @@ export default function NewInitiative({ variant = 'public' }) {
           <label className="form-field">
             <span>Descripción breve</span>
             <textarea name="desc" rows={4} value={form.desc} onChange={handleChange} placeholder="¿Qué problema resuelve y a quién?" />
+            <span className="field-hint">Lo primero que se lee en el dossier: qué problema atiende, para quién y cómo.</span>
           </label>
 
           <label className="form-field">
             <span>Impacto hasta ahora</span>
             <textarea name="impact" rows={2} value={form.impact} onChange={handleChange} placeholder="Ej. 140 personas graduadas, 2 escuelas con convenio firmado…" />
+            <span className="field-hint">Resultados concretos en texto. Para cifras clave usa las métricas de abajo, que se muestran en grande.</span>
+          </label>
+
+          <fieldset className="form-fieldset">
+            <legend>Métricas destacadas (opcional)</legend>
+            <p className="field-hint">
+              Hasta {MAX_METRICS} cifras que quieras que se vean primero en el dossier. Ejemplo: métrica "Engagement en redes" → cantidad "4,000 personas".
+            </p>
+            {form.metrics.map((m, i) => (
+              <div className="metric-row" key={i}>
+                <label className="form-field">
+                  <span>Métrica</span>
+                  <input type="text" value={m.label} onChange={(e) => updateMetric(i, { label: e.target.value })} placeholder="Ej. Engagement en redes" />
+                </label>
+                <label className="form-field">
+                  <span>Cantidad</span>
+                  <input type="text" value={m.value} onChange={(e) => updateMetric(i, { value: e.target.value })} placeholder="Ej. 4,000 personas" />
+                </label>
+                <button type="button" className="link-arrow sede-remove" onClick={() => removeMetric(i)}>Quitar</button>
+              </div>
+            ))}
+            {form.metrics.length < MAX_METRICS && (
+              <button type="button" className="btn btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={addMetric}>+ Agregar métrica</button>
+            )}
+          </fieldset>
+
+          <label className="form-check-inline">
+            <input type="checkbox" checked={form.womenFocus} onChange={(e) => setForm((f) => ({ ...f, womenFocus: e.target.checked }))} />
+            <span>
+              Enfocad{kind.el === 'la' ? 'a' : 'o'} en mujeres (opcional)
+              <span className="field-hint">Márcalo si {kind.el === 'la' ? 'la' : 'lo'} lideran mujeres o atiende principalmente a mujeres — así les aparece primero a quienes buscan eso.</span>
+            </span>
           </label>
 
           <div className="form-row">
             <label className="form-field">
               <span>Colaboradores (separados por coma)</span>
               <input type="text" name="collaboratorsText" value={form.collaboratorsText} onChange={handleChange} placeholder="Ej. Ana Ruiz, Luis Peña" />
+              <span className="field-hint">Nombres de quienes participan. Para darles acceso con su cuenta, usa "Ligar otra cuenta" desde el dossier.</span>
             </label>
             <label className="form-field">
               <span>En marcha desde</span>
               <input type="date" name="foundedDate" value={form.foundedDate} onChange={handleChange} />
+              <span className="field-hint">Fecha en que {kind.el === 'la' ? 'la' : 'lo'} empezaste a operar o trabajar.</span>
             </label>
           </div>
 

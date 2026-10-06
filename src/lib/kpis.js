@@ -1,6 +1,6 @@
 import { ODS_FILTERS, INDUSTRY_FILTERS } from '../data/initiatives.js'
 import { PROFILE_TYPES } from '../data/profileOptions.js'
-import { getCityName } from '../data/cities.js'
+import { getRegionName, regionsOf, sedesOf } from '../data/cities.js'
 
 // Todo lo que se calcula aquí viene únicamente de las colecciones reales
 // de Firestore (profiles/initiatives/events/groups/conversations). Un
@@ -55,11 +55,15 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
     }
   }
 
-  const citiesSet = new Set([
-    ...profiles.map((p) => p.city).filter(Boolean),
-    ...initiatives.map((i) => i.city).filter(Boolean),
-    ...events.map((e) => e.city).filter(Boolean),
-  ])
+  // Ciudades distintas con actividad — la ciudad es texto libre, así que se
+  // normaliza (minúsculas, sin acentos) para no contar "Mérida" y "merida"
+  // como dos. Un proyecto con varias sedes aporta todas las suyas.
+  const normalizeCity = (name) => (name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+  const citiesSet = new Set(
+    [...profiles, ...initiatives, ...events]
+      .flatMap((item) => sedesOf(item).map((x) => normalizeCity(x.cityName)))
+      .filter(Boolean)
+  )
 
   const initiativesWithOds = initiatives.filter((i) => (i.ods?.length > 0) || i.odsLabel).length
   const initiativesWithIndustry = initiatives.filter((i) => i.industry || i.industryLabel).length
@@ -74,9 +78,12 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
     countBy(initiatives, (i) => i.odsLabel || (i.ods?.[0] ? labelFor(ODS_FILTERS, i.ods[0]) : null))
   )
   const initiativesByStage = sortedEntries(countBy(initiatives, (i) => i.stage))
-  const profilesByCity = sortedEntries(countBy(profiles, (p) => getCityName(p.city) || p.city))
+  // Se agrupa por región, no por ciudad escrita — el texto libre
+  // fragmentaría el conteo ("Monterrey", "monterrey ", "MTY").
+  const regionLabelOf = (item) => regionsOf(item).map(getRegionName)[0]
+  const profilesByCity = sortedEntries(countBy(profiles, regionLabelOf))
   const profilesByType = sortedEntries(countBy(profiles, (p) => labelFor(PROFILE_TYPES, p.profileType)))
-  const eventsByCity = sortedEntries(countBy(events, (e) => getCityName(e.city) || e.city))
+  const eventsByCity = sortedEntries(countBy(events, regionLabelOf))
 
   const groupMembership = groups.map((g) => ({
     label: g.name,
@@ -124,7 +131,7 @@ export function computeKpis({ profiles = [], initiatives = [], events = [], conv
       return {
         ...a,
         name: owner.name || 'Sin nombre',
-        city: getCityName(owner.city),
+        city: regionsOf(owner).map(getRegionName)[0] || '',
         score: a.initiatives * 3 + a.interestShown * 2 + a.events * 2 + a.groupsJoined,
       }
     })

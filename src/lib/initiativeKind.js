@@ -80,3 +80,73 @@ export function sortByOwnProjectType(list, viewerProfileType, viewerSubtype) {
     return aMatch - bMatch
   })
 }
+
+// Roles que una cuenta cumple a la vez: su perfil principal más, si lo
+// tiene, el segundo (un estudiante puede sumar "voluntario/a"). Todo lo que
+// se recomienda o filtra por rol debería usar esto en vez de comparar
+// profileType a mano — así el segundo perfil cuenta en todos lados.
+export function profileRoles(profile) {
+  if (!profile) return []
+  const roles = [profile.profileType]
+  if (profile.profileType === 'estudiante' && profile.secondaryProfile) roles.push(profile.secondaryProfile)
+  return roles.filter(Boolean)
+}
+
+// Etapas por tipo de proyecto. Una iniciativa (proyecto escolar, aún sin
+// constituir) solo pasa por idea → prototipo; un emprendimiento o una
+// institución ya funcionan como organización, así que se describen por qué
+// tan consolidados están. Los valores viejos ("En marcha", "Escalando") se
+// siguen mostrando tal cual en lo ya guardado — ver stageOptionsFor.
+const STAGES_BY_PROJECT_TYPE = {
+  iniciativas: [
+    { id: 'Idea', hint: 'Todavía es un planteamiento: identificaste un problema y una posible solución, sin nada construido.' },
+    { id: 'Prototipo', hint: 'Ya hay una primera versión (prototipo, piloto o prueba) que se está probando con personas reales.' },
+  ],
+  emprendimientos: [
+    { id: 'Constituido', hint: 'Ya está formalizado (figura legal, RFC o equivalente) y empieza a operar y vender.' },
+    { id: 'En crecimiento', hint: 'Ventas, usuarios o equipo van en aumento y se busca escalar o abrir nuevos mercados.' },
+    { id: 'Maduro', hint: 'Operación estable: procesos definidos, ingresos recurrentes y un equipo consolidado.' },
+  ],
+  instituciones: [
+    { id: 'Constituida', hint: 'Ya está legalmente constituida y arrancando operaciones o programas.' },
+    { id: 'En crecimiento', hint: 'Está ampliando su alcance: más beneficiarios, sedes, programas o alianzas.' },
+    { id: 'Consolidada', hint: 'Trayectoria sólida: programas estables, equipo y financiamiento recurrentes.' },
+  ],
+}
+
+export function stagesFor(projectType) {
+  return STAGES_BY_PROJECT_TYPE[projectType] || STAGES_BY_PROJECT_TYPE.emprendimientos
+}
+
+export function defaultStageFor(projectType) {
+  return stagesFor(projectType)[0].id
+}
+
+// Etapas disponibles para un tipo de proyecto, más — al editar algo ya
+// guardado con una etapa de la lista vieja — esa etapa actual, para que el
+// select no la borre en silencio al guardar.
+export function stageOptionsFor(projectType, currentStage) {
+  const options = stagesFor(projectType)
+  if (currentStage && !options.some((o) => o.id === currentStage)) {
+    return [...options, { id: currentStage, hint: 'Etapa anterior — elige una de la lista nueva si quieres actualizarla.' }]
+  }
+  return options
+}
+
+// Texto de "mi emprendimiento / mi iniciativa / mi institución" para el
+// sidebar y los títulos del dashboard. Una cuenta puede tener varios
+// proyectos, incluso de tipos distintos (un estudiante con una iniciativa y
+// un emprendimiento) — con uno solo va en singular, con varios del mismo
+// tipo en plural, y si son de tipos distintos queda el genérico "proyectos".
+export function myProjectsLabel(profile, myInitiatives = []) {
+  const profileKind = kindFor(profile?.profileType, profile?.subtype)
+  if (myInitiatives.length === 0) return profileKind.my
+  const types = new Set(myInitiatives.map((i) => projectTypeFor(i.ownerProfileType, i.ownerProfileSubtype)))
+  if (types.size > 1) return 'Mis proyectos'
+  if (myInitiatives.length === 1) {
+    const only = myInitiatives[0]
+    return kindFor(only.ownerProfileType, only.ownerProfileSubtype).my
+  }
+  const first = myInitiatives[0]
+  return kindFor(first.ownerProfileType, first.ownerProfileSubtype).myPlural
+}

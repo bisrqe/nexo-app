@@ -6,8 +6,10 @@ import Footer from '../components/Footer.jsx'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES } from '../data/profileOptions.js'
-import { CITIES } from '../data/cities.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
+import LocationFields from '../components/LocationFields.jsx'
+import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
+import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
 import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
 
@@ -27,10 +29,12 @@ const EMPTY = {
   birthDate: '',
   gender: '',
   occupation: '',
-  location: '',
-  city: '',
+  region: '',
+  state: '',
+  cityName: '',
   profileType: 'emprendedor',
   subtype: '',
+  secondaryVolunteer: false,
   industry: '',
   industryOtra: '',
   industrySecondary: '',
@@ -68,6 +72,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+  const handleLinkedinBlur = () => setForm((f) => ({ ...f, linkedin: normalizeUrl(f.linkedin) }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -89,10 +94,13 @@ export default function Register() {
         birthDate: form.birthDate,
         gender: form.gender,
         occupation: form.occupation,
-        location: form.location,
-        city: form.city,
+        location: form.cityName.trim(),
+        region: form.region,
+        state: form.state,
+        cityName: form.cityName.trim(),
         profileType: form.profileType,
         subtype: form.profileType === 'estudiante' ? form.subtype : '',
+        secondaryProfile: form.profileType === 'estudiante' && form.secondaryVolunteer ? SECONDARY_PROFILE_VOLUNTEER : '',
         industry: isEmprendedor ? form.industry : '',
         industryLabel,
         industrySecondary: isEmprendedor ? form.industrySecondary : '',
@@ -104,10 +112,13 @@ export default function Register() {
         causeLabel,
         orgActivity: isOrganizacion ? form.orgActivity : '',
         orgAudience: isOrganizacion ? form.orgAudience : '',
-        linkedin: form.linkedin,
+        linkedin: normalizeUrl(form.linkedin),
         bio: form.bio,
         lookingFor: form.lookingFor,
         photo: null,
+        // Toda cuenta nueva entra a la mesa de dudas y onboarding — así tiene
+        // desde el primer día un lugar donde preguntarle al equipo.
+        joinedGroups: [SUPPORT_GROUP_ID],
       })
       resendVerificationEmail()?.catch(() => {})
       navigate('/app/dashboard', { replace: true })
@@ -167,7 +178,7 @@ export default function Register() {
               </label>
               <label className="form-field">
                 <span>Género</span>
-                <select name="gender" value={form.gender} onChange={handleChange}>
+                <select name="gender" required value={form.gender} onChange={handleChange}>
                   <option value="">Selecciona una opción</option>
                   {GENDERS.map((g) => (
                     <option key={g.id} value={g.id}>{g.label}</option>
@@ -176,39 +187,36 @@ export default function Register() {
               </label>
             </div>
             <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
-              Nombre, fecha de nacimiento, género y tipo de perfil no se podrán cambiar después de registrarte.
+              Nombre, fecha de nacimiento, género y tipo de perfil no se podrán cambiar después de registrarte. El género solo lo usamos para mostrarte primero apoyos dirigidos a mujeres; si eliges "No binario", "Prefiero no decir" u "Otro", tus recomendaciones se basan únicamente en tu industria, ODS, región e intereses.
             </p>
 
-            <div className="form-row">
-              <label className="form-field">
-                <span>Ocupación</span>
-                <input type="text" name="occupation" value={form.occupation} onChange={handleChange} placeholder="Ej. Ingeniera agrónoma" />
-              </label>
-              <label className="form-field">
-                <span>Ubicación (texto libre)</span>
-                <input type="text" name="location" value={form.location} onChange={handleChange} placeholder="Ciudad, estado" />
-              </label>
-            </div>
+            <label className="form-field">
+              <span>Ocupación</span>
+              <input type="text" name="occupation" value={form.occupation} onChange={handleChange} placeholder="Ej. Ingeniera agrónoma" />
+            </label>
 
-            <div className="form-row">
-              <label className="form-field">
-                <span>Ciudad / región</span>
-                <select name="city" required value={form.city} onChange={handleChange}>
-                  <option value="">Selecciona tu ciudad</option>
-                  {CITIES.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Tipo de perfil</span>
-                <select name="profileType" value={form.profileType} onChange={handleChange}>
-                  {PROFILE_TYPES.map((p) => (
-                    <option key={p.id} value={p.id}>{p.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            <LocationFields
+              region={form.region}
+              state={form.state}
+              cityName={form.cityName}
+              onChange={handleChange}
+              required
+              regionLabel="Región donde vives"
+              cityLabel="Ciudad donde vives"
+              cityPlaceholder="Ej. San Pedro Garza García"
+            />
+            <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
+              Elige la región del país, luego tu estado, y escribe tu ciudad. La región se usa para filtrar y recomendarte lo que queda cerca; la ciudad es la que se muestra en tu perfil.
+            </p>
+
+            <label className="form-field">
+              <span>Tipo de perfil</span>
+              <select name="profileType" value={form.profileType} onChange={handleChange}>
+                {PROFILE_TYPES.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </label>
 
             <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
               {{
@@ -233,6 +241,22 @@ export default function Register() {
                     Si además de estudiar ya tienes un emprendimiento propio, esto hace que lo registres como emprendimiento (con industria) en vez de como iniciativa, y que el resto del sitio te recomiende como a cualquier otro emprendedor/a.
                   </span>
                 )}
+              </label>
+            )}
+
+            {form.profileType === 'estudiante' && (
+              <label className="form-field form-check">
+                <span>
+                  <input
+                    type="checkbox"
+                    checked={form.secondaryVolunteer}
+                    onChange={(e) => setForm((f) => ({ ...f, secondaryVolunteer: e.target.checked }))}
+                  />
+                  {' '}También quiero ser voluntario/a (segundo perfil)
+                </span>
+                <span className="settings-card-desc" style={{ marginTop: 4 }}>
+                  Sigues siendo estudiante y registras tu iniciativa igual; además te mostramos emprendimientos, iniciativas y eventos donde puedes sumarte como voluntario/a, y los demás ven que ofreces tu tiempo.
+                </span>
               </label>
             )}
 
@@ -329,7 +353,7 @@ export default function Register() {
 
             <label className="form-field">
               <span>LinkedIn u otra red (opcional)</span>
-              <input type="url" name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/tu-usuario" />
+              <input type="text" name="linkedin" value={form.linkedin} onChange={handleChange} onBlur={handleLinkedinBlur} placeholder="linkedin.com/in/tu-usuario" />
             </label>
 
             <label className="form-field">

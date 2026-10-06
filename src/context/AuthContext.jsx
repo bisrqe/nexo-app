@@ -10,7 +10,7 @@ import {
 } from 'firebase/auth'
 import { doc, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../lib/firebase.js'
-import { ADMIN_EMAILS, RESOURCE_APPROVER_EMAILS } from '../data/admins.js'
+import { isStaffUser, isResourceApproverUser, isSupportAccount } from '../data/admins.js'
 
 const AuthContext = createContext(null)
 
@@ -46,8 +46,9 @@ export function AuthProvider({ children }) {
     email,
     createdAt: serverTimestamp(),
   })
-  const isAdmin = Boolean(user && ADMIN_EMAILS.includes(user.email))
-  const isResourceApprover = Boolean(user && RESOURCE_APPROVER_EMAILS.includes(user.email))
+  const isAdmin = isStaffUser(user)
+  const isResourceApprover = isResourceApproverUser(user)
+  const isSupport = isSupportAccount(user)
 
   // Requiere la contraseña porque Firebase exige un login "reciente" para
   // borrar una cuenta — sin esto tira auth/requires-recent-login. Borra el
@@ -63,7 +64,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser, resendVerificationEmail, sendPasswordReset, deleteAccount, isAdmin, isResourceApprover }}>
+    <AuthContext.Provider value={{ user, authLoading, signUp, signIn, signOutUser, resendVerificationEmail, sendPasswordReset, deleteAccount, isAdmin, isResourceApprover, isSupport }}>
       {children}
     </AuthContext.Provider>
   )

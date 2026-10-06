@@ -20,6 +20,16 @@ export const STUDENT_SUBTYPES = [
   { id: 'emprendedor', label: 'Emprendedor/a' },
 ]
 
+// Segundo perfil — hoy solo un estudiante puede sumar "voluntario/a" a su
+// perfil principal (profile.secondaryProfile). Sigue siendo estudiante para
+// registrar su iniciativa; el segundo perfil solo suma las recomendaciones
+// y la visibilidad de un voluntario (ver profileRoles en lib/initiativeKind.js).
+export const SECONDARY_PROFILE_VOLUNTEER = 'voluntario'
+
+// El género solo se usa para recomendar apoyos dirigidos a mujeres (ver
+// genderFocusFor en lib/recommend.js). "No binario", "Prefiero no decir" y
+// "Otro" no activan ningún criterio por género — a esas cuentas se les
+// recomienda únicamente por industria, ODS, región, etapa e intereses.
 export const GENDERS = [
   { id: 'femenino', label: 'Femenino' },
   { id: 'masculino', label: 'Masculino' },

@@ -101,8 +101,8 @@ export async function downloadKpiPdf(kpis) {
   })
 
   y = addSectionTable(doc, autoTable, {
-    title: 'Miembros por ciudad',
-    head: ['Ciudad', 'Miembros'],
+    title: 'Miembros por región',
+    head: ['Región', 'Miembros'],
     startY: y,
     body: kpis.profilesByCity.map((d) => [d.label, d.value]),
   })
@@ -132,7 +132,7 @@ export async function downloadKpiPdf(kpis) {
 
   y = addSectionTable(doc, autoTable, {
     title: 'Actividad por usuario (top 10)',
-    head: ['Nombre', 'Ciudad', 'Emprendimientos creados', 'Interés mostrado', 'Eventos creados', 'Mesas unidas'],
+    head: ['Nombre', 'Región', 'Emprendimientos creados', 'Interés mostrado', 'Eventos creados', 'Mesas unidas'],
     startY: y,
     note: 'Actividad registrada en la plataforma — no incluye tiempo de sesión, que todavía no se rastrea.',
     body: kpis.activityRanking.map((d) => [d.name, d.city || '—', d.initiatives, d.interestShown, d.events, d.groupsJoined]),

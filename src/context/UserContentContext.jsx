@@ -50,9 +50,11 @@ export function UserContentProvider({ children }) {
       return
     }
     const initiativesQuery = query(collection(db, 'initiatives'), where('memberUids', 'array-contains', user.uid))
-    const unsubInitiatives = onSnapshot(initiativesQuery, (snap) => {
-      setMyInitiatives(snap.docs.map((d) => ({ ...d.data(), docId: d.id })))
-    })
+    const unsubInitiatives = onSnapshot(
+      initiativesQuery,
+      (snap) => setMyInitiatives(snap.docs.map((d) => ({ ...d.data(), docId: d.id }))),
+      (err) => console.error('No se pudieron leer tus emprendimientos', err)
+    )
     return unsubInitiatives
   }, [user])
 
@@ -113,6 +115,15 @@ export function UserContentProvider({ children }) {
     await setDoc(doc(db, 'initiatives', docId), { ...initiative, updatedAt: serverTimestamp() }, { merge: true })
   }
 
+  // Borra un emprendimiento/iniciativa/institución — solo su dueño puede
+  // (ver firestore.rules); un cofundador que lo intente recibe el rechazo del
+  // servidor. No borra los archivos subidos a Storage — quedan huérfanos pero
+  // inaccesibles, porque el dossier que los enlazaba ya no existe.
+  const deleteInitiative = async (docId) => {
+    if (!user || !docId) return
+    await deleteDoc(doc(db, 'initiatives', docId))
+  }
+
   // Ligar una cuenta distinta (ej. un cofundador) al mismo emprendimiento
   // — solo el dueño puede hacerlo, buscando por @usuario. Recibe el
   // emprendimiento completo (no solo su id) porque quien llama ya lo tiene
@@ -144,6 +155,7 @@ export function UserContentProvider({ children }) {
     myInitiatives,
     createInitiative,
     updateInitiative,
+    deleteInitiative,
     addInitiativeMember,
     removeInitiativeMember,
   }

@@ -6,6 +6,7 @@ import NetworkGraphic from '../components/NetworkGraphic.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import SkeletonCards from '../components/SkeletonCards.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
+import { sedesOf } from '../data/cities.js'
 
 const WHY_STATS = [
   { num: '+43,000', label: 'Organizaciones civiles operan aisladas, sin coordinación entre sí' },
@@ -21,7 +22,11 @@ export default function Home() {
   const today = new Date().toISOString().slice(0, 10)
 
   const stats = useMemo(() => {
-    const cities = new Set(initiatives.map((i) => i.city).filter(Boolean))
+    const cities = new Set(
+      initiatives
+        .flatMap((i) => sedesOf(i).map((x) => (x.cityName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()))
+        .filter(Boolean)
+    )
     const ods = new Set(initiatives.flatMap((i) => i.ods || []).filter(Boolean))
     const upcoming = events.filter((e) => e.date >= today).length
     const realizedEvents = events.filter((e) => e.date < today).length

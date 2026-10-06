@@ -4,6 +4,7 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
 import { INDUSTRY_FILTERS, ODS_FILTERS } from '../data/initiatives.js'
+import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
 
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
@@ -22,6 +23,8 @@ export default function Comunidad() {
   const { groups, createGroup } = useGroups()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_GROUP)
+  // La mesa oficial de dudas y onboarding va siempre al principio.
+  const orderedGroups = [...groups].sort((a, b) => (b.docId === SUPPORT_GROUP_ID) - (a.docId === SUPPORT_GROUP_ID))
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -122,13 +125,16 @@ export default function Comunidad() {
         </div>
       ) : (
         <div className="page-grid">
-          {groups.map((g) => {
+          {orderedGroups.map((g) => {
             const joined = profile.joinedGroups?.includes(g.docId)
             return (
               <div className="group-card" key={g.docId}>
                 <div className="group-top">
                   <div>
-                    <div className="group-name">{g.name}</div>
+                    <div className="group-name">
+                      {g.name}
+                      {g.docId === SUPPORT_GROUP_ID && <span className="need-badge" style={{ marginLeft: 8, verticalAlign: 'middle' }}>Oficial</span>}
+                    </div>
                     <div className="cat-tags">
                       <span>{g.industryLabel}</span>
                       {g.secondaryOdsLabel && <span>{g.secondaryOdsLabel}</span>}

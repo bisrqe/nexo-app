@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
 import { RESOURCE_REGIONS, RESOURCES } from '../data/resources.js'
-import { CITIES, getCityName } from '../data/cities.js'
+import { CITIES, getCityName, resourceZoneFor } from '../data/cities.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
@@ -11,7 +11,6 @@ import { normalizeUrl } from '../lib/url.js'
 import { db } from '../lib/firebase.js'
 import { relevanceScore } from '../lib/resourceRelevance.js'
 
-const CITY_TO_REGION = { mty: 'mty', cdmx: 'cdmx', gdl: 'gdl' }
 const NAMED_REGION_IDS = RESOURCE_REGIONS.map((r) => r.id)
 // Cualquier ciudad del catálogo que no tenga ya su propia pestaña (mty,
 // cdmx, gdl) cae dentro de "Otras ciudades" — con su propio filtro por
@@ -34,12 +33,15 @@ function regionLabel(id) {
   return RESOURCE_REGIONS.find((r) => r.id === id)?.name || getCityName(id) || id
 }
 
-const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', region: '' }
+const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', region: '', womenFocus: false }
 
 export default function Recursos() {
   const { profile } = useProfile()
   const { user, isAdmin, isResourceApprover } = useAuth()
-  const myRegion = CITY_TO_REGION[profile.city] || (OTHER_CITIES.some((c) => c.id === profile.city) ? profile.city : '')
+  // Los recursos siguen organizados por ciudad (mty, cdmx, gdl…) — la
+  // ciudad que escribiste en tu perfil se traduce a una de esas zonas si
+  // coincide con alguna; si no, ves los de alcance nacional.
+  const myRegion = resourceZoneFor(profile)
 
   // Ciudad/región activa vive en la URL (?zona=, ?ciudad=) en vez de solo
   // en estado local — así refrescar la página o compartir el link no
@@ -95,8 +97,8 @@ export default function Recursos() {
       ...(RESOURCES[r] || []),
       ...approvedCustom.filter((res) => res.region === r),
     ])
-    return [...all].sort((a, b) => relevanceScore(b, profile.profileType) - relevanceScore(a, profile.profileType))
-  }, [topTab, myRegion, otherCity, otherRegionIds, approvedCustom, profile.profileType])
+    return [...all].sort((a, b) => relevanceScore(b, profile) - relevanceScore(a, profile))
+  }, [topTab, myRegion, otherCity, otherRegionIds, approvedCustom, profile])
 
   const handleAdminChange = (e) => setAdminDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
   const handleSuggestChange = (e) => setSuggestDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
@@ -121,6 +123,7 @@ export default function Recursos() {
         desc: adminDraft.desc.trim(),
         link: stripProtocol(adminDraft.link),
         region: adminDraft.region,
+        genderFocus: adminDraft.womenFocus ? 'mujeres' : '',
         status: 'approved',
         createdAt: serverTimestamp(),
       })
@@ -142,6 +145,7 @@ export default function Recursos() {
         desc: suggestDraft.desc.trim(),
         link: stripProtocol(suggestDraft.link),
         region: suggestDraft.region,
+        genderFocus: suggestDraft.womenFocus ? 'mujeres' : '',
         status: 'pending',
         submittedByUid: user.uid,
         submittedByName: profile.name || '',
@@ -249,6 +253,13 @@ export default function Recursos() {
               <span>Sitio web</span>
               <input type="text" name="link" required value={adminDraft.link} onChange={handleAdminChange} placeholder="www.ejemplo.com" />
             </label>
+            <label className="form-check-inline">
+              <input type="checkbox" checked={adminDraft.womenFocus} onChange={(e) => setAdminDraft((d) => ({ ...d, womenFocus: e.target.checked }))} />
+              <span>
+                Dirigido a mujeres
+                <span className="field-hint">Se le recomienda primero a quien se registró como mujer.</span>
+              </span>
+            </label>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Guardando…' : 'Agregar recurso +'}
             </button>
@@ -286,6 +297,13 @@ export default function Recursos() {
             <label className="form-field">
               <span>Sitio web</span>
               <input type="text" name="link" required value={suggestDraft.link} onChange={handleSuggestChange} placeholder="www.ejemplo.com" />
+            </label>
+            <label className="form-check-inline">
+              <input type="checkbox" checked={suggestDraft.womenFocus} onChange={(e) => setSuggestDraft((d) => ({ ...d, womenFocus: e.target.checked }))} />
+              <span>
+                Dirigido a mujeres
+                <span className="field-hint">Se le recomienda primero a quien se registró como mujer.</span>
+              </span>
             </label>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Enviando…' : 'Enviar para revisión →'}
@@ -326,7 +344,7 @@ export default function Recursos() {
             <div className="resource-card" key={item.docId || item.id}>
               <div className="resource-title">
                 {item.title}
-                {relevanceScore(item, profile.profileType) > 0 && (
+                {relevanceScore(item, profile) > 0 && (
                   <span className="need-badge" style={{ marginLeft: 8, verticalAlign: 'middle' }}>Recomendado para ti</span>
                 )}
               </div>

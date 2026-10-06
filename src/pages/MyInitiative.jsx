@@ -4,17 +4,30 @@ import DashboardLayout from '../components/DashboardLayout.jsx'
 import InitiativeCard from '../components/InitiativeCard.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
-import { kindFor, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { kindFor, myProjectsLabel, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 
-// Lista de TODOS los emprendimientos/iniciativas de los que esta cuenta es
-// dueña o cofundadora — antes era un solo registro ("mi emprendimiento"),
-// ahora una cuenta puede tener varios a la vez. El dossier completo (con
-// gestión de cofundadores, editar, etc.) vive en InitiativeDetail — esta
-// página solo lista y enlaza a cada uno.
+// Lista de TODOS los emprendimientos/iniciativas/instituciones de los que
+// esta cuenta es dueña o cofundadora — una cuenta puede tener varios a la
+// vez. El dossier completo (con gestión de cofundadores, editar, borrar)
+// vive en InitiativeDetail — esta página lista, enlaza y deja borrar los
+// propios con un clic.
 export default function MyInitiative() {
-  const { myInitiatives } = useUserContent()
+  const { myInitiatives, deleteInitiative } = useUserContent()
   const { profile } = useProfile()
+  const { user } = useAuth()
   const kind = kindFor(profile.profileType, profile.subtype)
+  const title = myProjectsLabel(profile, myInitiatives)
+
+  const handleDelete = async (initiative) => {
+    if (!window.confirm(`¿Seguro que quieres borrar "${initiative.title}"? Se elimina para siempre, junto con su dossier.`)) return
+    try {
+      await deleteInitiative(initiative.docId)
+    } catch (err) {
+      console.error(err)
+      window.alert('No se pudo borrar. Solo quien lo registró puede borrarlo — intenta de nuevo.')
+    }
+  }
 
   if (PROFILE_TYPES_WITHOUT_OWN_INITIATIVE.includes(profile.profileType)) {
     return (
@@ -35,7 +48,7 @@ export default function MyInitiative() {
     return (
       <DashboardLayout
         eyebrow={kind.eyebrow}
-        title={kind.myPlural}
+        title={title}
         subtitle={`Todavía no has registrado ${kind.un} ${kind.noun} propi${kind.un === 'una' ? 'a' : 'o'}.`}
       >
         <div className="empty-state">
@@ -49,12 +62,19 @@ export default function MyInitiative() {
   return (
     <DashboardLayout
       eyebrow={kind.eyebrow}
-      title={kind.myPlural}
+      title={title}
       subtitle="Todo lo que registraste o en lo que te ligaron como cofundador/a — cada uno con su propio dossier."
     >
       <div className="catalog-grid">
         {myInitiatives.map((i) => (
-          <InitiativeCard key={i.docId} initiative={i} basePath="/app/iniciativas" />
+          <div className="my-project-cell" key={i.docId}>
+            <InitiativeCard initiative={i} basePath="/app/iniciativas" />
+            {i.ownerUid === user?.uid && (
+              <button type="button" className="btn btn-ghost-danger my-project-delete" onClick={() => handleDelete(i)}>
+                Borrar {kindFor(i.ownerProfileType, i.ownerProfileSubtype).noun}
+              </button>
+            )}
+          </div>
         ))}
       </div>
       <div className="form-actions" style={{ marginTop: 28 }}>
