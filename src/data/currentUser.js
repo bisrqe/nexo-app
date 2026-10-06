@@ -12,6 +12,7 @@ export const DEFAULT_PROFILE = {
   username: '',
   email: '',
   additionalEmails: [],
+  tutorialSeen: false,
   birthDate: '',
   gender: '',
   occupation: '',

@@ -47,6 +47,12 @@ const PATHS = {
       <path d="M16 3v4M8 3v4M3 10h18" />
     </>
   ),
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01" />
+    </>
+  ),
   bookmark: <path d="M6 3h12v18l-6-4-6 4Z" />,
   mail: (
     <>

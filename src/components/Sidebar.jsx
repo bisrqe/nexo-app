@@ -75,6 +75,10 @@ export default function Sidebar() {
         </nav>
 
         <div className="app-nav-bottom">
+          <Link to="/app/tutorial" className={isActive('/app/tutorial') ? 'active' : ''} onClick={() => setOpen(false)}>
+            <NavIcon name="help" />
+            <span>Tutorial</span>
+          </Link>
           <Link to="/app/guardado" className={isActive('/app/guardado') ? 'active' : ''} onClick={() => setOpen(false)}>
             <NavIcon name="bookmark" />
             <span>Guardado</span>

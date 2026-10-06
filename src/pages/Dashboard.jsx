@@ -23,7 +23,7 @@ function formatDate(dateStr) {
 }
 
 export default function Dashboard() {
-  const { profile } = useProfile()
+  const { profile, updateProfile, profileLoading } = useProfile()
   const { user } = useAuth()
   const { myInitiatives } = useUserContent()
   const myRegion = profileRegion(profile)
@@ -76,6 +76,19 @@ export default function Dashboard() {
       title="Recomendado para ti"
       subtitle="Emprendimientos, eventos y mesas de trabajo afines a tu perfil — por causas, industria, región y lo que buscas."
     >
+      {!profile.tutorialSeen && !profileLoading && (
+        <div className="tutorial-banner">
+          <div>
+            <strong>Conoce Nexo en 2 minutos</strong>
+            <span>Un recorrido corto por tu perfil, el catálogo, las mesas, los eventos y el asistente.</span>
+          </div>
+          <div className="tutorial-banner-actions">
+            <Link to="/app/tutorial" className="btn btn-primary">Ver el tutorial →</Link>
+            <button type="button" className="link-arrow" onClick={() => updateProfile({ tutorialSeen: true })}>Ahora no</button>
+          </div>
+        </div>
+      )}
+
       {myRegion && (
         <div className="filters">
           <button className={`chip ${!showAllRegions ? 'active' : ''}`} onClick={() => setShowAllRegions(false)}>

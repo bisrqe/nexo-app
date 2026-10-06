@@ -24,6 +24,7 @@ import NotFound from './pages/NotFound.jsx'
 // solo paquete de más de 1 MB, y abrir cualquier página esperaba a bajarlo
 // completo — en una conexión lenta eso era justo lo que hacía tardar el
 // dashboard.
+const Tutorial = lazy(() => import('./pages/Tutorial.jsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'))
 const Iniciativas = lazy(() => import('./pages/Iniciativas.jsx'))
 const Personas = lazy(() => import('./pages/Personas.jsx'))
@@ -100,6 +101,7 @@ export default function App() {
         <Route path="/app/eventos" element={<RequireAuth><Eventos /></RequireAuth>} />
         <Route path="/app/mensajes" element={<RequireAuth><Mensajes /></RequireAuth>} />
         <Route path="/app/guardado" element={<RequireAuth><Saved /></RequireAuth>} />
+        <Route path="/app/tutorial" element={<RequireAuth><Tutorial /></RequireAuth>} />
         <Route path="/app/ajustes" element={<RequireAuth><Ajustes /></RequireAuth>} />
         <Route path="/app/admin" element={<RequireAuth><RequireAdmin><AdminKPIs /></RequireAdmin></RequireAuth>} />
 

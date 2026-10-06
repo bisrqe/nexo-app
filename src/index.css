@@ -1339,3 +1339,21 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .my-project-cell{background:var(--paper); display:flex; flex-direction:column; gap:12px; padding-bottom:20px;}
 .my-project-cell .cat-card{flex:1;}
 .my-project-delete{margin:0 26px; align-self:flex-start;}
+
+/* ── Tutorial ───────────────────────────────── */
+.tutorial{max-width:680px; display:flex; flex-direction:column; gap:20px;}
+.tutorial-progress{display:flex; gap:8px; flex-wrap:wrap;}
+.tutorial-dot{width:28px; height:6px; border-radius:3px; border:none; background:var(--line-strong); padding:0;}
+.tutorial-dot.done{background:var(--navy);}
+.tutorial-dot.active{background:var(--gold);}
+.tutorial-card{background:var(--paper-alt); border:1px solid var(--line); border-radius:12px; padding:28px 30px; display:flex; flex-direction:column; gap:12px; min-height:260px;}
+.tutorial-title{font-family:var(--serif); font-weight:500; font-size:1.6rem; color:var(--ink); letter-spacing:-.01em;}
+.tutorial-text{font-size:15px; color:var(--text-soft); line-height:1.6;}
+.tutorial-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  background:var(--paper-alt); border:1px solid var(--line); border-left:4px solid var(--gold);
+  border-radius:8px; padding:16px 20px; margin-bottom:20px;
+}
+.tutorial-banner > div:first-child{display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--text-soft);}
+.tutorial-banner strong{color:var(--ink);}
+.tutorial-banner-actions{display:flex; align-items:center; gap:14px;}
