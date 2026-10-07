@@ -19,7 +19,7 @@ export function useRegionFilter(myRegion) {
   return [value, setValue]
 }
 
-export default function RegionFilter({ value, onChange, myRegion, includeRemote = true }) {
+export default function RegionFilter({ value, onChange, myRegion, includeRemote = true, remoteLabel = 'Remoto / en línea' }) {
   const isOther = value !== 'todas' && value !== myRegion
   const otherOptions = REGIONS.filter((r) => r.id !== myRegion)
 
@@ -43,7 +43,7 @@ export default function RegionFilter({ value, onChange, myRegion, includeRemote 
         {otherOptions.map((r) => (
           <option key={r.id} value={r.id}>{r.name}</option>
         ))}
-        {includeRemote && <option value={REMOTE_FILTER_ID}>Remoto / en línea</option>}
+        {includeRemote && <option value={REMOTE_FILTER_ID}>{remoteLabel}</option>}
       </select>
     </div>
   )

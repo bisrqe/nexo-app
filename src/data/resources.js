@@ -298,10 +298,141 @@ export const RESOURCES = {
   ],
 }
 
-// Lista plana de los recursos fijos de este archivo, cada uno con su
-// `region` (mty/cdmx/gdl/nacional) — mismo formato que los recursos
-// capturados a mano en Firestore, para poder ordenarlos y recomendarlos
-// juntos (ver recommendResources en lib/recommend.js).
+// ── Ubicación de cada recurso: región + estado ─────────────────────────────
+// Los recursos de arriba están organizados por ciudad (mty, cdmx, gdl); cada
+// uno se ubica además en su región y estado para poder filtrarlos igual que
+// el resto de Nexo (ver src/data/cities.js). scope: 'estatal' (aplica en un
+// estado), 'nacional' (todo el país o remoto) o 'internacional'.
+const ZONE_LOCATION = {
+  mty: { regionId: 'norte', state: 'Nuevo León' },
+  cdmx: { regionId: 'centro', state: 'Ciudad de México' },
+  gdl: { regionId: 'occidente', state: 'Jalisco' },
+}
+
+// Por verificar: estados donde no se encontró una convocatoria 2026
+// confirmada — se listan como apoyo (la vía existe) pero marcados "sin
+// convocatoria abierta" y sin enlace específico.
+const NO_CALL_NOTE = 'No hay convocatoria abierta confirmada en 2026. '
+function pendingState(regionId, state, hint) {
+  return {
+    id: `se-${state.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, '-')}`,
+    title: `Secretaría de Desarrollo Económico de ${state}`,
+    category: 'Apoyo estatal',
+    desc: `${NO_CALL_NOTE}${hint}`,
+    link: '',
+    scope: 'estatal', regionId, state, noOpenCall: true,
+  }
+}
+const CONSULT = 'Consulta el portal de la Secretaría de Economía o Desarrollo Económico estatal e Impulso Nafin.'
+const CONSULT_SUR = 'Consulta el portal estatal, Impulso Nafin y FINABIEN.'
+
+// Recursos del directorio "Resources for Entrepreneurship Mexico" (oct 2026).
+// Montos y fechas vienen de comunicados y notas de prensa 2025–2026 — las
+// convocatorias cambian cada año, hay que confirmar bases en el enlace.
+const e = (id, regionId, state, title, category, desc, link, extra = {}) => ({ id, scope: 'estatal', regionId, state, title, category, desc, link, ...extra })
+const n = (id, title, category, desc, link, extra = {}) => ({ id, scope: 'nacional', title, category, desc, link, ...extra })
+const w = (id, title, category, desc, link, extra = {}) => ({ id, scope: 'internacional', title, category, desc, link, ...extra })
+
+const EXTRA_RESOURCES = [
+  // Norte
+  e('caintra-creditos', 'norte', 'Nuevo León', 'Caintra – créditos con banca', 'Financiamiento', 'Esquemas de crédito con Santander y Banregio para pymes industriales afiliadas.', 'mexicoindustry.com/categoria.php?e=pymes'),
+  e('pa-adelante-coahuila', 'norte', 'Coahuila', "Pa' Adelante", 'Financiamiento', 'Microcréditos de $10,000 a $30,000 con prioridad a jóvenes y mujeres; fondo revolvente de 100 mdp.', 'posta.com.mx/coahuila/que-tramites-y-apoyos-hay-en-coahuila-para-registrar-una-pyme/vl2234195', { genderFocus: 'mujeres' }),
+  e('impulso-nafin-coahuila', 'norte', 'Coahuila', 'Impulso Nafin + Coahuila', 'Financiamiento', 'Créditos de $250,000 a 2.5 mdp para mipymes.', 'posta.com.mx/coahuila/que-tramites-y-apoyos-hay-en-coahuila-para-registrar-una-pyme/vl2234195'),
+  e('fideapech', 'norte', 'Chihuahua', 'Fideapech', 'Financiamiento', 'Fideicomiso estatal con cinco modalidades de crédito, hasta 5 mdp; trámite digital.', 'fideapech.com'),
+  e('impulso-chihuahua-2026', 'norte', 'Chihuahua', 'Impulso Chihuahua 2026', 'Financiamiento', 'Bolsa de 900 mdp con Nafin: créditos sin garantía para mipymes.', 'razon.com.mx/estados/2026/06/16/chihuahua-impulsa-mipymes-con-creditos-de-hasta-5-millones-de-pesos/'),
+  e('programa-200-chihuahua', 'norte', 'Chihuahua', 'Programa "200" (municipio de Chihuahua)', 'Financiamiento', '200 créditos de hasta $30,000 al 1.3 % mensual en la capital.', 'tiempo.com.mx/local/programa-200-creditos-emprendedores-chihuahua-fomech-demic-junio-2026/'),
+  e('impulsa-bc', 'norte', 'Baja California', 'Impulsa BC', 'Financiamiento', 'Tu Idea Tu Negocio, Emprende Tradicional y Emprende Empresarial: de $10,000 a $500,000, hasta 36 meses.', 'razon.com.mx/estados/2026/01/08/anuncia-gobernadora-de-bc-convocatorias-de-financiamiento-a-emprendedores-2026/'),
+  e('ismujeres-bcs', 'norte', 'Baja California Sur', 'Créditos a mujeres emprendedoras (ISMujeres)', 'Financiamiento', 'Hasta $25,000 al 0 % en 18 mensualidades (convocatoria anual).', 'ismujeres.bcs.gob.mx/wp-content/uploads/2025/09/CONVOCATORIA-DE-CREDITOS-2025-.pdf', { genderFocus: 'mujeres' }),
+  e('sedeco-sinaloa', 'norte', 'Sinaloa', 'Sedeco – microcréditos', 'Financiamiento', 'Créditos de $5,000 a $300,000; tasa preferente para mujeres.', 'tusbuenasnoticias.com/economia/sinaloa-encima-nacional-generacion-de-empleos/', { genderFocus: 'mujeres' }),
+  e('fondo-culiacan-2026', 'norte', 'Sinaloa', 'Fondo municipal-estatal 2026 (Culiacán)', 'Financiamiento', '120 mdp en créditos de $300,000 a 1.5 mdp, con 6 meses de gracia.', 'luznoticias.mx/2026-02-11/sinaloa/gamez-mendivil-anuncia-inversion-de-120-mdp-para-brindar-creditos-a-mipymes-de-culiacan/277741'),
+  e('fondo-tamaulipas', 'norte', 'Tamaulipas', 'Fondo Tamaulipas', 'Financiamiento', 'Microcrédito, Microemprendedor y Credibienestar; más de 3 mil apoyos en 2025.', 'posta.com.mx/tamaulipas/fondo-tamaulipas-impulsa-a-mas-de-3-mil-emprendedores-con-microcreditos-y-fortalece-la-economia-familiar/vl2144528'),
+  e('hecho-en-tamaulipas', 'norte', 'Tamaulipas', 'Hecho en Tamaulipas', 'Red / comercialización', 'Distintivo de origen para productos locales.', 'posta.com.mx/tamaulipas/hecho-en-tampico-el-sello-que-busca-convertir-a-las-pymes-en-protagonistas-del-desarrollo-industrial/vl2191692'),
+  pendingState('norte', 'Sonora', CONSULT),
+  pendingState('norte', 'Durango', CONSULT),
+
+  // Occidente y Bajío
+  e('fojal', 'occidente', 'Jalisco', 'FOJAL', 'Financiamiento + incubación', 'Fojal Emprende, Avanza y Consolida; incluye el modelo de incubación de la Academia FOJAL.', 'transparencia.info.jalisco.gob.mx/sites/default/files//FOJAL_emprende_Jalisco.pdf'),
+  e('tu-puedes-guanajuato', 'occidente', 'Guanajuato', 'Tú Puedes Guanajuato', 'Financiamiento', 'Financiera estatal para mipymes y emprendedores fuera del sistema bancario; bolsa inicial de 400 mdp.', 'publimetro.com.mx/guanajuato/2025/01/28/tu-puedes-guanajuato-financiera-que-apuesta-por-la-inclusion-y-el-crecimiento-economico/'),
+  e('creemos-en-ti', 'occidente', 'Guanajuato', 'Creemos en Ti', 'Capital semilla', 'Apoyo único de $7,000 con taller y acompañamiento, por convocatorias regionales.', 'unotv.com/estados/guanajuato/programa-creemos-en-ti-en-guanajuato-como-registrarse-y-obtener-7-mil-pesos/'),
+  e('confia-aguascalientes', 'occidente', 'Aguascalientes', 'Programa Confía (Sedecyt)', 'Financiamiento / apoyos', 'Nueve convocatorias para emprendedores y mipymes.', 'eluniversal.com.mx/estados/teresa-jimenez-entrega-apoyos-por-16-mdp-a-emprendedores-y-mipymes/'),
+  e('sifia-aguascalientes', 'occidente', 'Aguascalientes', 'Sifia + Nafin/Bancomext', 'Financiamiento / exportación', '1,300 mdp para mipymes que buscan mercados internacionales.', 'elfinanciero.com.mx/estados/2026/04/21/tere-jimenez-anuncia-programa-para-fortalecer-pymes-y-su-expansion-internacional/'),
+  e('si-financia-michoacan', 'occidente', 'Michoacán', 'Sí Financia', 'Financiamiento', 'Organismo estatal que concentra los créditos a emprendedores y mipymes.', 'tiendanube.com/blog/apoyos-del-gobierno-de-michoacan-para-iniciar-un-negocio/'),
+  e('sueno-michoacano', 'occidente', 'Michoacán', 'Sueño Michoacano Inversión Productiva', 'Financiamiento', 'Coinversión con migrantes para proyectos productivos; convocatoria anual en abril–mayo.', 'tiendanube.com/blog/apoyos-del-gobierno-de-michoacan-para-iniciar-un-negocio/'),
+  e('san-luis-emprende', 'occidente', 'San Luis Potosí', 'Estrategia Estatal de Apoyo y Reto San Luis Emprende', 'Competencia + capacitación', 'Concurso que capacita a los 100 mejores proyectos; talleres como Acelera tu Negocio y San Luis Innova. Verifica la edición vigente.', 'elfinanciero.com.mx/bajio/lanza-slp-estrategia-de-apoyo-a-emprendedores-y-mipymes'),
+  e('mipymes-zacatecas-2026', 'occidente', 'Zacatecas', 'Programa municipal de mipymes 2026 (capital)', 'Financiamiento', 'Lineamientos 2026 del Ayuntamiento para apoyo a micro, pequeña y mediana empresa.', 'portal.capitaldezacatecas.gob.mx/storage/app/uploads/public/6a3/57a/453/6a357a4532eae366820947.pdf'),
+  pendingState('occidente', 'Querétaro', CONSULT),
+  pendingState('occidente', 'Colima', CONSULT),
+  pendingState('occidente', 'Nayarit', CONSULT),
+
+  // Centro
+  e('fondeso-ikal', 'centro', 'Ciudad de México', 'FONDESO – Capital Semilla Ikal', 'Capital semilla', '$25,000 no reembolsables; bolsa 2026 de 100 mdp para unos 4 mil proyectos.', 'chilango.com/noticias/capital-semilla-2026-requisitos-programa-social-cdmx/'),
+  e('fondeso-xitopehua', 'centro', 'Ciudad de México', 'FONDESO – Crédito Xitopehua', 'Financiamiento', 'Créditos de $10,000 a $100,000; 0 % de interés en montos de $10,000 a $30,000.', 'sdpnoticias.com/estados/cdmx/fondeso-requisitos-para-recibir-prestamos-de-10-mil-a-30-mil-pesos-con-0-de-interes-de-la-cdmx/'),
+  e('startup-mexico', 'centro', 'Ciudad de México', 'Startup México', 'Hub / incubación', 'Campus de emprendimiento con programas de incubación, eventos y conexión corporativa.', 'startupmexico.com'),
+  e('ime-edomex', 'centro', 'Estado de México', 'Instituto Mexiquense del Emprendedor', 'Asesoría / financiamiento', 'Ventanilla estatal de apoyos, capacitación y vinculación. Verifica la convocatoria vigente.', 'ime.edomex.gob.mx'),
+  e('incentivos-verdes-puebla', 'centro', 'Puebla', 'Incentivos Verdes 2026', 'Subsidio', 'Apoyo a mipymes para instalar paneles solares.', 'mexicoindustry.com/categoria.php?e=pymes'),
+  e('impulsa-joven-morelos', 'centro', 'Morelos', 'Impulsa Joven – Incúbate (FIFODEPI)', 'Incubación / apoyo', 'Apoyos para jóvenes de 18 a 29 años vía incubadoras e instituciones académicas del estado.', 'mir.morelos.gob.mx/records/4EA01AF92C6440AFB0811B868464DB40.pdf'),
+  e('cultura-emprendedora-tlaxcala', 'centro', 'Tlaxcala', 'Programa de Apoyo a la Cultura Emprendedora', 'Apoyo / capacitación', 'Programa estatal anual con reglas publicadas (edición 2025).', 'publicaciones.tlaxcala.gob.mx/indices/2Ex09102025.pdf'),
+  pendingState('centro', 'Hidalgo', 'Consulta el portal de la Secretaría de Desarrollo Económico estatal.'),
+
+  // Sur
+  e('fifeo-oaxaca', 'sur', 'Oaxaca', 'Créditos Incluyentes (FIFEO)', 'Financiamiento', 'Fideicomiso de Fomento del Estado: crédito preferencial para mipymes y emprendedores.', 'oaxaca.gob.mx/fifeo/wp-content/uploads/sites/33/2026/01/Programas-y-Proyectos-de-Inversion-4o-Inf-Trim-25-DC.pdf'),
+  pendingState('sur', 'Veracruz', CONSULT_SUR),
+  pendingState('sur', 'Chiapas', CONSULT_SUR),
+  pendingState('sur', 'Guerrero', CONSULT_SUR),
+
+  // Sureste
+  e('mujer-transformadora', 'sureste', 'Yucatán', 'Mujer Transformadora', 'Financiamiento', 'Créditos de $25,000 a $75,000 para mujeres, tasa de un dígito y 90 días de gracia; vigente hasta 2030.', 'posta.com.mx/yucatan/entregan-en-yucatan-primeros-financiamientos-del-programa-mujer-transformadora-/vl2175280', { genderFocus: 'mujeres' }),
+  e('microcreditos-bienestar-yucatan', 'sureste', 'Yucatán', 'Microcréditos del Bienestar (estatal)', 'Financiamiento', 'Crédito de bajo costo para trabajadores independientes: maquinaria, equipo e insumos.', 'poresto.com/yucatan/2025/12/3/microcreditos-del-bienestar-en-yucatan-requisitos-y-como-solicitarlos.html'),
+  e('micromer-merida', 'sureste', 'Yucatán', 'Micromer y créditos municipales (Mérida)', 'Financiamiento', 'Requisitos simplificados en 2026; negocios de reciente creación ya pueden aplicar.', 'poresto.com/yucatan/merida/2026/4/14/como-acceder-a-creditos-para-emprendedores-en-merida-en-2026-requisitos-y-montos.amp.html'),
+  pendingState('sureste', 'Tabasco', CONSULT_SUR),
+  pendingState('sureste', 'Campeche', CONSULT_SUR),
+  pendingState('sureste', 'Quintana Roo', CONSULT_SUR),
+
+  // Alcance nacional y remoto
+  n('finabien-tandas', 'FINABIEN – Tandas del Bienestar', 'Financiamiento', 'Para micronegocios, incluso informales: de $6,000 a $45,000 en escalones; 0 % de interés en la primera tanda con pago puntual.', 'news.culturacolectiva.com/noticias/mexico/credito-gobierno-para-negocio-2026-programas-federales/'),
+  n('nafin-pyme-joven', 'Nafin – Crédito PyME Joven y garantías', 'Financiamiento', 'Para negocios formales: de $300,000 a 2.5 mdp sin garantía hipotecaria, vía banca comercial; además, cursos gratuitos en línea.', 'nafin.com'),
+  n('impulso-nafin-estados', 'Impulso Nafin + Estados', 'Financiamiento', 'Bolsas regionales coordinadas con gobiernos estatales (Chihuahua, Coahuila, Tamaulipas, entre otros) para mipymes.', 'tiendanube.com/blog/apoyos-de-gobierno-para-iniciar-un-negocio/'),
+  n('innovafest-premio', 'Premio a la Innovación Mexicana – InnovaFest (SE)', 'Competencia / premio', 'Premios de hasta $250,000 para inventores, investigadores y emprendedores; 2,911 proyectos registrados en 2026.', 'cronica.com.mx/nacional/2026/05/30/innovafest-2026-reconoce-a-24-proyectos-mexicanos-con-hasta-250-mil-pesos/'),
+  n('incmty-retos', 'INCmty – convocatorias y retos', 'Competencia / aceleración', 'Concursos de startups para estudiantes, startups y pymes; programas como la Aceleradora PotencIA MX (IA para pymes, con Meta) y vínculo a SXSW.', 'incmty.com'),
+  n('ife-accelerator', 'IFE Accelerator (Tec de Monterrey)', 'Aceleración', 'Para startups EdTech: inmersión de un mes en CDMX y Monterrey; red de más de 200 startups.', 'edtech.tec.mx/sites/g/files/vgjovo1926/files/%5BIFE%20Accelerator%2026%5D%20Bases.docx.pdf'),
+  n('wayra-mexico', 'Wayra México', 'Aceleración / inversión', 'Para startups tecnológicas: inversión corporativa de Telefónica y acceso a clientes.', 'wayra.com'),
+  n('mexico-early-stage-100', 'Mexico Early Stage 100', 'Ranking / visibilidad', 'Ranking de Mexico Tech Week para startups pre-Serie A, con exposición a inversionistas de EE. UU.', ''),
+  n('ashoka-mexico', 'Ashoka México', 'Red / fellowship', 'Fellowship para líderes con innovación social sistémica.', 'ashoka.org/es-mx'),
+  n('condusef-comparador', 'Comparador de créditos pyme (CONDUSEF)', 'Herramienta', 'Compara tasas y condiciones de créditos bancarios para cualquier negocio.', 'condusef.gob.mx'),
+
+  // Internacional
+  w('bid-lab-financiamiento', 'BID Lab – financiamiento', 'Financiamiento / capital', 'Para startups y empresas de impacto en América Latina y el Caribe. Postulación continua; instrumentos reembolsables, no reembolsables y de capital.', 'bogota.gov.co/boletin-oferta-internacional/financiamiento-bid-lab-para-startups-y-empresas-innovadoras'),
+  w('bid-convocatorias', 'Convocatorias del BID', 'Convocatorias temáticas', 'Llamados periódicos para organizaciones, investigadores y gobiernos: residuos y metano, investigación sobre IA, entre otros.', 'iadb.org/es/como-trabajar-juntos/convocatorias'),
+  w('gobernarte', 'Gobernarte – Premio Pablo Valenti (BID)', 'Premio', 'Reconoce innovación en gestión pública de gobiernos estatales y municipales.', 'iadb.org/es/como-trabajar-juntos/convocatorias'),
+  w('wexchange', 'WeXchange (BID Lab)', 'Red / aceleración', 'Para emprendedoras STEM, de pre-semilla a Serie B: conexión con inversionistas y bootcamp con Google.', 'forbesargentina.com/liderazgo/convocatoria-abierta-nuevas-oportunidades-emprendedoras-stem-region-n14295/amp', { genderFocus: 'mujeres' }),
+  w('puentes-de-talento', 'Puentes de Talento (BID Lab + Madrid)', 'Programa de inmersión', 'Para fundadores de 23 a 35 años: conexión con el ecosistema europeo vía Madrid; incluye seleccionados mexicanos.', 'iadb.org/es/noticias/bid-lab-y-el-ayuntamiento-de-madrid-impulsan-emprendedores-de-america-latina-en-nueva-edicion-de'),
+  w('y-combinator', 'Y Combinator', 'Aceleración / inversión', 'Para startups tecnológicas globales: postulación en línea, varias tandas por año.', 'ycombinator.com'),
+  w('founders-inc-blueprint', 'Founders, Inc. – Blueprint', 'Aceleración / inversión', 'Deep tech y hardware: tres meses en San Francisco; $150,000 dólares por 5 % de capital.', 'f.inc/blueprint'),
+  w('ashoka-global', 'Ashoka', 'Fellowship', 'Red global de agentes de cambio para emprendedores sociales.', 'ashoka.org/es-mx'),
+  w('circular-packaging-challenge', 'Circular Packaging Challenge (Ecoembes)', 'Competencia', 'Para startups de empaque circular: 16 finalistas viajan a Madrid; premios por 16 mil euros.', ''),
+  w('coalar-grants', 'COALAR Grants', 'Subvención', 'Para proyectos Australia–América Latina: fondos para educación, emprendimiento, transición energética y pueblos indígenas.', ''),
+]
+
+const LEGACY_NATIONAL_ZONE = 'nacional'
+
+function withLocation(r, zone) {
+  if (zone === LEGACY_NATIONAL_ZONE) return { ...r, scope: 'nacional' }
+  const loc = ZONE_LOCATION[zone]
+  return loc ? { ...r, scope: 'estatal', ...loc } : { ...r, scope: 'estatal' }
+}
+
+// Todos los recursos fijos (los de arriba + los del directorio), en una
+// lista plana con scope/regionId/state — mismo formato que
+// normalizeResource deja a los capturados a mano en Firestore.
 export function flattenResources() {
-  return Object.entries(RESOURCES).flatMap(([region, list]) => list.map((r) => ({ ...r, region })))
+  const base = Object.entries(RESOURCES).flatMap(([zone, list]) => list.map((r) => withLocation(r, zone)))
+  return [...base, ...EXTRA_RESOURCES]
+}
+
+// Los recursos capturados a mano antes de este cambio traen `region` con el
+// id de ciudad (mty, cdmx…) o "nacional" — se traducen a región y estado.
+// Los nuevos ya traen scope/regionId/state directamente.
+export function normalizeResource(r) {
+  if (r.scope) return r
+  return withLocation(r, r.region)
 }

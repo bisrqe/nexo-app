@@ -3,7 +3,7 @@
 // de comparar ODS a mano en cada página — así "recomendado para ti"
 // significa lo mismo en todas partes (dashboard, recursos y chatbot).
 import { isStudentEntrepreneur, profileRoles } from './initiativeKind.js'
-import { regionsOf, isRemoteItem, profileRegion, matchesRegionFilter, resourceZoneFor } from '../data/cities.js'
+import { regionsOf, isRemoteItem, profileRegion, matchesRegionFilter } from '../data/cities.js'
 import { relevanceScore } from './resourceRelevance.js'
 import { genderFocusFor, itemGenderFocus } from './gender.js'
 
@@ -153,15 +153,20 @@ export function rankForProfile(items, profile, { onlyPositive = true } = {}) {
     .map((x) => x.item)
 }
 
-// Recursos recomendados — de la zona de la cuenta (mty/cdmx/gdl…, si su
-// ciudad coincide con alguna) más los de alcance nacional, ordenados por
-// tipo de perfil (y género, si aplica). `resources` es una lista plana donde
-// cada recurso trae su `region` (ver flattenResources en data/resources.js).
+// Recursos recomendados — los de alcance nacional/internacional más los de
+// la región de la cuenta (con prioridad a los de su propio estado), ordenados
+// por tipo de perfil (y género, si aplica). Los marcados "sin convocatoria
+// abierta" no se recomiendan: siguen visibles en Recursos, pero no tiene
+// caso empujarlos al inicio. `resources` es una lista plana normalizada (ver
+// flattenResources / normalizeResource en data/resources.js).
 export function recommendResources(resources, profile, limit = 3) {
-  const zone = resourceZoneFor(profile)
-  const pool = resources.filter((r) => r.region === 'nacional' || (zone && r.region === zone))
+  const region = profileRegion(profile)
+  const pool = resources.filter((r) => r.link && !r.noOpenCall && (r.scope !== 'estatal' || (region && r.regionId === region)))
   const scored = pool
-    .map((r) => ({ item: r, score: relevanceScore(r, profile) }))
+    .map((r) => ({
+      item: r,
+      score: relevanceScore(r, profile) + (r.scope === 'estatal' && profile.state && r.state === profile.state ? 2 : 0),
+    }))
     .sort((a, b) => b.score - a.score)
   const matched = scored.filter((x) => x.score > 0)
   return (matched.length > 0 ? matched : scored).map((x) => x.item).slice(0, limit)

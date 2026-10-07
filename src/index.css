@@ -1357,3 +1357,5 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .tutorial-banner > div:first-child{display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--text-soft);}
 .tutorial-banner strong{color:var(--ink);}
 .tutorial-banner-actions{display:flex; align-items:center; gap:14px;}
+
+.need-badge-muted{background:var(--paper-alt); color:var(--text-soft); border:1px solid var(--line-strong);}

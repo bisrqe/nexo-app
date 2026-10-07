@@ -9,7 +9,7 @@ import { useUserContent } from '../context/UserContentContext.jsx'
 import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
 import { ODS_FILTERS } from '../data/initiatives.js'
 import { getRegionName, profileRegion, locationLabel, isRemoteItem } from '../data/cities.js'
-import { flattenResources } from '../data/resources.js'
+import { flattenResources, normalizeResource } from '../data/resources.js'
 import { SUPPORT_EMAIL as SUPPORT_ACCOUNT_EMAIL, isSupportProfile } from '../data/admins.js'
 import { SUPPORT_GROUP_ID, SUPPORT_GROUP_SLUG } from '../data/supportGroup.js'
 import { kindFor } from '../lib/initiativeKind.js'
@@ -62,7 +62,7 @@ async function buildInsideContext(profile, groups, uid, myInitiatives) {
     events: events.filter((e) => !e.date || e.date >= today),
     groups: groups.filter((g) => g.docId !== SUPPORT_GROUP_ID),
     mentors: mentors.filter((m) => !isSupportProfile(m)),
-    resources: [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved')],
+    resources: [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved').map(normalizeResource)],
     limits: { initiatives: 5, events: 4, groups: 3, mentors: 3, resources: 4 },
   })
 

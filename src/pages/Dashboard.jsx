@@ -11,7 +11,7 @@ import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
 import { buildRecommendations } from '../lib/recommend.js'
 import { getRegionName, profileRegion } from '../data/cities.js'
 import { kindFor, myProjectsLabel, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
-import { flattenResources } from '../data/resources.js'
+import { flattenResources, normalizeResource } from '../data/resources.js'
 import { isSupportProfile } from '../data/admins.js'
 import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
 
@@ -44,7 +44,7 @@ export default function Dashboard() {
   )
 
   const resources = useMemo(
-    () => [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved')],
+    () => [...BUILT_IN_RESOURCES, ...customResources.filter((r) => !r.status || r.status === 'approved').map(normalizeResource)],
     [customResources]
   )
 

@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore'
 import DashboardLayout from '../components/DashboardLayout.jsx'
-import { RESOURCE_REGIONS, RESOURCES } from '../data/resources.js'
-import { CITIES, getCityName, resourceZoneFor } from '../data/cities.js'
+import RegionFilter, { useRegionFilter } from '../components/RegionFilter.jsx'
+import { flattenResources, normalizeResource } from '../data/resources.js'
+import { REGIONS, getRegionName, statesOfRegion, profileRegion } from '../data/cities.js'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
@@ -11,16 +12,7 @@ import { normalizeUrl } from '../lib/url.js'
 import { db } from '../lib/firebase.js'
 import { relevanceScore } from '../lib/resourceRelevance.js'
 
-const NAMED_REGION_IDS = RESOURCE_REGIONS.map((r) => r.id)
-// Cualquier ciudad del catálogo que no tenga ya su propia pestaña (mty,
-// cdmx, gdl) cae dentro de "Otras ciudades" — con su propio filtro por
-// ciudad, en vez de llenar la barra de arriba con una pestaña por cada una.
-// "Remoto" se excluye a propósito: no tiene bucket propio en RESOURCES (no
-// hay convocatorias "de remoto"), así que tratarlo como región propia solo
-// manda a quien trabaja remoto a una pestaña "mi ciudad" vacía por defecto,
-// en vez de a Alcance nacional — que es justo lo que sí le recomienda el
-// dashboard para ese mismo perfil.
-const OTHER_CITIES = CITIES.filter((c) => !NAMED_REGION_IDS.includes(c.id) && c.id !== 'otra' && c.id !== 'remoto')
+const BUILT_IN = flattenResources()
 
 // El link se guarda sin protocolo (mismo formato que src/data/resources.js,
 // que arma el href como `https://${item.link}`) para que ambas fuentes se
@@ -29,42 +21,118 @@ function stripProtocol(url) {
   return normalizeUrl(url).replace(/^https?:\/\//i, '').replace(/\/+$/, '')
 }
 
-function regionLabel(id) {
-  return RESOURCE_REGIONS.find((r) => r.id === id)?.name || getCityName(id) || id
+const SCOPE_LABEL = { nacional: 'Alcance nacional', internacional: 'Internacional' }
+
+function placeLabel(r) {
+  if (r.scope !== 'estatal') return SCOPE_LABEL[r.scope] || ''
+  return [r.state, getRegionName(r.regionId)].filter(Boolean).join(' · ')
 }
 
-const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', region: '', womenFocus: false }
+const EMPTY_DRAFT = { title: '', category: '', desc: '', link: '', scope: 'estatal', regionId: '', state: '', womenFocus: false, noOpenCall: false }
+
+// Campos de ubicación y alcance, comunes al formulario de admin y al de
+// sugerencias.
+function ResourceFormFields({ draft, onChange, setDraft }) {
+  return (
+    <>
+      <div className="form-row">
+        <label className="form-field">
+          <span>Nombre</span>
+          <input type="text" name="title" required value={draft.title} onChange={onChange} placeholder="Ej. Fondo Semilla CDMX" />
+        </label>
+        <label className="form-field">
+          <span>Categoría</span>
+          <input type="text" name="category" value={draft.category} onChange={onChange} placeholder="Ej. Financiamiento" />
+        </label>
+      </div>
+      <label className="form-field">
+        <span>Alcance</span>
+        <select name="scope" value={draft.scope} onChange={(e) => setDraft((d) => ({ ...d, scope: e.target.value, regionId: '', state: '' }))}>
+          <option value="estatal">De un estado o región</option>
+          <option value="nacional">Alcance nacional / remoto</option>
+          <option value="internacional">Internacional</option>
+        </select>
+      </label>
+      {draft.scope === 'estatal' && (
+        <div className="form-row">
+          <label className="form-field">
+            <span>Región</span>
+            <select name="regionId" required value={draft.regionId} onChange={(e) => setDraft((d) => ({ ...d, regionId: e.target.value, state: '' }))}>
+              <option value="">Selecciona una región</option>
+              {REGIONS.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </label>
+          <label className="form-field">
+            <span>Estado</span>
+            <select name="state" required value={draft.state} onChange={onChange} disabled={!draft.regionId}>
+              <option value="">{draft.regionId ? 'Selecciona el estado' : 'Primero elige la región'}</option>
+              {statesOfRegion(draft.regionId).map((st) => <option key={st} value={st}>{st}</option>)}
+            </select>
+          </label>
+        </div>
+      )}
+      <label className="form-field">
+        <span>Descripción</span>
+        <textarea name="desc" rows={3} value={draft.desc} onChange={onChange} placeholder="¿Qué ofrece y a quién aplica?" />
+      </label>
+      <label className="form-field">
+        <span>Sitio web</span>
+        <input type="text" name="link" required value={draft.link} onChange={onChange} placeholder="www.ejemplo.com" />
+      </label>
+      <label className="form-check-inline">
+        <input type="checkbox" checked={draft.womenFocus} onChange={(e) => setDraft((d) => ({ ...d, womenFocus: e.target.checked }))} />
+        <span>
+          Dirigido a mujeres
+          <span className="field-hint">Se le recomienda primero a quien se registró como mujer.</span>
+        </span>
+      </label>
+      <label className="form-check-inline">
+        <input type="checkbox" checked={draft.noOpenCall} onChange={(e) => setDraft((d) => ({ ...d, noOpenCall: e.target.checked }))} />
+        <span>
+          Sin convocatoria abierta por ahora
+          <span className="field-hint">El programa existe pero no hay fechas vigentes; se muestra con esa etiqueta y no se recomienda en el inicio.</span>
+        </span>
+      </label>
+    </>
+  )
+}
+
+function draftToDoc(draft) {
+  return {
+    title: draft.title.trim(),
+    category: draft.category.trim() || 'Recurso',
+    desc: draft.desc.trim(),
+    link: stripProtocol(draft.link),
+    scope: draft.scope,
+    regionId: draft.scope === 'estatal' ? draft.regionId : '',
+    state: draft.scope === 'estatal' ? draft.state : '',
+    genderFocus: draft.womenFocus ? 'mujeres' : '',
+    noOpenCall: draft.noOpenCall,
+  }
+}
 
 export default function Recursos() {
   const { profile } = useProfile()
   const { user, isAdmin, isResourceApprover } = useAuth()
-  // Los recursos siguen organizados por ciudad (mty, cdmx, gdl…) — la
-  // ciudad que escribiste en tu perfil se traduce a una de esas zonas si
-  // coincide con alguna; si no, ves los de alcance nacional.
-  const myRegion = resourceZoneFor(profile)
+  const myRegion = profileRegion(profile)
 
-  // Ciudad/región activa vive en la URL (?zona=, ?ciudad=) en vez de solo
-  // en estado local — así refrescar la página o compartir el link no
-  // borra el filtro que ya elegiste.
+  // Región y estado activos viven en la URL (?region=, ?estado=) — así
+  // refrescar la página o compartir el link no borra el filtro. "Remoto"
+  // aquí es lo de alcance nacional e internacional.
+  const [regionFilter, setRegionFilter] = useRegionFilter(myRegion)
   const [searchParams, setSearchParams] = useSearchParams()
-  const topTab = searchParams.get('zona') || (myRegion ? 'mine' : 'nacional')
-  const otherCity = searchParams.get('ciudad') || ''
-  const setTopTab = (value) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      next.set('zona', value)
-      next.delete('ciudad')
-      return next
-    })
+  const stateFilter = searchParams.get('estado') || ''
+  const setStateFilter = (value) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev)
+    if (value) next.set('estado', value)
+    else next.delete('estado')
+    return next
+  })
+  const changeRegion = (value) => {
+    setRegionFilter(value)
+    setStateFilter('')
   }
-  const setOtherCity = (value) => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev)
-      if (value) next.set('ciudad', value)
-      else next.delete('ciudad')
-      return next
-    })
-  }
+
   const [customResources] = useFirestoreCollection('resources')
   const [showAdminForm, setShowAdminForm] = useState(false)
   const [showSuggestForm, setShowSuggestForm] = useState(false)
@@ -72,61 +140,40 @@ export default function Recursos() {
   const [suggestDraft, setSuggestDraft] = useState(EMPTY_DRAFT)
   const [saving, setSaving] = useState(false)
 
-  const region = topTab === 'mine' ? myRegion : topTab === 'nacional' ? 'nacional' : otherCity
-
-  // Todas las regiones que no son "mi ciudad" ni "alcance nacional" — es lo
-  // que se muestra junto cuando entras a "Otras ciudades" sin elegir
-  // todavía una específica en el desplegable, en vez de dejar la lista
-  // vacía hasta que escojas una.
-  const otherRegionIds = useMemo(
-    () => [...RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion), ...OTHER_CITIES.filter((c) => c.id !== myRegion)].map((r) => r.id),
-    [myRegion]
+  const approvedCustom = useMemo(
+    () => customResources.filter((r) => !r.status || r.status === 'approved').map(normalizeResource),
+    [customResources]
   )
-
-  const approvedCustom = customResources.filter((r) => !r.status || r.status === 'approved')
-  const pendingCustom = customResources.filter((r) => r.status === 'pending')
+  const pendingCustom = customResources.filter((r) => r.status === 'pending').map(normalizeResource)
 
   const items = useMemo(() => {
-    const regionIds = topTab === 'mine'
-      ? (myRegion ? [myRegion] : [])
-      : topTab === 'nacional'
-        ? ['nacional']
-        : (otherCity ? [otherCity] : otherRegionIds)
-
-    const all = regionIds.flatMap((r) => [
-      ...(RESOURCES[r] || []),
-      ...approvedCustom.filter((res) => res.region === r),
-    ])
-    return [...all].sort((a, b) => relevanceScore(b, profile) - relevanceScore(a, profile))
-  }, [topTab, myRegion, otherCity, otherRegionIds, approvedCustom, profile])
+    const all = [...BUILT_IN, ...approvedCustom]
+    const filtered = all.filter((r) => {
+      if (regionFilter === 'todas') return true
+      if (regionFilter === 'remoto') return r.scope !== 'estatal'
+      if (r.scope !== 'estatal' || r.regionId !== regionFilter) return false
+      return !stateFilter || r.state === stateFilter
+    })
+    // Los que tienen convocatoria abierta primero, luego por relevancia para
+    // tu perfil; sort es estable, así que el resto conserva su orden.
+    return filtered.sort((a, b) => (Number(Boolean(a.noOpenCall)) - Number(Boolean(b.noOpenCall))) || (relevanceScore(b, profile) - relevanceScore(a, profile)))
+  }, [regionFilter, stateFilter, approvedCustom, profile])
 
   const handleAdminChange = (e) => setAdminDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
   const handleSuggestChange = (e) => setSuggestDraft((d) => ({ ...d, [e.target.name]: e.target.value }))
 
-  const openAdminForm = () => {
-    setAdminDraft({ ...EMPTY_DRAFT, region: region || 'nacional' })
-    setShowAdminForm(true)
-  }
-  const openSuggestForm = () => {
-    setSuggestDraft({ ...EMPTY_DRAFT, region: region || 'nacional' })
-    setShowSuggestForm(true)
+  const openForm = (setDraft, setShow) => {
+    const regionId = REGIONS.some((r) => r.id === regionFilter) ? regionFilter : ''
+    setDraft({ ...EMPTY_DRAFT, scope: regionFilter === 'remoto' ? 'nacional' : 'estatal', regionId, state: regionId ? stateFilter : '' })
+    setShow(true)
   }
 
   const handleAddResource = async (e) => {
     e.preventDefault()
-    if (!adminDraft.title.trim() || !adminDraft.link.trim() || !adminDraft.region) return
+    if (!adminDraft.title.trim() || !adminDraft.link.trim()) return
     setSaving(true)
     try {
-      await addDoc(collection(db, 'resources'), {
-        title: adminDraft.title.trim(),
-        category: adminDraft.category.trim() || 'Recurso',
-        desc: adminDraft.desc.trim(),
-        link: stripProtocol(adminDraft.link),
-        region: adminDraft.region,
-        genderFocus: adminDraft.womenFocus ? 'mujeres' : '',
-        status: 'approved',
-        createdAt: serverTimestamp(),
-      })
+      await addDoc(collection(db, 'resources'), { ...draftToDoc(adminDraft), status: 'approved', createdAt: serverTimestamp() })
       setAdminDraft(EMPTY_DRAFT)
       setShowAdminForm(false)
     } finally {
@@ -136,16 +183,11 @@ export default function Recursos() {
 
   const handleSuggestResource = async (e) => {
     e.preventDefault()
-    if (!suggestDraft.title.trim() || !suggestDraft.link.trim() || !suggestDraft.region || !user) return
+    if (!suggestDraft.title.trim() || !suggestDraft.link.trim() || !user) return
     setSaving(true)
     try {
       await addDoc(collection(db, 'resources'), {
-        title: suggestDraft.title.trim(),
-        category: suggestDraft.category.trim() || 'Recurso',
-        desc: suggestDraft.desc.trim(),
-        link: stripProtocol(suggestDraft.link),
-        region: suggestDraft.region,
-        genderFocus: suggestDraft.womenFocus ? 'mujeres' : '',
+        ...draftToDoc(suggestDraft),
         status: 'pending',
         submittedByUid: user.uid,
         submittedByName: profile.name || '',
@@ -169,100 +211,46 @@ export default function Recursos() {
     await updateDoc(doc(db, 'resources', docId), { status: 'approved' })
   }
 
-  const regionOptions = useMemo(
-    () => [...RESOURCE_REGIONS.filter((r) => r.id !== 'nacional'), ...OTHER_CITIES.map((c) => ({ id: c.id, name: c.name })), { id: 'nacional', name: 'Alcance nacional' }],
-    []
-  )
-
   return (
     <DashboardLayout
       eyebrow="Aprovechar lo que ya existe"
       title="Recursos"
-      subtitle="Convocatorias, financiamiento, mentoría y aceleración — por ciudad, más lo que aplica en todo el país."
+      subtitle="Convocatorias, financiamiento, mentoría y aceleración — por región y estado, más lo que aplica en todo el país."
     >
-      <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <div className="filters" style={{ marginBottom: 0 }}>
-          {myRegion && (
-            <button className={`chip ${topTab === 'mine' ? 'active' : ''}`} onClick={() => setTopTab('mine')}>
-              {regionLabel(myRegion)}
-            </button>
-          )}
-          <button className={`chip ${topTab === 'nacional' ? 'active' : ''}`} onClick={() => setTopTab('nacional')}>
-            Alcance nacional
-          </button>
-          <button className={`chip ${topTab === 'otras' ? 'active' : ''}`} onClick={() => setTopTab('otras')}>
-            Otras ciudades
-          </button>
-          {topTab === 'otras' && (
-            <select
-              className="chip-select"
-              value={otherCity}
-              onChange={(e) => setOtherCity(e.target.value)}
-            >
-              <option value="">Todas las otras ciudades</option>
-              {(myRegion ? RESOURCE_REGIONS.filter((r) => r.id !== 'nacional' && r.id !== myRegion) : RESOURCE_REGIONS.filter((r) => r.id !== 'nacional'))
-                .concat(OTHER_CITIES.filter((c) => c.id !== myRegion))
-                .map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-            </select>
-          )}
+      <div className="filters" style={{ justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <RegionFilter value={regionFilter} onChange={changeRegion} myRegion={myRegion} remoteLabel="Nacional e internacional" />
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
           {isAdmin && (
-            <button type="button" className="btn btn-primary" onClick={() => (showAdminForm ? setShowAdminForm(false) : openAdminForm())}>
+            <button type="button" className="btn btn-primary" onClick={() => (showAdminForm ? setShowAdminForm(false) : openForm(setAdminDraft, setShowAdminForm))}>
               {showAdminForm ? 'Cancelar' : 'Agregar recurso +'}
             </button>
           )}
           {user && !isAdmin && (
-            <button type="button" className="btn btn-ghost" onClick={() => (showSuggestForm ? setShowSuggestForm(false) : openSuggestForm())}>
+            <button type="button" className="btn btn-ghost" onClick={() => (showSuggestForm ? setShowSuggestForm(false) : openForm(setSuggestDraft, setShowSuggestForm))}>
               {showSuggestForm ? 'Cancelar' : 'Sugerir recurso +'}
             </button>
           )}
         </div>
       </div>
 
+      {REGIONS.some((r) => r.id === regionFilter) && (
+        <div className="filters">
+          <select className={`chip-select ${stateFilter ? 'active' : ''}`} value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} aria-label="Filtrar por estado">
+            <option value="">Todos los estados de la región</option>
+            {statesOfRegion(regionFilter).map((st) => <option key={st} value={st}>{st}</option>)}
+          </select>
+        </div>
+      )}
+
       {showAdminForm && (
         <div className="settings-card" style={{ marginBottom: 28 }}>
           <h2>Agregar recurso</h2>
-          <p className="settings-card-desc">Solo tu cuenta admin ve este formulario. Queda publicado de inmediato en la zona que elijas.</p>
+          <p className="settings-card-desc">Solo las cuentas del equipo ven este formulario. Queda publicado de inmediato.</p>
           <form onSubmit={handleAddResource} className="auth-form">
-            <div className="form-row">
-              <label className="form-field">
-                <span>Nombre</span>
-                <input type="text" name="title" required value={adminDraft.title} onChange={handleAdminChange} placeholder="Ej. Fondo Semilla CDMX" />
-              </label>
-              <label className="form-field">
-                <span>Categoría</span>
-                <input type="text" name="category" value={adminDraft.category} onChange={handleAdminChange} placeholder="Ej. Financiamiento" />
-              </label>
-            </div>
-            <label className="form-field">
-              <span>Ciudad / alcance</span>
-              <select name="region" required value={adminDraft.region} onChange={handleAdminChange}>
-                {regionOptions.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Descripción</span>
-              <textarea name="desc" rows={3} value={adminDraft.desc} onChange={handleAdminChange} placeholder="¿Qué ofrece y a quién aplica?" />
-            </label>
-            <label className="form-field">
-              <span>Sitio web</span>
-              <input type="text" name="link" required value={adminDraft.link} onChange={handleAdminChange} placeholder="www.ejemplo.com" />
-            </label>
-            <label className="form-check-inline">
-              <input type="checkbox" checked={adminDraft.womenFocus} onChange={(e) => setAdminDraft((d) => ({ ...d, womenFocus: e.target.checked }))} />
-              <span>
-                Dirigido a mujeres
-                <span className="field-hint">Se le recomienda primero a quien se registró como mujer.</span>
-              </span>
-            </label>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando…' : 'Agregar recurso +'}
-            </button>
+            <ResourceFormFields draft={adminDraft} onChange={handleAdminChange} setDraft={setAdminDraft} />
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando…' : 'Agregar recurso +'}</button>
           </form>
         </div>
       )}
@@ -270,44 +258,10 @@ export default function Recursos() {
       {showSuggestForm && (
         <div className="settings-card" style={{ marginBottom: 28 }}>
           <h2>Sugerir recurso</h2>
-          <p className="settings-card-desc">Lo revisa el equipo de Nexo antes de publicarlo — le avisamos a support@nexohub.mx en cuanto lo mandes.</p>
+          <p className="settings-card-desc">Lo revisa el equipo de Nexo antes de publicarlo.</p>
           <form onSubmit={handleSuggestResource} className="auth-form">
-            <div className="form-row">
-              <label className="form-field">
-                <span>Nombre</span>
-                <input type="text" name="title" required value={suggestDraft.title} onChange={handleSuggestChange} placeholder="Ej. Fondo Semilla CDMX" />
-              </label>
-              <label className="form-field">
-                <span>Categoría</span>
-                <input type="text" name="category" value={suggestDraft.category} onChange={handleSuggestChange} placeholder="Ej. Financiamiento" />
-              </label>
-            </div>
-            <label className="form-field">
-              <span>Ciudad / alcance</span>
-              <select name="region" required value={suggestDraft.region} onChange={handleSuggestChange}>
-                {regionOptions.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Descripción</span>
-              <textarea name="desc" rows={3} value={suggestDraft.desc} onChange={handleSuggestChange} placeholder="¿Qué ofrece y a quién aplica?" />
-            </label>
-            <label className="form-field">
-              <span>Sitio web</span>
-              <input type="text" name="link" required value={suggestDraft.link} onChange={handleSuggestChange} placeholder="www.ejemplo.com" />
-            </label>
-            <label className="form-check-inline">
-              <input type="checkbox" checked={suggestDraft.womenFocus} onChange={(e) => setSuggestDraft((d) => ({ ...d, womenFocus: e.target.checked }))} />
-              <span>
-                Dirigido a mujeres
-                <span className="field-hint">Se le recomienda primero a quien se registró como mujer.</span>
-              </span>
-            </label>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Enviando…' : 'Enviar para revisión →'}
-            </button>
+            <ResourceFormFields draft={suggestDraft} onChange={handleSuggestChange} setDraft={setSuggestDraft} />
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Enviando…' : 'Enviar para revisión →'}</button>
           </form>
         </div>
       )}
@@ -315,15 +269,15 @@ export default function Recursos() {
       {isResourceApprover && pendingCustom.length > 0 && (
         <div className="settings-card settings-card-danger" style={{ marginBottom: 28 }}>
           <h2>Pendientes de aprobación ({pendingCustom.length})</h2>
-          <p className="settings-card-desc">Solo tú las ves así — nadie más en Recursos hasta que las apruebes.</p>
+          <p className="settings-card-desc">Solo el equipo las ve así — nadie más en Recursos hasta que se aprueben.</p>
           <div className="page-grid" style={{ margin: 0 }}>
             {pendingCustom.map((item) => (
               <div className="resource-card" key={item.docId}>
                 <div className="resource-title">{item.title}</div>
-                <div className="resource-org">{item.category} · {regionLabel(item.region)}</div>
+                <div className="resource-org">{item.category} · {placeLabel(item)}</div>
                 <p className="resource-desc">{item.desc}</p>
                 <p className="settings-card-desc" style={{ margin: 0 }}>Sugerido por {item.submittedByName || 'alguien'}{item.submittedByEmail ? ` (${item.submittedByEmail})` : ''}</p>
-                <a href={`https://${item.link}`} target="_blank" rel="noreferrer" className="resource-tag">Visitar sitio →</a>
+                {item.link && <a href={`https://${item.link}`} target="_blank" rel="noreferrer" className="resource-tag">Visitar sitio →</a>}
                 <div className="form-actions">
                   <button type="button" className="btn btn-primary" onClick={() => handleApproveResource(item.docId)}>Aprobar</button>
                   <button type="button" className="btn btn-ghost-danger" onClick={() => handleDeleteResource(item.docId)}>Rechazar</button>
@@ -337,6 +291,7 @@ export default function Recursos() {
       {items.length === 0 ? (
         <div className="empty-state">
           <p>Todavía no tenemos recursos capturados para esta zona.</p>
+          <button type="button" className="link-arrow" onClick={() => changeRegion('remoto')}>Ver recursos de alcance nacional e internacional →</button>
         </div>
       ) : (
         <div className="page-grid">
@@ -344,20 +299,19 @@ export default function Recursos() {
             <div className="resource-card" key={item.docId || item.id}>
               <div className="resource-title">
                 {item.title}
-                {relevanceScore(item, profile) > 0 && (
+                {item.noOpenCall ? (
+                  <span className="need-badge need-badge-muted" style={{ marginLeft: 8, verticalAlign: 'middle' }}>Sin convocatoria abierta</span>
+                ) : relevanceScore(item, profile) > 0 && (
                   <span className="need-badge" style={{ marginLeft: 8, verticalAlign: 'middle' }}>Recomendado para ti</span>
                 )}
               </div>
-              <div className="resource-org">{item.category}</div>
+              <div className="resource-org">{item.category}{placeLabel(item) ? ` · ${placeLabel(item)}` : ''}</div>
               <p className="resource-desc">{item.desc}</p>
-              <a
-                href={`https://${item.link}`}
-                target="_blank"
-                rel="noreferrer"
-                className="resource-tag"
-              >
-                Visitar sitio →
-              </a>
+              {item.link && (
+                <a href={`https://${item.link}`} target="_blank" rel="noreferrer" className="resource-tag">
+                  Visitar sitio →
+                </a>
+              )}
               {isAdmin && item.docId && (
                 <button type="button" className="link-arrow" onClick={() => handleDeleteResource(item.docId)} style={{ alignSelf: 'flex-start' }}>
                   Borrar
@@ -370,8 +324,9 @@ export default function Recursos() {
 
       <p className="kpi-footnote" style={{ marginTop: 28 }}>
         Varias convocatorias son anuales; las que ya cerraron su edición 2026 quedan como referencia para la
-        siguiente ventana. Confirma siempre montos, fechas y bases en el sitio oficial antes de aplicar, y
-        desconfía de cualquiera que pida pagos por adelantado.
+        siguiente ventana. Los marcados "Sin convocatoria abierta" son vías que existen pero no tenían fechas
+        confirmadas en 2026. Confirma siempre montos, fechas y bases en el sitio oficial antes de aplicar, y
+        desconfía de cualquiera que pida pagos por adelantado: ningún programa público cobra por aprobar un crédito.
       </p>
     </DashboardLayout>
   )
