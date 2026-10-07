@@ -11,9 +11,14 @@ import { REGIONS, REMOTE_FILTER_ID, getRegionName } from '../data/cities.js'
 export function useRegionFilter(myRegion) {
   const [searchParams, setSearchParams] = useSearchParams()
   const value = searchParams.get('region') || myRegion || 'todas'
-  const setValue = (next) => setSearchParams((prev) => {
+  // Un solo setSearchParams por cambio: en react-router dos llamadas
+  // seguidas con función NO se encolan (la segunda parte de los params
+  // viejos y pisa a la primera), así que lo que haya que limpiar junto con
+  // la región (ej. el estado) se pasa en `alsoClear`.
+  const setValue = (next, alsoClear = []) => setSearchParams((prev) => {
     const params = new URLSearchParams(prev)
     params.set('region', next)
+    alsoClear.forEach((key) => params.delete(key))
     return params
   })
   return [value, setValue]

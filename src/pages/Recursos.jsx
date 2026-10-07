@@ -128,10 +128,7 @@ export default function Recursos() {
     else next.delete('estado')
     return next
   })
-  const changeRegion = (value) => {
-    setRegionFilter(value)
-    setStateFilter('')
-  }
+  const changeRegion = (value) => setRegionFilter(value, ['estado'])
 
   const [customResources] = useFirestoreCollection('resources')
   const [showAdminForm, setShowAdminForm] = useState(false)

@@ -83,9 +83,10 @@ export default function Personas() {
     else next.delete(key)
     return next
   })
-  const clearFilters = () => setSearchParams((prev) => {
+  const clearFilters = (region) => setSearchParams((prev) => {
     const next = new URLSearchParams()
-    if (prev.get('region')) next.set('region', prev.get('region'))
+    const keep = region || prev.get('region')
+    if (keep) next.set('region', keep)
     return next
   })
   const hasActiveFilters = Boolean(query || roleFilter || industryFilter || causeFilter || odsFilter)
@@ -163,7 +164,7 @@ export default function Personas() {
           onChange={(e) => setParam('q', e.target.value)}
         />
         {hasActiveFilters && (
-          <button type="button" className="btn btn-ghost" onClick={clearFilters}>Limpiar filtros</button>
+          <button type="button" className="btn btn-ghost" onClick={() => clearFilters()}>Limpiar filtros</button>
         )}
         {!profilesLoading && (
           <span className="filter-count">{filtered.length} {filtered.length === 1 ? 'persona' : 'personas'}</span>
@@ -176,7 +177,7 @@ export default function Personas() {
         <div className="empty-state">
           <p>No encontramos a nadie con ese criterio todavía.</p>
           {(hasActiveFilters || regionFilter !== 'todas') && (
-            <button type="button" className="link-arrow" onClick={() => { clearFilters(); setRegionFilter('todas') }}>
+            <button type="button" className="link-arrow" onClick={() => clearFilters('todas')}>
               Ver todo el directorio →
             </button>
           )}
