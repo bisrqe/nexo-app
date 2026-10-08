@@ -7,7 +7,7 @@ const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/
 const { defineSecret } = require('firebase-functions/params')
 const logger = require('firebase-functions/logger')
 const admin = require('firebase-admin')
-const { renderEmail, APP_URL } = require('./emailTemplate')
+const { renderEmail, htmlToText, APP_URL } = require('./emailTemplate')
 
 admin.initializeApp()
 const db = admin.firestore()
@@ -32,8 +32,12 @@ function escapeHtml(str) {
   ))
 }
 
-async function sendEmail({ to, subject, html }) {
+// Siempre manda html y text juntos: si quien llama solo trae html (o no usa
+// renderEmail), el texto plano se deriva de él. reply_to apunta al buzón de
+// soporte para que responder a un correo automático llegue a alguien.
+async function sendEmail({ to, subject, html, text }) {
   if (!to) return
+  const plainText = text || htmlToText(html)
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -41,7 +45,7 @@ async function sendEmail({ to, subject, html }) {
         Authorization: `Bearer ${RESEND_API_KEY.value()}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
+      body: JSON.stringify({ from: FROM, to, subject, html, text: plainText, reply_to: SUPPORT_EMAIL }),
     })
     if (!res.ok) logger.error('Resend error', res.status, await res.text())
   } catch (err) {
@@ -73,7 +77,7 @@ exports.onDirectMessage = onDocumentCreated(
     await sendEmail({
       to: profile.email,
       subject: `${senderName} te escribió en Nexo`,
-      html: renderEmail({
+      ...renderEmail({
         preheader: `${senderName} te mandó un mensaje directo en Nexo`,
         heading: `${escapeHtml(senderName)} te escribió`,
         bodyHtml: body,
@@ -108,7 +112,7 @@ exports.onGroupJoin = onDocumentUpdated(
       await sendEmail({
         to: owner.email,
         subject: `${joinerName} se unió a tu mesa "${group.name}"`,
-        html: renderEmail({
+        ...renderEmail({
           preheader: `${joinerName} se unió a tu mesa de trabajo en Nexo`,
           heading: 'Nueva persona en tu mesa de trabajo',
           bodyHtml: `<p style="margin:0;"><b>${escapeHtml(joinerName)}</b> se unió a tu mesa de trabajo <b>${escapeHtml(group.name)}</b> en Nexo.</p>`,
@@ -143,7 +147,7 @@ exports.onInitiativeInterest = onDocumentUpdated(
       await sendEmail({
         to: owner.email,
         subject: `${interestedName} está interesado en "${after.title}"`,
-        html: renderEmail({
+        ...renderEmail({
           preheader: `${interestedName} marcó "Me interesa" en ${after.title}`,
           heading: 'Nuevo interés en tu emprendimiento',
           bodyHtml: `
@@ -170,14 +174,14 @@ exports.onResourceSuggested = onDocumentCreated(
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: `Nuevo recurso sugerido: "${resource.title}"`,
-      html: renderEmail({
+      ...renderEmail({
         preheader: `${resource.submittedByName || 'Alguien'} sugirió un recurso nuevo en Nexo`,
         heading: 'Recurso pendiente de aprobación',
         bodyHtml: `
           <p style="margin:0 0 4px;"><b>Sugerido por:</b> ${escapeHtml(resource.submittedByName || 'Alguien')}${resource.submittedByEmail ? ` (${escapeHtml(resource.submittedByEmail)})` : ''}</p>
           <p style="margin:0 0 4px;"><b>Nombre:</b> ${escapeHtml(resource.title)}</p>
           <p style="margin:0 0 4px;"><b>Categoría:</b> ${escapeHtml(resource.category || '—')}</p>
-          <p style="margin:0 0 4px;"><b>Zona:</b> ${escapeHtml(resource.region || '—')}</p>
+          <p style="margin:0 0 4px;"><b>Zona:</b> ${escapeHtml(resource.scope && resource.scope !== 'estatal' ? resource.scope : [resource.state, resource.regionId].filter(Boolean).join(' · ') || resource.region || '—')}</p>
           <p style="margin:0 0 16px;"><b>Liga:</b> ${escapeHtml(resource.link || '—')}</p>
           <blockquote style="margin:0; padding-left:12px; border-left:3px solid rgba(16,27,38,.14); color:#5E6672;">${escapeHtml(resource.desc)}</blockquote>
         `,
@@ -200,7 +204,7 @@ exports.onFeedbackCreate = onDocumentCreated(
     await sendEmail({
       to: SUPPORT_EMAIL,
       subject: `Nueva retroalimentación en Nexo (${feedback.page || 'página desconocida'})`,
-      html: renderEmail({
+      ...renderEmail({
         preheader: `Retroalimentación de ${from}`,
         heading: 'Nueva retroalimentación',
         bodyHtml: `
@@ -257,7 +261,7 @@ exports.onAuthEmailRequested = onDocumentCreated(
       await sendEmail({
         to: userRecord.email,
         subject: 'Confirma tu correo en Nexo',
-        html: renderEmail({
+        ...renderEmail({
           preheader: 'Confirma tu correo para asegurar tu cuenta de Nexo.',
           heading: 'Confirma tu correo',
           bodyHtml: '<p style="margin:0;">Un último paso para asegurar tu cuenta — confirma que esta dirección es tuya.</p>',
@@ -279,7 +283,7 @@ exports.onAuthEmailRequested = onDocumentCreated(
         await sendEmail({
           to: req.email,
           subject: 'Restablece tu contraseña de Nexo',
-          html: renderEmail({
+          ...renderEmail({
             preheader: 'Restablece tu contraseña de Nexo.',
             heading: 'Restablece tu contraseña',
             bodyHtml: '<p style="margin:0;">Pediste restablecer tu contraseña. Si no fuiste tú, ignora este correo — tu cuenta sigue segura.</p>',

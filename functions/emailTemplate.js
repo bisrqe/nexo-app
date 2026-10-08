@@ -5,13 +5,56 @@
 // sistema de diseño del sitio (src/index.css: --navy, --gold, --ink,
 // --paper, --paper-alt, --line, --text-faint).
 
-const APP_URL = 'https://nexo-app-mauve.vercel.app'
+// Mismo dominio que remitente y que los links de verificación — un correo
+// de nexohub.mx cuyos links apuntan a otro dominio se ve sospechoso para
+// los filtros de spam.
+const APP_URL = 'https://nexohub.mx'
 
 const DEFAULT_FOOTER = `Puedes ajustar qué correos te mandamos desde <a href="${APP_URL}/app/ajustes" style="color:#636A7C;">tu perfil</a>.`
 
 // heading/bodyHtml ya deben venir con las partes dinámicas escapadas
 // (ver escapeHtml en index.js) — esta función solo arma el shell.
-function renderEmail({ preheader = '', heading, bodyHtml, cta, footerNote = DEFAULT_FOOTER }) {
+// Versión de texto plano a partir del HTML — todo correo se manda siempre
+// con html Y text juntos (los filtros de spam desconfían de los correos
+// solo-HTML, y algunos clientes solo muestran texto). Convierte bloques a
+// líneas, citas a "> ", enlaces a "texto (url)" y decodifica entidades.
+function htmlToText(html) {
+  return String(html || '')
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => {
+      const text = label.replace(/<[^>]+>/g, '').trim()
+      return text && text !== href ? `${text} (${href})` : href
+    })
+    .replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, inner) => `\n> ${inner.replace(/<[^>]+>/g, '').trim().replace(/\n+/g, '\n> ')}\n`)
+    .replace(/<\/(p|div|h1|tr|li)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^[ \t]+/gm, '')
+    .trim()
+}
+
+// Devuelve { html, text } — se pasa tal cual a sendEmail (index.js).
+function renderEmail(opts) {
+  const html = renderEmailHtml(opts)
+  const { heading, bodyHtml, cta, footerNote = DEFAULT_FOOTER } = opts
+  const text = [
+    'NEXO.',
+    '',
+    htmlToText(heading),
+    '',
+    htmlToText(bodyHtml),
+    cta ? `\n${cta.label.replace(/\s*→\s*$/, '')}: ${cta.href}` : '',
+    '',
+    '--',
+    `Nexo — red de emprendimiento e iniciativas sociales · ${APP_URL}`,
+    htmlToText(footerNote),
+  ].filter((line, i, all) => line !== '' || all[i - 1] !== '').join('\n')
+  return { html, text }
+}
+
+function renderEmailHtml({ preheader = '', heading, bodyHtml, cta, footerNote = DEFAULT_FOOTER }) {
   return `<!DOCTYPE html>
 <html lang="es">
   <body style="margin:0; padding:0; background:#F1ECE1; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
@@ -51,4 +94,4 @@ function renderEmail({ preheader = '', heading, bodyHtml, cta, footerNote = DEFA
 </html>`
 }
 
-module.exports = { renderEmail, APP_URL }
+module.exports = { renderEmail, htmlToText, APP_URL }
