@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useGroups } from '../context/GroupsContext.jsx'
 import { useUserContent } from '../context/UserContentContext.jsx'
 import { useFirestoreCollection } from '../hooks/useFirestoreCollection.js'
-import { buildRecommendations } from '../lib/recommend.js'
+import { buildRecommendations, matchedExpertise } from '../lib/recommend.js'
 import { getRegionName, profileRegion } from '../data/cities.js'
 import { kindFor, myProjectsLabel, PROFILE_TYPES_WITHOUT_OWN_INITIATIVE } from '../lib/initiativeKind.js'
 import { flattenResources, normalizeResource } from '../data/resources.js'
@@ -154,9 +154,11 @@ export default function Dashboard() {
               <h3>Mentores afines a ti</h3>
               <div className="dash-list">
                 {recommended.mentors.map((m) => (
-                  <Link to={`/app/personas/${m.username || m.docId}`} className="dash-list-item" key={m.docId}>
-                    <span>{m.name}</span>
-                    <span title={m.expertise}>{m.expertise}</span>
+                  <Link to={`/app/personas/${m.username || m.docId}`} className="dash-mentor" key={m.docId}>
+                    <span className="dash-mentor-name">{m.name}</span>
+                    <span className="dash-mentor-areas" title={m.expertise}>
+                      {matchedExpertise(m, profile).areas.map((a) => <span className="dash-mentor-area" key={a}>{a}</span>)}
+                    </span>
                   </Link>
                 ))}
               </div>

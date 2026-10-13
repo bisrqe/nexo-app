@@ -131,6 +131,17 @@ export function scoreMentorForProfile(mentor, profile) {
   return score
 }
 
+// Las áreas de expertise de un mentor vienen en un solo texto separado por
+// comas. Para el dashboard se muestran solo las que empatan con el perfil de
+// quien mira (mismo cruce de palabras que scoreMentorForProfile); si ninguna
+// empata, se muestran las dos primeras para que la fila no quede vacía.
+export function matchedExpertise(mentor, profile, limit = 3) {
+  const areas = String(mentor.expertise || '').split(/[,;/]+/).map((a) => a.trim()).filter(Boolean)
+  const profileText = `${profile.industryLabel || ''} ${profile.bio || ''} ${profile.lookingFor || ''} ${profile.occupation || ''}`.toLowerCase()
+  const matched = areas.filter((a) => a.toLowerCase().split(/\W+/).some((w) => w.length > 3 && profileText.includes(w.slice(0, Math.max(4, w.length - 2)))))
+  return { areas: (matched.length > 0 ? matched : areas.slice(0, 2)).slice(0, limit), matched: matched.length > 0 }
+}
+
 export function rankMentorsForProfile(mentors, profile, limit = 3) {
   const scored = mentors
     .map((m) => ({ item: m, score: scoreMentorForProfile(m, profile) }))
