@@ -3,7 +3,8 @@
 // cliente. Cada trigger revisa las preferencias de notificación del
 // destinatario antes de mandar nada.
 const { setGlobalOptions } = require('firebase-functions/v2')
-const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore')
+const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore')
+const { onSchedule } = require('firebase-functions/v2/scheduler')
 const { defineSecret } = require('firebase-functions/params')
 const logger = require('firebase-functions/logger')
 const admin = require('firebase-admin')
@@ -296,3 +297,172 @@ exports.onAuthEmailRequested = onDocumentCreated(
     }
   }
 )
+
+// ── Eventos: confirmación al inscribirte + recordatorio 1 hora antes ──────
+// La hora del evento se captura sin zona horaria — se interpreta como hora
+// del centro de México (UTC-6 todo el año desde que se eliminó el horario
+// de verano en 2022).
+const EVENT_TZ = 'America/Mexico_City'
+const EVENT_UTC_OFFSET = '-06:00'
+
+function eventStart(event) {
+  if (!event.date) return null
+  const d = new Date(`${event.date}T${event.time || '00:00'}:00${EVENT_UTC_OFFSET}`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function minutesUntil(event) {
+  const start = eventStart(event)
+  return start ? (start.getTime() - Date.now()) / 60000 : null
+}
+
+function eventEmailContent(event, { reminder }) {
+  const start = eventStart(event)
+  const dateText = start
+    ? start.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: EVENT_TZ })
+    : event.date
+  const timeText = event.time ? `${event.time} hrs (hora del centro de México)` : 'Hora por confirmar'
+  const virtual = event.locationType === 'virtual' || Boolean(event.callUrl)
+  const callUrl = event.callUrl ? (/^https?:/i.test(event.callUrl) ? event.callUrl : `https://${event.callUrl}`) : ''
+  const where = virtual
+    ? (callUrl ? `Videollamada: <a href="${escapeHtml(callUrl)}" style="color:#04448B;">${escapeHtml(callUrl)}</a>` : 'Videollamada — liga por confirmar')
+    : `${escapeHtml(event.location || 'Lugar por definir')}${event.mapsUrl ? ` — <a href="${escapeHtml(event.mapsUrl)}" style="color:#04448B;">Ver en el mapa</a>` : ''}`
+  const lines = [
+    `<p style="margin:0 0 4px;"><b>Evento:</b> ${escapeHtml(event.title)}</p>`,
+    `<p style="margin:0 0 4px;"><b>Fecha:</b> ${escapeHtml(dateText)}</p>`,
+    `<p style="margin:0 0 4px;"><b>Hora:</b> ${escapeHtml(timeText)}</p>`,
+    `<p style="margin:0 0 4px;"><b>Dónde:</b> ${where}</p>`,
+    event.category ? `<p style="margin:0 0 4px;"><b>Categoría:</b> ${escapeHtml(event.category)}</p>` : '',
+    event.description ? `<blockquote style="margin:12px 0 0; padding-left:12px; border-left:3px solid rgba(16,27,38,.14); color:#5E6672;">${escapeHtml(event.description)}</blockquote>` : '',
+  ].join('')
+  return {
+    subject: reminder ? `Hoy en 1 hora: ${event.title}` : `Quedaste inscrito en "${event.title}"`,
+    ...renderEmail({
+      preheader: reminder ? `Tu evento "${event.title}" empieza en 1 hora.` : `Te inscribiste a "${event.title}" en Nexo.`,
+      heading: reminder ? 'Tu evento empieza en 1 hora' : 'Quedaste inscrito',
+      bodyHtml: lines,
+      cta: { href: `${APP_URL}/app/eventos`, label: 'Ver evento en Nexo →' },
+      footerNote: `Puedes dejar de recibir estos avisos de eventos desde <a href="${APP_URL}/app/ajustes" style="color:#636A7C;">tu perfil</a>.`,
+    }),
+  }
+}
+
+async function attendeeEmail(uid) {
+  const snap = await db.doc(`profiles/${uid}`).get()
+  if (!snap.exists) return null
+  const profile = snap.data()
+  if (profile.notificationPrefs?.onEvent === false || !profile.email) return null
+  return profile.email
+}
+
+// Alguien se inscribe a un evento: correo con la información del evento.
+exports.onEventRegistration = onDocumentUpdated(
+  { document: 'events/{id}', secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const before = event.data.before.data().attendees || []
+    const after = event.data.after.data()
+    const newAttendees = (after.attendees || []).filter((uid) => !before.includes(uid))
+    if (newAttendees.length === 0) return
+
+    const mins = minutesUntil(after)
+    // Si el evento ya está a una hora o menos, el recordatorio ya no tiene
+    // sentido aparte — la confirmación llega y se marca como recordado.
+    if (mins !== null && mins <= 60 && mins > 0) {
+      await event.data.after.ref.update({ remindersSent: admin.firestore.FieldValue.arrayUnion(...newAttendees) })
+    }
+    for (const uid of newAttendees) {
+      const to = await attendeeEmail(uid)
+      if (to) await sendEmail({ to, ...eventEmailContent(after, { reminder: false }) })
+    }
+  }
+)
+
+// Cada 5 minutos: a quien está inscrito y le falta 1 hora o menos para el
+// evento (y no se le ha recordado), se le manda el recordatorio. remindersSent
+// en el documento del evento evita repetirlo.
+exports.sendEventReminders = onSchedule(
+  { schedule: 'every 5 minutes', timeZone: EVENT_TZ, secrets: [RESEND_API_KEY] },
+  async () => {
+    const mxDate = (d) => d.toLocaleDateString('en-CA', { timeZone: EVENT_TZ })
+    const today = mxDate(new Date())
+    const tomorrow = mxDate(new Date(Date.now() + 24 * 3600 * 1000))
+    const snap = await db.collection('events').where('date', 'in', [today, tomorrow]).get()
+    for (const doc of snap.docs) {
+      const ev = doc.data()
+      const mins = minutesUntil(ev)
+      if (mins === null || mins <= 0 || mins > 60) continue
+      const pending = (ev.attendees || []).filter((uid) => !(ev.remindersSent || []).includes(uid))
+      if (pending.length === 0) continue
+      // Se marca antes de mandar: si algo falla a mitad, es preferible
+      // perder un recordatorio que mandarlo dos veces.
+      await doc.ref.update({ remindersSent: admin.firestore.FieldValue.arrayUnion(...pending) })
+      for (const uid of pending) {
+        const to = await attendeeEmail(uid)
+        if (to) await sendEmail({ to, ...eventEmailContent(ev, { reminder: true }) })
+      }
+    }
+  }
+)
+
+// ── Cifras públicas de la landing ─────────────────────────────────────────
+// Los perfiles no se pueden leer sin sesión, así que las cifras de la
+// landing (personas activas, organizaciones, estados con actividad) se
+// calculan aquí y se guardan en publicStats/summary, que sí es público.
+const LEGACY_CITY_STATE = {
+  mty: 'Nuevo León', cdmx: 'Ciudad de México', gdl: 'Jalisco', oax: 'Oaxaca', pue: 'Puebla', mid: 'Yucatán', qro: 'Querétaro',
+}
+
+async function recomputePublicStats() {
+  const [profiles, initiatives, events] = await Promise.all([
+    db.collection('profiles').select('email', 'state', 'city', 'profileType').get(),
+    db.collection('initiatives').select('ownerUid', 'ownerProfileType', 'sedes', 'state', 'city').get(),
+    db.collection('events').select('state', 'city').get(),
+  ])
+  const people = profiles.docs.filter((d) => d.get('email') !== SUPPORT_EMAIL)
+  const orgOwners = new Set(
+    initiatives.docs.filter((d) => d.get('ownerProfileType') === 'organizacion').map((d) => d.get('ownerUid'))
+  )
+  // Organizaciones = todos los proyectos registrados (emprendimientos,
+  // negocios, iniciativas, instituciones) + instituciones con perfil pero sin
+  // dossier propio (así aparecen también en Explorar).
+  const orgProfilesWithoutDossier = people.filter((d) => d.get('profileType') === 'organizacion' && !orgOwners.has(d.id)).length
+  const organizations = initiatives.size + orgProfilesWithoutDossier
+
+  const states = new Set()
+  const addState = (st, city) => { const v = st || LEGACY_CITY_STATE[city]; if (v) states.add(v) }
+  people.forEach((d) => addState(d.get('state'), d.get('city')))
+  initiatives.docs.forEach((d) => {
+    const sedes = d.get('sedes')
+    if (Array.isArray(sedes) && sedes.length > 0) sedes.forEach((s) => addState(s.state))
+    else addState(d.get('state'), d.get('city'))
+  })
+  events.docs.forEach((d) => addState(d.get('state'), d.get('city')))
+
+  await db.doc('publicStats/summary').set({
+    people: people.length,
+    organizations,
+    states: states.size,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  })
+}
+
+// Cada hora (también sirve de primer llenado tras desplegar) y en vivo
+// cuando algo que cuenta cambia: se crea/borra una cuenta o proyecto, o
+// cambia su ubicación o tipo.
+exports.refreshPublicStats = onSchedule({ schedule: 'every 60 minutes', timeZone: EVENT_TZ }, recomputePublicStats)
+
+const changed = (before, after, fields) => fields.some((f) => JSON.stringify(before?.[f] ?? null) !== JSON.stringify(after?.[f] ?? null))
+
+exports.onProfileCountChange = onDocumentWritten('profiles/{uid}', async (event) => {
+  const before = event.data.before.exists ? event.data.before.data() : null
+  const after = event.data.after.exists ? event.data.after.data() : null
+  if (before && after && !changed(before, after, ['state', 'city', 'profileType', 'email'])) return
+  await recomputePublicStats()
+})
+
+exports.onInitiativeCountChange = onDocumentWritten('initiatives/{id}', async (event) => {
+  const before = event.data.before.exists ? event.data.before.data() : null
+  const after = event.data.after.exists ? event.data.after.data() : null
+  if (before && after && !changed(before, after, ['sedes', 'state', 'city', 'ownerProfileType'])) return
+  await recomputePublicStats()
+})

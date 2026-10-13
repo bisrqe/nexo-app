@@ -24,6 +24,11 @@ const EMPTY_METRIC = { label: '', value: '' }
 // qué grupo mayor pertenece (si pertenece a alguno) — la etiqueta y la
 // explicación cambian según el tipo de proyecto.
 const ORG_FIELD = {
+  negocios: {
+    label: 'Empresa, grupo o cámara al que perteneces',
+    placeholder: 'Ej. Grupo Industrial X, Canaco',
+    hint: 'Solo si tu negocio forma parte de un grupo empresarial, franquicia, cámara o asociación. Si es independiente, déjalo vacío.',
+  },
   emprendimientos: {
     label: 'Empresa, organización o colectivo al que perteneces',
     placeholder: 'Ej. Colectivo Raíz, Incubadora Tec',

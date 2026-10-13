@@ -6,12 +6,12 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useProfile } from '../context/ProfileContext.jsx'
 import { initials, calculateAge } from '../data/currentUser.js'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, AFFILIATIONS, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
 import LocationFields from '../components/LocationFields.jsx'
 import { profileRegion } from '../data/cities.js'
 import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
-import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
+import { isStudentEntrepreneur, hasIndustryProfile } from '../lib/initiativeKind.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -147,7 +147,7 @@ export default function Ajustes() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const { industryOtra, industrySecondaryOtra, causeOtra, ...rest } = form
-    const isEmprendedor = profile.profileType === 'emprendedor' || isStudentEntrepreneur(profile.profileType, form.subtype)
+    const isEmprendedor = hasIndustryProfile(profile.profileType, form.subtype)
     const isOrganizacion = profile.profileType === 'organizacion'
     await updateProfile({
       ...rest,
@@ -273,6 +273,16 @@ export default function Ajustes() {
             <input type="text" name="occupation" value={form.occupation} onChange={handleChange} />
           </label>
 
+          <label className="form-field">
+              <span>Afiliación (opcional)</span>
+              <select name="affiliation" value={form.affiliation || ''} onChange={handleChange}>
+                {AFFILIATIONS.map((a) => (
+                  <option key={a.id} value={a.id}>{a.label}</option>
+                ))}
+              </select>
+              <span className="field-hint">Si formas parte de alguna de estas comunidades, elígela; si no, déjalo en N/A.</span>
+            </label>
+
           <LocationFields
             region={form.region}
             state={form.state}
@@ -318,7 +328,7 @@ export default function Ajustes() {
             </label>
           )}
 
-          {(profile.profileType === 'emprendedor' || isStudentEntrepreneur(profile.profileType, form.subtype)) && (
+          {hasIndustryProfile(profile.profileType, form.subtype) && (
             <>
               <div className="form-row">
                 <label className="form-field">
@@ -502,6 +512,23 @@ export default function Ajustes() {
               role="switch"
               aria-checked={Boolean(form.notificationPrefs?.onInterest)}
               aria-label="Avisarme cuando alguien muestra interés en mi emprendimiento"
+            >
+              <span className="theme-toggle-knob" />
+            </button>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Eventos a los que te inscribes</div>
+              <div className="settings-row-desc">Un correo con los datos del evento al inscribirte y un recordatorio 1 hora antes.</div>
+            </div>
+            <button
+              type="button"
+              className={`theme-toggle ${form.notificationPrefs?.onEvent !== false ? 'on' : ''}`}
+              onClick={() => { setSaved(false); setForm((f) => ({ ...f, notificationPrefs: { ...f.notificationPrefs, onEvent: f.notificationPrefs?.onEvent === false } })) }}
+              role="switch"
+              aria-checked={form.notificationPrefs?.onEvent !== false}
+              aria-label="Avisarme por correo de los eventos a los que me inscribo"
             >
               <span className="theme-toggle-knob" />
             </button>

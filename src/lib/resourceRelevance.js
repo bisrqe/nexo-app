@@ -15,6 +15,7 @@ import { genderFocusFor, itemGenderFocus } from './gender.js'
 export const PROFILE_CATEGORY_WEIGHTS = {
   emprendedor: ['financiamiento', 'incubaci', 'aceleraci', 'convocatoria', 'grant', 'premio', 'crédito', 'capital'],
   estudiante: ['incubaci', 'competencia', 'beca', 'mentoría', 'formación', 'evento', 'networking'],
+  empresario: ['financiamiento', 'incubaci', 'aceleraci', 'convocatoria', 'grant', 'premio', 'crédito', 'capital', 'exportaci'],
   mentor: ['mentoría', 'red', 'comunidad', 'directorio', 'networking'],
   voluntario: ['comunidad', 'red', 'directorio', 'evento', 'networking'],
   organizacion: ['programas estatales', 'directorio', 'grant', 'alianza', 'financiamiento'],

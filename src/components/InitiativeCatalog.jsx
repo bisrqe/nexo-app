@@ -10,13 +10,15 @@ import { PROJECT_TYPE_FILTERS, projectTypeFor } from '../lib/initiativeKind.js'
 // mezcla los tres catálogos y no hay una sola categoría que los describa.
 const CATEGORY_BY_PROJECT_TYPE = {
   emprendimientos: { key: 'industry', set: INDUSTRY_FILTERS },
+  negocios: { key: 'industry', set: INDUSTRY_FILTERS },
   iniciativas: { key: 'ods', set: ODS_FILTERS },
   instituciones: { key: 'cause', set: CAUSE_FILTERS },
 }
 
 const EMPTY_STATE_NOUN = {
-  todos: 'emprendimientos, iniciativas o instituciones',
+  todos: 'emprendimientos, negocios, iniciativas o instituciones',
   emprendimientos: 'emprendimientos',
+  negocios: 'negocios',
   iniciativas: 'iniciativas',
   instituciones: 'instituciones',
 }

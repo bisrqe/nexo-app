@@ -9,6 +9,7 @@ const TAG_LABEL_KEY_BY_PROJECT_TYPE = {
   iniciativas: 'odsLabel',
   instituciones: 'causeLabel',
   emprendimientos: 'industryLabel',
+  negocios: 'industryLabel',
 }
 
 export default function InitiativeCard({ initiative, basePath = '/iniciativas', allowSave = true }) {

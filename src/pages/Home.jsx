@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { db } from '../lib/firebase.js'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
@@ -21,23 +23,33 @@ export default function Home() {
 
   const today = new Date().toISOString().slice(0, 10)
 
+  // Personas, organizaciones y estados con actividad vienen de un documento
+  // público (publicStats/summary) que mantienen las Cloud Functions — los
+  // perfiles no se pueden leer sin sesión, así que el conteo no se puede
+  // hacer desde aquí. Mientras ese documento no existe (primer despliegue),
+  // se estima con lo que sí es público: los proyectos y sus dueños.
+  const [summary, setSummary] = useState(null)
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'publicStats', 'summary'), (snap) => setSummary(snap.exists() ? snap.data() : null), () => setSummary(null))
+    return unsub
+  }, [])
+
   const stats = useMemo(() => {
-    const cities = new Set(
-      initiatives
-        .flatMap((i) => sedesOf(i).map((x) => (x.cityName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()))
-        .filter(Boolean)
-    )
-    const ods = new Set(initiatives.flatMap((i) => i.ods || []).filter(Boolean))
+    const fallbackStates = new Set(initiatives.flatMap((i) => sedesOf(i).map((x) => x.state)).filter(Boolean))
+    const fallbackPeople = new Set(initiatives.flatMap((i) => i.memberUids || []))
+    const people = summary?.people ?? fallbackPeople.size
+    const organizations = summary?.organizations ?? initiatives.length
+    const states = summary?.states ?? fallbackStates.size
     const upcoming = events.filter((e) => e.date >= today).length
     const realizedEvents = events.filter((e) => e.date < today).length
     return [
-      { num: String(initiatives.length).padStart(2, '0'), label: 'Emprendimientos activos' },
-      { num: String(cities.size).padStart(2, '0'), label: 'Ciudades con presencia' },
-      { num: String(ods.size).padStart(2, '0'), label: 'ODS con actividad' },
+      { num: String(people).padStart(2, '0'), label: 'Personas activas' },
+      { num: String(states).padStart(2, '0'), label: 'Estados con actividad' },
+      { num: String(organizations).padStart(2, '0'), label: 'Organizaciones' },
       { num: String(upcoming).padStart(2, '0'), label: 'Eventos programados' },
       { num: String(realizedEvents).padStart(2, '0'), label: 'Eventos realizados' },
     ]
-  }, [initiatives, events, today])
+  }, [initiatives, events, today, summary])
 
   const featuredInitiatives = useMemo(
     () => [...initiatives].sort((a, b) => (b.interestedBy?.length || 0) - (a.interestedBy?.length || 0)).slice(0, 3),
@@ -63,7 +75,7 @@ export default function Home() {
             <p className="lede">Nexo reúne lo que ya existe en tu ecosistema (emprendimientos, personas y recursos) para que la próxima solución no la construyas desde cero, ni sin compañía.</p>
 
             <div className="hero-actions">
-              <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar emprendimientos →</Link>
+              <Link to="/iniciativas" className="btn btn-gold btn-lg">Explorar la red →</Link>
               <Link to="/como-funciona" className="btn btn-ghost btn-lg">Ver cómo funciona</Link>
             </div>
 
@@ -89,9 +101,7 @@ export default function Home() {
             <div className="stat-item" key={s.label}>
               <span className="stat-num">{s.num}</span>
               <span className="stat-label">
-                {s.label === 'ODS con actividad' ? (
-                  <>ODS con actividad</>
-                ) : s.label}
+                {s.label}
               </span>
             </div>
           ))}
@@ -160,7 +170,7 @@ export default function Home() {
             <p>Conecta con uno que ya existe, o créalo en cinco minutos sin crear cuenta, la comunidad se encarga del resto.</p>
           </div>
           <div className="hero-actions">
-            <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar emprendimientos →</Link>
+            <Link to="/iniciativas" className="btn btn-ghost-dark btn-lg">Explorar la red →</Link>
             <Link to="/iniciativas/nueva" className="btn btn-gold btn-lg">Sumar el mío al mapa →</Link>
           </div>
         </div>

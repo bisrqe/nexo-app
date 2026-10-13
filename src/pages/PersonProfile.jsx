@@ -8,7 +8,7 @@ import { locationLabel } from '../data/cities.js'
 import { normalizeUrl } from '../lib/url.js'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { PROFILE_TYPES, STUDENT_SUBTYPES } from '../data/profileOptions.js'
+import { PROFILE_TYPES, STUDENT_SUBTYPES, AFFILIATIONS } from '../data/profileOptions.js'
 import { kindFor } from '../lib/initiativeKind.js'
 
 function initials(name) {
@@ -42,6 +42,7 @@ function profileToPerson(p, uid) {
     offers,
     offersLabel,
     advisoryOffer: p.advisoryOffer,
+    affiliation: AFFILIATIONS.find((a) => a.id === p.affiliation && a.id)?.label || '',
     orgActivity: p.orgActivity,
     orgAudience: p.orgAudience,
     bio: p.bio,
@@ -124,7 +125,7 @@ export default function PersonProfile() {
   }
 
   const {
-    uid, profileType, profileSubtype, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
+    uid, profileType, profileSubtype, affiliation, name, username, role, location, odsLabel, profileTypeLabel, offers, offersLabel, advisoryOffer, orgActivity, orgAudience,
     bio, lookingFor, contact, extraEmails, linkedin, photo,
   } = person
   const canMessage = Boolean(uid && user && uid !== user.uid)
@@ -172,6 +173,12 @@ export default function PersonProfile() {
                 <div className="dossier-section">
                   <span className="kicker">Ocupación</span>
                   <p className="dossier-meta-value">{role}</p>
+                </div>
+              )}
+              {affiliation && (
+                <div className="dossier-section">
+                  <span className="kicker">Afiliación</span>
+                  <p className="dossier-meta-value">{affiliation}</p>
                 </div>
               )}
               {location && (

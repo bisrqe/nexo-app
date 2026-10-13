@@ -25,10 +25,11 @@ function normalizeOds(value) {
 // mueve hacia arriba lo más relevante según el principio de Nexo (recomendar
 // por perfil e intereses sin limitar la exploración del resto).
 const PROFILE_TYPE_PRIORITY = {
-  emprendedor: ['emprendedor'],
-  estudiante: ['mentor', 'emprendedor', 'estudiante'],
+  emprendedor: ['emprendedor', 'empresario'],
+  empresario: ['empresario', 'emprendedor'],
+  estudiante: ['mentor', 'emprendedor', 'empresario', 'estudiante'],
   organizacion: ['estudiante'],
-  mentor: ['estudiante', 'emprendedor'],
+  mentor: ['estudiante', 'emprendedor', 'empresario'],
   voluntario: [],
 }
 

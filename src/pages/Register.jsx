@@ -6,12 +6,12 @@ import Footer from '../components/Footer.jsx'
 import { db } from '../lib/firebase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ODS_FILTERS, INDUSTRY_FILTERS, CAUSE_FILTERS } from '../data/initiatives.js'
-import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
+import { PROFILE_TYPES, GENDERS, STUDENT_SUBTYPES, AFFILIATIONS, SECONDARY_PROFILE_VOLUNTEER } from '../data/profileOptions.js'
 import LocationFields from '../components/LocationFields.jsx'
 import { SUPPORT_GROUP_ID } from '../data/supportGroup.js'
 import { normalizeUrl } from '../lib/url.js'
 import { labelFor } from '../lib/catalogLabel.js'
-import { isStudentEntrepreneur } from '../lib/initiativeKind.js'
+import { isStudentEntrepreneur, hasIndustryProfile } from '../lib/initiativeKind.js'
 
 const ODS_OPTIONS = ODS_FILTERS.filter((f) => f.id !== 'todos')
 const INDUSTRY_OPTIONS = INDUSTRY_FILTERS.filter((f) => f.id !== 'todos')
@@ -35,6 +35,7 @@ const EMPTY = {
   profileType: 'emprendedor',
   subtype: '',
   secondaryVolunteer: false,
+  affiliation: '',
   industry: '',
   industryOtra: '',
   industrySecondary: '',
@@ -80,7 +81,7 @@ export default function Register() {
     setLoading(true)
     try {
       const cred = await signUp(form.email, form.password)
-      const isEmprendedor = form.profileType === 'emprendedor' || isStudentEntrepreneur(form.profileType, form.subtype)
+      const isEmprendedor = hasIndustryProfile(form.profileType, form.subtype)
       const industryLabel = isEmprendedor ? labelFor(INDUSTRY_OPTIONS, form.industry, form.industryOtra) : ''
       const industrySecondaryLabel = isEmprendedor && form.industrySecondary
         ? labelFor(INDUSTRY_OPTIONS, form.industrySecondary, form.industrySecondaryOtra)
@@ -100,6 +101,7 @@ export default function Register() {
         cityName: form.cityName.trim(),
         profileType: form.profileType,
         subtype: form.profileType === 'estudiante' ? form.subtype : '',
+        affiliation: form.affiliation,
         secondaryProfile: form.profileType === 'estudiante' && form.secondaryVolunteer ? SECONDARY_PROFILE_VOLUNTEER : '',
         industry: isEmprendedor ? form.industry : '',
         industryLabel,
@@ -192,7 +194,18 @@ export default function Register() {
 
             <label className="form-field">
               <span>Ocupación</span>
-              <input type="text" name="occupation" value={form.occupation} onChange={handleChange} placeholder="Ej. Ingeniera agrónoma" />
+              <input type="text" name="occupation" value={form.occupation} onChange={handleChange} placeholder="Ej. Estudiante de Ingeniería, contadora, diseñador gráfico o dueño de una cafetería" />
+              <span className="field-hint">A qué te dedicas hoy: tu trabajo, tu carrera o tu giro.</span>
+            </label>
+
+            <label className="form-field">
+              <span>Afiliación (opcional)</span>
+              <select name="affiliation" value={form.affiliation} onChange={handleChange}>
+                {AFFILIATIONS.map((a) => (
+                  <option key={a.id} value={a.id}>{a.label}</option>
+                ))}
+              </select>
+              <span className="field-hint">Si formas parte de alguna de estas comunidades, elígela; si no, déjalo en N/A.</span>
             </label>
 
             <LocationFields
@@ -221,6 +234,7 @@ export default function Register() {
             <p className="settings-card-desc" style={{ margin: '-10px 0 0' }}>
               {{
                 emprendedor: 'Como emprendedor/a vas a poder registrar tu emprendimiento.',
+                empresario: 'Como empresario/a vas a poder registrar tu negocio — ya en marcha, con su industria, etapa y métricas.',
                 estudiante: 'Como estudiante vas a poder registrar tu iniciativa.',
                 mentor: 'Como mentor/a no registras un emprendimiento — compartes tu área de expertise para que otros te encuentren.',
                 voluntario: 'Como voluntario/a puedes explorar y contactar emprendimientos e iniciativas, sin registrar uno propio.',
@@ -260,7 +274,7 @@ export default function Register() {
               </label>
             )}
 
-            {(form.profileType === 'emprendedor' || isStudentEntrepreneur(form.profileType, form.subtype)) && (
+            {hasIndustryProfile(form.profileType, form.subtype) && (
               <>
                 <div className="form-row">
                   <label className="form-field">

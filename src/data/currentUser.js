@@ -23,6 +23,7 @@ export const DEFAULT_PROFILE = {
   profileType: 'emprendedor',
   subtype: '',
   secondaryProfile: '',
+  affiliation: '',
   industry: '',
   industryLabel: '',
   industrySecondary: '',
@@ -43,6 +44,7 @@ export const DEFAULT_PROFILE = {
     onMessage: true,
     onGroupActivity: true,
     onInterest: true,
+    onEvent: true,
     marketing: false,
   },
 }

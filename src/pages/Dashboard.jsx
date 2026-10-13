@@ -156,7 +156,7 @@ export default function Dashboard() {
                 {recommended.mentors.map((m) => (
                   <Link to={`/app/personas/${m.username || m.docId}`} className="dash-list-item" key={m.docId}>
                     <span>{m.name}</span>
-                    <span>{m.expertise}</span>
+                    <span title={m.expertise}>{m.expertise}</span>
                   </Link>
                 ))}
               </div>

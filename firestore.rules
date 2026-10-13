@@ -157,6 +157,14 @@ service cloud.firestore {
       }
     }
 
+    // Cifras públicas de la landing (personas activas, organizaciones,
+    // estados con actividad) — las calcula y escribe solo Cloud Functions
+    // (permisos de administrador); cualquiera puede leerlas, nadie escribirlas.
+    match /publicStats/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Retroalimentación mandada desde el chatbot (landing o dashboard) —
     // cualquiera puede mandar una, con o sin cuenta; nadie la puede leer
     // de vuelta desde el cliente, solo se revisa desde la consola de

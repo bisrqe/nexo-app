@@ -18,6 +18,12 @@ const KIND_LABELS = {
     el: 'la', un: 'una', nuevo: 'Nueva',
   },
 }
+// Un empresario ya tiene un negocio en marcha — se le llama "negocio", no
+// "emprendimiento" (que suena a algo en etapa temprana).
+KIND_LABELS.empresario = {
+  noun: 'negocio', Noun: 'Negocio', eyebrow: 'Negocios', my: 'Mi negocio', myPlural: 'Mis negocios',
+  el: 'el', un: 'un', nuevo: 'Nuevo',
+}
 const DEFAULT_KIND = {
   noun: 'emprendimiento', Noun: 'Emprendimiento', eyebrow: 'Emprendimientos', my: 'Mi emprendimiento', myPlural: 'Mis emprendimientos',
   el: 'el', un: 'un', nuevo: 'Nuevo',
@@ -35,6 +41,12 @@ export const PROFILE_TYPES_WITHOUT_OWN_INITIATIVE = ['mentor', 'voluntario']
 // perfil "emprendedor" normal — es la única fuente de verdad de esa regla,
 // así que cualquier otro lugar del código debería usar kindFor/
 // projectTypeFor en vez de comparar profileType a mano.
+// Perfiles que capturan industria (emprendedor, empresario, y estudiante con
+// emprendimiento propio) — única fuente de verdad para Register/Ajustes.
+export function hasIndustryProfile(profileType, subtype) {
+  return profileType === 'emprendedor' || profileType === 'empresario' || (profileType === 'estudiante' && subtype === 'emprendedor')
+}
+
 export function isStudentEntrepreneur(profileType, subtype) {
   return profileType === 'estudiante' && subtype === 'emprendedor'
 }
@@ -49,6 +61,7 @@ export function kindFor(profileType, subtype) {
 // mostrar. Cualquier ownerProfileType que no sea estudiante/organizacion
 // (emprendedor, o vacío en registros viejos) cae en "emprendimientos".
 const PROJECT_TYPE_BY_PROFILE = {
+  empresario: 'negocios',
   estudiante: 'iniciativas',
   organizacion: 'instituciones',
 }
@@ -61,6 +74,7 @@ export function projectTypeFor(profileType, subtype) {
 export const PROJECT_TYPE_FILTERS = [
   { id: 'todos', label: 'Todos' },
   { id: 'emprendimientos', label: 'Emprendimientos' },
+  { id: 'negocios', label: 'Negocios' },
   { id: 'iniciativas', label: 'Iniciativas' },
   { id: 'instituciones', label: 'Instituciones' },
 ]

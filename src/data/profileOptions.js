@@ -4,6 +4,7 @@
 
 export const PROFILE_TYPES = [
   { id: 'emprendedor', label: 'Emprendedor/a' },
+  { id: 'empresario', label: 'Empresario/a' },
   { id: 'estudiante', label: 'Estudiante' },
   { id: 'mentor', label: 'Mentor/a' },
   { id: 'voluntario', label: 'Voluntario/a' },
@@ -30,6 +31,15 @@ export const SECONDARY_PROFILE_VOLUNTEER = 'voluntario'
 // genderFocusFor en lib/recommend.js). "No binario", "Prefiero no decir" y
 // "Otro" no activan ningún criterio por género — a esas cuentas se les
 // recomienda únicamente por industria, ODS, región, etapa e intereses.
+// Afiliación a una comunidad o red — opcional (quien no tiene ninguna deja
+// "N/A", que se guarda como vacío).
+export const AFFILIATIONS = [
+  { id: '', label: 'N/A' },
+  { id: 'distritotec', label: 'DistritoTec' },
+  { id: 'empresarios-de-exito', label: 'Empresarios de Éxito' },
+  { id: 'egs', label: 'EGS' },
+]
+
 export const GENDERS = [
   { id: 'femenino', label: 'Femenino' },
   { id: 'masculino', label: 'Masculino' },

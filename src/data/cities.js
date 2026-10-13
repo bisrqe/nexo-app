@@ -37,6 +37,12 @@ export const CITIES = [
   { id: 'otra', name: 'Otra ciudad', region: '' },
 ]
 
+// Estado de cada ciudad del catálogo viejo — para contar "estados con
+// actividad" también con datos anteriores a que existiera el campo estado.
+export const LEGACY_CITY_STATE = {
+  mty: 'Nuevo León', cdmx: 'Ciudad de México', gdl: 'Jalisco', oax: 'Oaxaca', pue: 'Puebla', mid: 'Yucatán', qro: 'Querétaro',
+}
+
 export function getCityName(id) {
   return CITIES.find((c) => c.id === id)?.name ?? ''
 }
@@ -98,7 +104,7 @@ export function sedesOf(item) {
   if (Array.isArray(item.sedes) && item.sedes.length > 0) return item.sedes
   if (item.region || item.cityName) return [{ region: item.region || '', state: item.state || '', cityName: item.cityName || '' }]
   if (item.city && item.city !== 'remoto' && item.city !== 'otra') {
-    return [{ region: regionOfLegacyCity(item.city), cityName: getCityName(item.city) }]
+    return [{ region: regionOfLegacyCity(item.city), state: LEGACY_CITY_STATE[item.city] || '', cityName: getCityName(item.city) }]
   }
   return []
 }
