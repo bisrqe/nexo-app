@@ -149,14 +149,14 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 .mobile-menu-cta .btn{flex:1; justify-content:center;}
 
 /* ── Hero (full-bleed) ────────────────────────── */
-.hero{padding-top:28px;}
-.hero-flex{display:flex; align-items:center; min-height:500px;}
+.hero{padding:28px 0 0;}
+.hero-flex{display:flex; align-items:center; min-height:0;}
 /* margin (not padding) carries the left gutter offset, so it stays
    outside the box: at very wide viewports --gutter can exceed 300px,
    and padding on both sides of a max-width:600px box was driving the
    content area to 0/negative, collapsing the heading to one word per
    line. The box's own width budget is now independent of --gutter. */
-.hero-text{flex:0 0 46%; flex-shrink:0; max-width:600px; margin-left:var(--gutter); padding:20px 32px 20px 0; display:flex; flex-direction:column;}
+.hero-text{flex:0 0 46%; flex-shrink:0; max-width:600px; margin-left:var(--gutter); padding:20px 32px 0 0; display:flex; flex-direction:column;}
 /* El def-block va después del CTA tanto en el HTML como visualmente, en
    todos los tamaños de pantalla — así el H1 (la propuesta de valor real)
    siempre se lee primero, antes que la definición del nombre. */
@@ -189,7 +189,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
 .hero-actions{display:flex; gap:12px; flex-wrap:wrap;}
 
 /* ── Stat strip (contained card, separated from dark sections) ── */
-.stat-section{padding:32px 0 52px;}
+.stat-section{padding:8px 0 52px;}
 .stat-strip{
   background:var(--ink);
   border-radius:8px;
