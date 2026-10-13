@@ -77,7 +77,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
   color:var(--text-soft);
   transition:.15s;
 }
-.navlinks a:hover{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.navlinks a:hover{color:var(--navy);}}
 .navlinks a.active{color:var(--navy);}
 
 .nav-dropdown{position:relative;}
@@ -86,7 +86,8 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
   font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
   color:var(--text-soft); transition:.15s;
 }
-.nav-dropdown > button:hover, .nav-dropdown > button.active{color:var(--navy);}
+.nav-dropdown > button.active{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.nav-dropdown > button:hover{color:var(--navy);}}
 .nav-dropdown-menu{
   position:absolute; top:calc(100% + 4px); left:0; min-width:160px;
   background:#fff; border:1px solid var(--line); border-radius:6px; box-shadow:0 8px 24px rgba(16,27,38,.1);
@@ -97,7 +98,8 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
   font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
   color:var(--text-soft);
 }
-.nav-dropdown-menu a:hover, .nav-dropdown-menu a.active{color:var(--navy); background:var(--paper-alt);}
+.nav-dropdown-menu a.active{color:var(--navy); background:var(--paper-alt);}
+@media (hover:hover) and (pointer:fine){.nav-dropdown-menu a:hover{color:var(--navy); background:var(--paper-alt);}}
 .navcta{display:flex; align-items:center; gap:14px;}
 .navcta .link-quiet{
   font-family:var(--sans); font-size:13.5px; font-weight:600;
@@ -105,7 +107,7 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
   padding:8px 2px;
   transition:.15s;
 }
-.navcta .link-quiet:hover{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.navcta .link-quiet:hover{color:var(--navy);}}
 .btn{
   display:inline-flex; align-items:center; gap:7px;
   font-family:var(--sans); font-size:13.5px; font-weight:700;
@@ -115,13 +117,13 @@ nav{display:flex; align-items:center; justify-content:space-between; height:76px
   transition:.15s;
 }
 .btn-primary{background:var(--ink); color:#fff;}
-.btn-primary:hover{background:var(--navy);}
+@media (hover:hover) and (pointer:fine){.btn-primary:hover{background:var(--navy);}}
 .btn-gold{background:var(--gold); color:var(--ink); border-color:var(--gold);}
-.btn-gold:hover{background:#f7ca63; border-color:#f7ca63;}
+@media (hover:hover) and (pointer:fine){.btn-gold:hover{background:#f7ca63; border-color:#f7ca63;}}
 .btn-ghost{border-color:var(--line-strong); color:var(--text); background:transparent;}
-.btn-ghost:hover{border-color:var(--navy); color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.btn-ghost:hover{border-color:var(--navy); color:var(--navy);}}
 .btn-ghost-dark{border-color:rgba(255,255,255,.35); color:#fff;}
-.btn-ghost-dark:hover{background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.6);}
+@media (hover:hover) and (pointer:fine){.btn-ghost-dark:hover{background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.6);}}
 .btn-lg{padding:15px 26px; font-size:15px;}
 
 .menu-toggle{
@@ -335,7 +337,7 @@ section.full{padding:0;}
   padding:6px 11px; border-radius:3px;
 }
 .link-arrow{font-family:var(--mono); font-weight:600; font-size:12px; color:var(--ink); background:none; border:none; padding:0;}
-.link-arrow:hover{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.link-arrow:hover{color:var(--navy);}}
 
 .empty-state{
   margin:0 var(--gutter);
@@ -434,7 +436,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .foot-brand p{font-family:var(--serif); font-style:italic; color:var(--text-soft); font-size:14.5px; margin-top:14px; max-width:300px; line-height:1.5;}
 .foot-col .foot-heading{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:14px;}
 .foot-col a{display:block; font-size:14px; color:var(--text); margin-bottom:9px;}
-.foot-col a:hover{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.foot-col a:hover{color:var(--navy);}}
 .foot-bottom{
   border-top:1px solid var(--line); padding-top:24px; max-width:var(--maxw); margin:0 auto;
   display:flex; justify-content:space-between; font-family:var(--mono); font-size:11.5px; color:var(--text-faint);
@@ -443,7 +445,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 
 /* ── Auth / form pages (Login, Register, Nueva iniciativa) ── */
 .auth-section{
-  min-height:calc(100vh - 68px - 260px);
+  min-height:calc(100vh - 68px - 260px); min-height:calc(100dvh - 68px - 260px);
   display:flex; align-items:center; justify-content:center;
   padding:44px var(--gutter);
 }
@@ -609,7 +611,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .dossier-contact-actions{display:flex; gap:8px; flex-wrap:wrap;}
 .dossier-contact-actions .btn{flex:1; justify-content:center; white-space:nowrap; padding-left:10px; padding-right:10px;}
 .dossier-contact-remove{align-self:flex-start; color:#c0392b;}
-.dossier-contact-remove:hover{color:#a53125;}
+@media (hover:hover) and (pointer:fine){.dossier-contact-remove:hover{color:#a53125;}}
 
 @media (max-width:860px){
   .dossier-grid{grid-template-columns:1fr;}
@@ -642,7 +644,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 /* ══════════════════════════════════════════════
    App shell (dashboard / catálogo / personas / etc.)
    ══════════════════════════════════════════════ */
-.app-shell{display:flex; min-height:100vh; background:var(--paper); align-items:stretch;}
+.app-shell{display:flex; min-height:100vh; min-height:100dvh; background:var(--paper); align-items:stretch;}
 
 /* Fixed — never scrolls or shifts with the page, regardless of how tall
    the content next to it gets. .app-main carries a matching margin-left. */
@@ -650,7 +652,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
   width:244px; max-width:244px; flex-shrink:0; background:var(--ink); color:#fff;
   display:flex; flex-direction:column; gap:24px;
   padding:28px 18px; box-sizing:border-box;
-  position:fixed; top:0; left:0; height:100vh;
+  position:fixed; top:0; left:0; height:100vh; height:100dvh;
   overflow-y:auto; overflow-x:hidden;
 }
 /* Centering is done with justify-content on each full-width row below,
@@ -701,9 +703,9 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .app-nav-bottom a span,
 .app-nav-bottom button span{white-space:nowrap; text-align:left; color:inherit;}
 
-.app-nav-inner a:hover,
+@media (hover:hover) and (pointer:fine){.app-nav-inner a:hover,
 .app-nav-bottom a:hover,
-.app-nav-bottom button:hover{color:#fff; background:rgba(255,255,255,.06);}
+.app-nav-bottom button:hover{color:#fff; background:rgba(255,255,255,.06);}}
 
 .app-nav-inner a.active{color:var(--ink); background:var(--gold);}
 .app-nav-inner a.active svg,
@@ -725,7 +727,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
   border:1px solid rgba(255,255,255,.08);
   color:#fff;
 }
-.app-profile-card:hover{background:rgba(255,255,255,.09);}
+@media (hover:hover) and (pointer:fine){.app-profile-card:hover{background:rgba(255,255,255,.09);}}
 .app-profile-card.active{background:var(--gold); border-color:var(--gold);}
 .app-profile-card.active .app-profile-name,
 .app-profile-card.active .app-profile-role{color:var(--ink);}
@@ -770,7 +772,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .verify-banner-actions{display:flex; align-items:center; gap:16px;}
 .verify-banner .link-arrow{color:var(--ink); font-weight:600;}
 .verify-banner-close{background:none; border:none; color:var(--ink); font-size:14px; opacity:.6; padding:2px 4px;}
-.verify-banner-close:hover{opacity:1;}
+@media (hover:hover) and (pointer:fine){.verify-banner-close:hover{opacity:1;}}
 
 /* Avisos no bloqueantes (ver ToastContext) — reemplazan alert() nativo
    para errores/confirmaciones que no deben interrumpir toda la página. */
@@ -788,7 +790,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
 .toast-error{background:var(--ink); color:#fff;}
 .toast-success{background:var(--navy); color:#fff;}
 .toast-close{background:none; border:none; color:inherit; opacity:.65; font-size:13px; flex-shrink:0; padding:2px;}
-.toast-close:hover{opacity:1;}
+@media (hover:hover) and (pointer:fine){.toast-close:hover{opacity:1;}}
 @media (max-width:560px){
   .toast-stack{left:16px; right:16px; bottom:16px; max-width:none;}
 }
@@ -840,7 +842,7 @@ footer{border-top:1px solid var(--line); padding:44px var(--gutter) 28px;}
   display:inline-block; align-self:flex-start; font-family:var(--mono); font-size:11.5px; font-weight:700;
   background:var(--paper-alt); color:var(--gold-ink); padding:4px 9px; border-radius:3px; margin-top:4px;
 }
-a.resource-tag:hover{background:var(--gold);}
+@media (hover:hover) and (pointer:fine){a.resource-tag:hover{background:var(--gold);}}
 
 .group-card{background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; display:flex; flex-direction:column; gap:10px;}
 .group-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
@@ -867,7 +869,7 @@ a.resource-tag:hover{background:var(--gold);}
 .capacity-fill{height:100%; background:var(--navy);}
 .capacity-fill.mid{background:var(--gold-ink);}
 .capacity-fill.high{background:#c0392b;}
-.event-title:hover{text-decoration:underline;}
+@media (hover:hover) and (pointer:fine){.event-title:hover{text-decoration:underline;}}
 
 /* ── event detail modal ── */
 .modal-overlay{
@@ -883,7 +885,7 @@ a.resource-tag:hover{background:var(--gold);}
   position:absolute; top:16px; right:16px; background:transparent; border:none;
   font-size:16px; color:var(--text-soft); cursor:pointer; line-height:1;
 }
-.modal-close:hover{color:var(--ink);}
+@media (hover:hover) and (pointer:fine){.modal-close:hover{color:var(--ink);}}
 .modal-title{font-family:var(--serif); font-weight:600; font-size:26px; color:var(--ink); margin:0;}
 .modal-desc{font-size:14px; color:var(--text-soft); line-height:1.6; white-space:pre-wrap;}
 
@@ -892,7 +894,7 @@ a.resource-tag:hover{background:var(--gold);}
   width:34px; height:34px; display:flex; align-items:center; justify-content:center;
   color:var(--text-soft); flex-shrink:0;
 }
-.save-btn:hover{border-color:var(--navy); color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.save-btn:hover{border-color:var(--navy); color:var(--navy);}}
 .save-btn.saved{background:var(--gold); border-color:var(--gold); color:var(--ink);}
 
 /* ── dashboard widgets ── */
@@ -915,7 +917,7 @@ a.resource-tag:hover{background:var(--gold);}
 /* Only real <Link> rows (mentors/groups) get a hover cue, so it honestly
    reflects which rows are clickable — the plain-<div> event rows
    (.dash-list-item-static) intentionally get none. */
-a.dash-list-item:hover span:first-child{color:var(--navy);}
+@media (hover:hover) and (pointer:fine){a.dash-list-item:hover span:first-child{color:var(--navy);}}
 .dash-list-item-static{cursor:default;}
 .dash-empty{font-size:13px; color:var(--text-faint);}
 
@@ -931,7 +933,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   border-bottom:1px solid var(--line); border-left:3px solid transparent;
   text-align:left; background:transparent; width:100%;
 }
-.conv-item:hover{background:var(--paper-alt);}
+@media (hover:hover) and (pointer:fine){.conv-item:hover{background:var(--paper-alt);}}
 .conv-item.active{background:var(--paper-alt); border-left-color:var(--navy);}
 .conv-name{font-weight:700; font-size:13.5px; color:var(--ink);}
 .conv-meta{font-family:var(--mono); font-size:10.5px; color:var(--text-faint); text-transform:uppercase;}
@@ -1013,9 +1015,9 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .settings-card-danger{border-color:rgba(192,57,43,.35);}
 .settings-card-danger h2{color:#c0392b;}
 .btn-ghost-danger{border:1.5px solid rgba(192,57,43,.4); color:#c0392b; background:transparent; display:inline-flex; align-items:center; gap:7px; font-family:var(--sans); font-size:13.5px; font-weight:700; padding:11px 19px; border-radius:4px; cursor:pointer; transition:.15s;}
-.btn-ghost-danger:hover{background:rgba(192,57,43,.08); border-color:#c0392b;}
+@media (hover:hover) and (pointer:fine){.btn-ghost-danger:hover{background:rgba(192,57,43,.08); border-color:#c0392b;}}
 .btn-danger{background:#c0392b; color:#fff; border:1.5px solid #c0392b;}
-.btn-danger:hover{background:#a53125;}
+@media (hover:hover) and (pointer:fine){.btn-danger:hover{background:#a53125;}}
 .btn-danger:disabled{opacity:.5; cursor:default;}
 .delete-account-form{max-width:360px; display:flex; flex-direction:column; gap:16px;}
 .delete-account-error{color:#c0392b; font-size:13px; margin-top:-8px;}
@@ -1073,7 +1075,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   --line:rgba(255,255,255,.12);
   --line-strong:rgba(255,255,255,.24);
   background:var(--paper);
-  min-height:100vh;
+  min-height:100vh; min-height:100dvh;
 }
 
 .app-shell[data-theme="dark"] .app-topbar-toggle{
@@ -1103,7 +1105,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 /* Buttons/chips that use --ink as a solid dark background: pinned to navy
    in dark mode instead of following the (now light) --ink token. */
 .app-shell[data-theme="dark"] .app-main .btn-primary{background:var(--navy);}
-.app-shell[data-theme="dark"] .app-main .btn-primary:hover{background:var(--navy-dark);}
+@media (hover:hover) and (pointer:fine){.app-shell[data-theme="dark"] .app-main .btn-primary:hover{background:var(--navy-dark);}}
 .app-shell[data-theme="dark"] .app-main .chip.active{background:var(--navy); border-color:var(--navy);}
 
 /* Text sitting on a fixed gold accent: always dark, regardless of theme. */
@@ -1118,9 +1120,9 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .app-shell[data-theme="dark"] .app-main .cat-tags,
 .app-shell[data-theme="dark"] .app-main .event-cat{color:#8FB8E8;}
 .app-shell[data-theme="dark"] .app-main .kicker::before{color:var(--gold);}
-.app-shell[data-theme="dark"] .app-main .link-arrow:hover,
+@media (hover:hover) and (pointer:fine){.app-shell[data-theme="dark"] .app-main .link-arrow:hover,
 .app-shell[data-theme="dark"] .app-main .btn-ghost:hover,
-.app-shell[data-theme="dark"] .app-main .save-btn:hover{color:#8FB8E8; border-color:#8FB8E8;}
+.app-shell[data-theme="dark"] .app-main .save-btn:hover{color:#8FB8E8; border-color:#8FB8E8;}}
 
 /* .msg-bubble (not .self) uses --paper-alt same as .messages-shell's own
    dark-mode background above — without this, incoming message bubbles are
@@ -1200,9 +1202,9 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   background:var(--ink); color:#fff; font-size:22px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   display:flex; align-items:center; justify-content:center; transition:transform .15s ease;
 }
-.nexo-chatbot-fab:hover{transform:scale(1.05);}
+@media (hover:hover) and (pointer:fine){.nexo-chatbot-fab:hover{transform:scale(1.05);}}
 .nexo-chatbot-panel{
-  position:absolute; right:0; bottom:70px; width:min(340px, calc(100vw - 40px)); height:min(460px, calc(100vh - 120px));
+  position:absolute; right:0; bottom:70px; width:min(340px, calc(100vw - 40px)); height:min(460px, calc(100vh - 120px)); height:min(460px, calc(100dvh - 120px));
   background:#fff; color:var(--text); border-radius:16px; box-shadow:0 16px 40px rgba(0,0,0,.28);
   display:flex; flex-direction:column; overflow:hidden; border:1px solid var(--line);
 }
@@ -1215,7 +1217,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   background:none; border:1px solid rgba(255,255,255,.35); color:#fff; border-radius:20px;
   font-size:11.5px; font-weight:600; padding:4px 12px; cursor:pointer; transition:.15s;
 }
-.nexo-chatbot-menu-btn:hover{background:rgba(255,255,255,.12);}
+@media (hover:hover) and (pointer:fine){.nexo-chatbot-menu-btn:hover{background:rgba(255,255,255,.12);}}
 .nexo-chatbot-close{background:none; border:none; color:#fff; font-size:15px; cursor:pointer; line-height:1;}
 .nexo-chatbot-body{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px;}
 .nexo-chatbot-msg{
@@ -1232,8 +1234,8 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   display:block; width:100%; text-align:left; border:1px solid var(--line-strong); border-radius:10px;
   padding:8px 12px; background:#fff; color:var(--navy); font-size:12.5px; font-weight:600; cursor:pointer; transition:.15s;
 }
-.nexo-chatbot-suggestions button:hover,
-.nexo-chatbot-suggestions a:hover{background:var(--paper-alt); border-color:var(--navy);}
+@media (hover:hover) and (pointer:fine){.nexo-chatbot-suggestions button:hover,
+.nexo-chatbot-suggestions a:hover{background:var(--paper-alt); border-color:var(--navy);}}
 .nexo-chatbot-feedback{display:flex; flex-direction:column; gap:8px; align-self:stretch;}
 .nexo-chatbot-feedback label{display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:var(--text-soft);}
 .nexo-chatbot-feedback textarea{
@@ -1322,7 +1324,7 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
   font-family:var(--mono); font-weight:700; font-size:12px; color:var(--navy);
   border:1.5px solid var(--navy); border-radius:4px; padding:5px 10px;
 }
-.cat-site-link:hover{background:var(--navy); color:#fff;}
+@media (hover:hover) and (pointer:fine){.cat-site-link:hover{background:var(--navy); color:#fff;}}
 
 /* Dossier: métricas en grande y botón de sitio visible */
 .dossier-visit{margin-top:20px; align-self:flex-start;}
@@ -1361,3 +1363,32 @@ a.dash-list-item:hover span:first-child{color:var(--navy);}
 .tutorial-banner-actions{display:flex; align-items:center; gap:14px;}
 
 .need-badge-muted{background:var(--paper-alt); color:var(--text-soft); border:1px solid var(--line-strong);}
+
+
+/* ── Base móvil nativo ────────────────────────── */
+html{-webkit-tap-highlight-color:transparent; -webkit-text-size-adjust:100%;}
+button, a, [role="button"], summary, label, select{touch-action:manipulation;}
+button, [role="button"], .chip, .btn, .nexo-chatbot-fab{user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;}
+.btn:active, button:active:not(:disabled){transition:transform 100ms ease-out; }
+.btn:active{transform:scale(.97);}
+.modal-overlay, .app-sidebar, .nexo-chatbot-panel, .chat-messages{overscroll-behavior:contain;}
+@media (pointer:coarse){
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select{font-size:16px !important;}
+}
+@media (max-width:900px){
+  nav{padding-top:env(safe-area-inset-top, 0px); height:calc(76px + env(safe-area-inset-top, 0px));}
+  .app-topbar-toggle{top:calc(16px + env(safe-area-inset-top, 0px));}
+  .app-sidebar{padding-top:calc(28px + env(safe-area-inset-top, 0px)); padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
+  .toast-stack{bottom:calc(24px + env(safe-area-inset-bottom, 0px)); right:max(16px, env(safe-area-inset-right, 0px));}
+  .nexo-chatbot{right:max(20px, env(safe-area-inset-right, 0px)); bottom:calc(20px + env(safe-area-inset-bottom, 0px));}
+  .modal-overlay{padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));}
+}
+@media (pointer:coarse){
+  .menu-toggle{width:44px; height:44px;}
+  .brand, .mobile-menu a:not(.btn), .link-arrow, .foot-col a, a.resource-tag, .save-btn, .modal-close, .toast-close, .nexo-chatbot-close{display:inline-flex; align-items:center; min-height:44px;}
+  .mobile-menu a:not(.btn){display:flex;}
+  .foot-col a{display:flex;}
+}
+@media (max-width:900px){
+  .mobile-menu{max-height:calc(100dvh - 76px - env(safe-area-inset-top, 0px)); overflow-y:auto; overscroll-behavior:contain; padding-bottom:calc(22px + env(safe-area-inset-bottom, 0px));}
+}
