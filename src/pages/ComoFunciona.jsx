@@ -2,62 +2,49 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header.jsx'
 import Footer from '../components/Footer.jsx'
+import { useReveal } from '../hooks/useReveal.js'
 
 const PILLARS = [
-  { num: '01', title: 'Emprendimientos', text: 'Un catálogo real de proyectos en curso, filtrable por ODS, sector y etapa, no publicaciones sueltas que se pierden en un scroll.' },
-  { num: '02', title: 'Personas', text: 'Quién sabe hacer qué, y qué está dispuesto a compartir. Sin currículums de relleno.' },
-  { num: '03', title: 'Recursos', text: 'Mentoría, fondeo, herramientas y aliados institucionales que ya existen, pero nadie sabía dónde buscar.' },
-  { num: '04', title: 'Eventos', text: 'Los espacios donde el mapa se vuelve conversación real, cara a cara.' },
+  { title: 'Emprendimientos', text: 'Un catálogo real de proyectos en curso, filtrable por ODS, sector y etapa, no publicaciones sueltas que se pierden en un scroll.' },
+  { title: 'Personas', text: 'Quién sabe hacer qué, y qué está dispuesto a compartir. Sin currículums de relleno.' },
+  { title: 'Recursos', text: 'Mentoría, fondeo, herramientas y aliados institucionales que ya existen, pero nadie sabía dónde buscar.' },
+  { title: 'Eventos', text: 'Los espacios donde el mapa se vuelve conversación real, cara a cara.' },
 ]
 
 const STEPS = [
-  { num: '01', title: 'Explora el mapa', text: 'Filtra por ODS, sector o por lo que tú puedes aportar.' },
-  { num: '02', title: 'Conecta directo', text: 'Sin mensajes perdidos en un feed. Hablas con quien lidera el emprendimiento.' },
-  { num: '03', title: 'Construyan juntos', text: 'Súmate a un emprendimiento existente o registra el tuyo para que te encuentren.' },
+  { verb: 'Explora', title: 'el mapa', text: 'Filtra por ODS, sector o por lo que tú puedes aportar.' },
+  { verb: 'Conecta', title: 'directo', text: 'Sin mensajes perdidos en un feed. Hablas con quien lidera el emprendimiento.' },
+  { verb: 'Construyan', title: 'juntos', text: 'Súmate a un emprendimiento existente o registra el tuyo para que te encuentren.' },
 ]
 
 export default function ComoFunciona() {
+  useReveal()
   return (
     <>
       <Header />
 
-      {/* ── PILLARS ──────────────────────────────── */}
-      <section>
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Qué hay adentro</span>
-            <h2>Cuatro maneras de dejar de empezar de cero</h2>
-          </div>
-        </div>
-
-        <div className="pillars">
-          {PILLARS.map((p) => (
-            <div className="pillar" key={p.num}>
-              <div className="num">{p.num}</div>
-              <div className="pillar-body">
-                <h3>{p.title}</h3>
-                <p>{p.text}</p>
-              </div>
-            </div>
+      {/* ── CÓMO FUNCIONA ────────────────────────── */}
+      <section className="cf-steps">
+        <h1 className="cf-title" data-reveal>Tres pasos, sin vueltas.</h1>
+        <ol className="cf-step-list">
+          {STEPS.map((s, i) => (
+            <li className="cf-step" key={s.verb} data-reveal style={{ '--d': `${i * 80}ms` }}>
+              <h2 className="cf-step-head">{s.verb} <span>{s.title}</span></h2>
+              <p>{s.text}</p>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────── */}
-      <section className="bg-alt">
-        <div className="section-head">
-          <div className="head-title">
-            <span className="kicker">Cómo funciona</span>
-            <h2>Tres pasos, sin vueltas</h2>
-          </div>
-        </div>
-        <div className="steps">
-          {STEPS.map((s) => (
-            <div className="step" key={s.num}>
-              <div className="step-num">{s.num}</div>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-            </div>
+      {/* ── QUÉ HAY ADENTRO ──────────────────────── */}
+      <section className="cf-inside">
+        <h2 className="cf-inside-title" data-reveal>Cuatro maneras de dejar de empezar de cero</h2>
+        <div className="cf-pillars">
+          {PILLARS.map((p, i) => (
+            <article className={`cf-pillar cf-pillar-${i + 1}`} key={p.title} data-reveal style={{ '--d': `${i * 70}ms` }}>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </article>
           ))}
         </div>
       </section>
